@@ -37,6 +37,9 @@ interface RouteCardProps {
   /** Whether the card is selected/highlighted */
   isSelected?: boolean;
 
+  /** Callback when the user clicks Start Live Commute button */
+  onStartNavigation?: () => void;
+
   /** Optional class name */
   className?: string;
 }
@@ -57,6 +60,7 @@ export default function RouteCard({
   passengerType,
   onClick,
   isSelected = false,
+  onStartNavigation,
   className = "",
 }: RouteCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -420,6 +424,21 @@ export default function RouteCard({
               );
             })}
           </div>
+
+          {onStartNavigation && (
+            <div className="pt-3 border-t border-outline-variant/30 mt-3 flex justify-end">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStartNavigation();
+                }}
+                className="bg-safe-green hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all duration-200 active:scale-98 flex items-center justify-center gap-1.5 shadow-sm text-xs select-none"
+              >
+                <span className="material-symbols-outlined text-sm">navigation</span>
+                <span>Start Live Commute</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

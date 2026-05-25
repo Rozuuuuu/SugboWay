@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
+import NavigationDrawer from "@/components/route/NavigationDrawer";
 import { calculateFare, formatPHP } from "@/domain";
 import maplibregl from "maplibre-gl";
 import type { Map } from "maplibre-gl";
@@ -391,6 +392,16 @@ export default function DemoPage() {
   const [currentTab, setCurrentTab] = useState<"map" | "rush" | "chat" | "profile">("map");
   const [passengerType, setPassengerType] = useState<PassengerType>("regular");
   const [isSafetyModeActive, setIsSafetyModeActive] = useState(false);
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
+  // Auto-trigger Late-Night Safety Mode if local time is past 9 PM (21:00) or before 5 AM
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 21 || hour < 5) {
+      setIsSafetyModeActive(true);
+    }
+  }, []);
 
   // Tab 1: Map & Routing States
   const [routes, setRoutes] = useState<RouteResult[]>(MOCK_ROUTES);
@@ -1034,6 +1045,7 @@ export default function DemoPage() {
                         passengerType={passengerType}
                         isSelected={selectedRouteIdx === idx}
                         onClick={() => setSelectedRouteIdx(idx)}
+                        onStartNavigation={() => setIsNavDrawerOpen(true)}
                       />
                     ))
                   )}
@@ -1055,6 +1067,43 @@ export default function DemoPage() {
                 <div className="relative h-64 rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
                   {/* Real MapContainer */}
                   <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+
+                  {/* Pulsing ChatFAB Floating Voice/AI Button in Map Corner (WOW Element) */}
+                  <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
+                    <button 
+                      onClick={() => {
+                        setIsRecording(true);
+                        setTimeout(() => {
+                          setIsRecording(false);
+                          setCurrentTab("chat");
+                          handleQuickQuestion("pila plete padong colon?");
+                        }, 3000); // 3 seconds mock Whisper recording
+                      }}
+                      className={`
+                        w-12 h-12 rounded-full bg-error hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition-all duration-300 relative select-none
+                        ${isRecording ? "scale-110 bg-red-800" : "hover:scale-105 active:scale-95"}
+                      `}
+                      title="Speak to Whisper AI Guide"
+                    >
+                      {isRecording ? (
+                        <span className="material-symbols-outlined text-xl animate-spin">graphic_eq</span>
+                      ) : (
+                        <span className="material-symbols-outlined text-xl">mic</span>
+                      )}
+                      {/* Pulse waves */}
+                      {isRecording && (
+                        <span className="absolute inset-0 w-full h-full rounded-full border-4 border-error/50 animate-ping" />
+                      )}
+                    </button>
+                    
+                    <button 
+                      onClick={() => setCurrentTab("chat")}
+                      className="w-12 h-12 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 select-none"
+                      title="Open AI Commuter Guide"
+                    >
+                      <span className="material-symbols-outlined text-xl">smart_toy</span>
+                    </button>
+                  </div>
 
                   {/* Glassmorphism Over-Map Control */}
                   <div className="absolute bottom-4 left-4 right-4 bg-surface-container-lowest/80 backdrop-blur-md border border-outline-variant rounded-xl p-3 flex justify-between items-center z-10 shadow-xs">
@@ -1527,6 +1576,13 @@ export default function DemoPage() {
             );
           })}
         </nav>
+
+        <NavigationDrawer 
+          route={selectedRouteIdx !== null && routes[selectedRouteIdx] ? routes[selectedRouteIdx] : null} 
+          passengerType={passengerType} 
+          isOpen={isNavDrawerOpen} 
+          onClose={() => setIsNavDrawerOpen(false)} 
+        />
 
       </div>
     </div>
