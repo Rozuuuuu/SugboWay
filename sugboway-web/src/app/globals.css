@@ -1,0 +1,241 @@
+@import "tailwindcss";
+
+/* =========================================================================
+   SugboWay Design System
+   =========================================================================
+   Ported from the static HTML prototypes.
+   Color palette: Material Design 3 with Cebu transit brand tokens.
+   Typography: Inter (consistent with all 4 existing prototypes).
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Tailwind v4 Theme: Design Tokens
+   --------------------------------------------------------------------------- */
+@theme inline {
+  /* --- Brand Colors (from prototype palette) --- */
+  --color-cebu-blue: #0056b3;
+  --color-safe-green: #2e7d32;
+  --color-alert-amber: #ffbf00;
+  --color-aircon-cyan: #00acc1;
+
+  /* --- Primary System --- */
+  --color-primary: #003f87;
+  --color-primary-container: #0056b3;
+  --color-primary-fixed: #d7e2ff;
+  --color-primary-fixed-dim: #acc7ff;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #bbd0ff;
+  --color-on-primary-fixed: #001a40;
+  --color-on-primary-fixed-variant: #004491;
+  --color-inverse-primary: #acc7ff;
+
+  /* --- Secondary System --- */
+  --color-secondary: #1b6d24;
+  --color-secondary-container: #a0f399;
+  --color-secondary-fixed: #a3f69c;
+  --color-secondary-fixed-dim: #88d982;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #217128;
+  --color-on-secondary-fixed: #002204;
+  --color-on-secondary-fixed-variant: #005312;
+
+  /* --- Tertiary System --- */
+  --color-tertiary: #722b00;
+  --color-tertiary-container: #983c00;
+  --color-tertiary-fixed: #ffdbcc;
+  --color-tertiary-fixed-dim: #ffb694;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #ffc2a7;
+  --color-on-tertiary-fixed: #351000;
+  --color-on-tertiary-fixed-variant: #7b2f00;
+
+  /* --- Error System --- */
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  /* --- Surface System --- */
+  --color-surface: #f9f9ff;
+  --color-surface-dim: #d9d9e2;
+  --color-surface-bright: #f9f9ff;
+  --color-surface-variant: #e1e2ea;
+  --color-surface-tint: #115cb9;
+  --color-surface-container: #ededf6;
+  --color-surface-container-low: #f2f3fc;
+  --color-surface-container-high: #e7e8f0;
+  --color-surface-container-highest: #e1e2ea;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-surface: #191c21;
+  --color-on-surface-variant: #424752;
+  --color-inverse-surface: #2e3037;
+  --color-inverse-on-surface: #f0f0f9;
+
+  /* --- Outline --- */
+  --color-outline: #727784;
+  --color-outline-variant: #c2c6d4;
+
+  /* --- Background --- */
+  --color-background: #f9f9ff;
+  --color-on-background: #191c21;
+
+  /* --- Crowding Colors (semantic) --- */
+  --color-crowding-low: #2e7d32;
+  --color-crowding-mid: #ffbf00;
+  --color-crowding-high: #f97316;
+  --color-crowding-full: #ba1a1a;
+
+  /* --- Spacing (from prototype config) --- */
+  --spacing-touch-target-min: 48px;
+  --spacing-base: 8px;
+  --spacing-container-margin: 16px;
+  --spacing-gutter: 12px;
+
+  /* --- Font Families --- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* --- Font Sizes (from prototype type scale) --- */
+  --font-size-label-sm: 12px;
+  --font-size-route-code: 14px;
+  --font-size-body-md: 16px;
+  --font-size-body-lg: 18px;
+  --font-size-headline-sm: 20px;
+  --font-size-headline-md: 24px;
+  --font-size-display-lg: 32px;
+}
+
+/* ---------------------------------------------------------------------------
+   Base Styles
+   --------------------------------------------------------------------------- */
+body {
+  font-family: var(--font-sans);
+  background: var(--color-background);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------------------------------------------------------------------------
+   Material Symbols (Google Fonts Icon Library)
+   --------------------------------------------------------------------------- */
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------------------
+   CrowdingIndicator Animations
+   --------------------------------------------------------------------------- */
+@keyframes crowding-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes crowding-fill {
+  from {
+    width: 0%;
+  }
+}
+
+.animate-crowding-pulse {
+  animation: crowding-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-crowding-fill {
+  animation: crowding-fill 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ---------------------------------------------------------------------------
+   Card Interactions
+   --------------------------------------------------------------------------- */
+@keyframes card-press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.route-card-press {
+  animation: card-press 0.15s ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+   Discount Badge Transition
+   --------------------------------------------------------------------------- */
+.fare-transition {
+  transition:
+    color 0.3s ease,
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+/* ---------------------------------------------------------------------------
+   Scrollbar Utilities
+   --------------------------------------------------------------------------- */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Step Line Connecting Styles
+   --------------------------------------------------------------------------- */
+.step-line::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 24px;
+  bottom: -24px;
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--line-color, var(--color-cebu-blue)) 0%,
+    var(--line-color, var(--color-cebu-blue)) 50%,
+    transparent 50%,
+    transparent 100%
+  );
+  background-size: 2px 8px;
+}
+.step-line-last::before {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Simple Fade In Animation
+   --------------------------------------------------------------------------- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

@@ -1,0 +1,427 @@
+"use client";
+
+import React, { useState } from "react";
+import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
+import RouteCodeBadge from "./RouteCodeBadge";
+import CrowdingIndicator from "./CrowdingIndicator";
+import FareBadge from "./FareBadge";
+
+// Helper to format travel time into readable hours and minutes
+function formatDuration(seconds: number): string {
+  const mins = Math.round(seconds / 60);
+  if (mins < 60) return `${mins} min${mins !== 1 ? "s" : ""}`;
+  const hrs = Math.floor(mins / 60);
+  const remainingMins = mins % 60;
+  if (remainingMins === 0) return `${hrs} hr${hrs !== 1 ? "s" : ""}`;
+  return `${hrs} hr${hrs !== 1 ? "s" : ""} ${remainingMins} min${
+    remainingMins !== 1 ? "s" : ""
+  }`;
+}
+
+// Helper to format distance into readable meters or kilometers
+function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1)} km`;
+}
+
+interface RouteCardProps {
+  /** The routing engine result representing a complete path */
+  route: RouteResult;
+
+  /** The passenger type currently selected */
+  passengerType: PassengerType;
+
+  /** Callback when the user clicks the card */
+  onClick?: () => void;
+
+  /** Whether the card is selected/highlighted */
+  isSelected?: boolean;
+
+  /** Optional class name */
+  className?: string;
+}
+
+/**
+ * RouteCard Component
+ * ====================
+ * A premium React component representing a Cebu transit route.
+ * It features:
+ * - High-contrast route code badges (supporting multi-leg transfers)
+ * - Animated crowding indicator powered by BPR (Bureau of Public Roads) congestion modeling
+ * - Deterministic fare computation based on LTFRB 2023 Order
+ * - Expandable step-by-step navigation panel showing Cebuano cultural cues and landmarks
+ * - Polished Material Design 3-inspired micro-interactions and animations
+ */
+export default function RouteCard({
+  route,
+  passengerType,
+  onClick,
+  isSelected = false,
+  className = "",
+}: RouteCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [animatePress, setAnimatePress] = useState(false);
+
+  // Extract all transit legs
+  const transitLegs = route.legs.filter((leg) => leg.type === "transit");
+  const walkingLegs = route.legs.filter((leg) => leg.type === "walking");
+
+  const totalWalkingDistance = walkingLegs.reduce(
+    (acc, leg) => acc + leg.distanceMeters,
+    0
+  );
+
+  // Get primary display information from the first transit leg
+  const primaryTransitLeg = transitLegs[0];
+  const routeCode = primaryTransitLeg?.routeShortName || "Walk";
+  const routeLongName =
+    primaryTransitLeg?.route?.routeLongName ||
+    "Walk to destination";
+  const vehicleTypeLabel = primaryTransitLeg?.route?.isModernized
+    ? "Modern E-Jeep"
+    : primaryTransitLeg?.route?.routeType === "mybus"
+    ? "MyBus"
+    : primaryTransitLeg?.route?.routeType === "ceres"
+    ? "Ceres Bus"
+    : primaryTransitLeg?.route?.routeType === "bus"
+    ? "Bus"
+    : "Traditional Jeepney";
+
+  const isAircon = primaryTransitLeg?.route?.hasAircon || false;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If clicking a button, toggle, or details panel, don't trigger main card selection
+    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("a")) {
+      return;
+    }
+
+    setAnimatePress(true);
+    setTimeout(() => setAnimatePress(false), 150);
+
+    if (onClick) {
+      onClick();
+    } else {
+      setIsExpanded(!isExpanded);
+    }
+  };
+
+  return (
+    <div
+      onClick={handleCardClick}
+      className={`
+        relative overflow-hidden
+        bg-surface-container-low border rounded-2xl p-4
+        transition-all duration-300 ease-out select-none cursor-pointer
+        ${
+          isSelected
+            ? "border-cebu-blue ring-2 ring-cebu-blue/20 bg-surface-container-lowest shadow-md"
+            : "border-outline-variant hover:border-outline hover:shadow-md hover:bg-surface-container-lowest"
+        }
+        ${animatePress ? "route-card-press" : ""}
+        ${className}
+      `}
+    >
+      {/* Decorative vertical selection accent */}
+      {isSelected && (
+        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-cebu-blue rounded-l-2xl" />
+      )}
+
+      {/* Main Row Info */}
+      <div className="flex gap-4 items-start">
+        {/* Left Badge Column */}
+        <div className="flex flex-col items-center gap-1.5 min-w-[4.5rem]">
+          {transitLegs.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-1">
+              {transitLegs.map((leg, idx) => (
+                <React.Fragment key={leg.routeId || idx}>
+                  {idx > 0 && (
+                    <span
+                      className="material-symbols-outlined text-xs text-outline self-center"
+                      aria-hidden="true"
+                    >
+                      chevron_right
+                    </span>
+                  )}
+                  <RouteCodeBadge
+                    code={leg.routeShortName || "JP"}
+                    route={leg.route}
+                    size={transitLegs.length > 2 ? "sm" : "md"}
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          ) : (
+            <span className="material-symbols-outlined text-3xl text-outline-variant p-2 bg-surface-container-highest rounded-full">
+              directions_walk
+            </span>
+          )}
+
+          <span className="text-sm font-bold text-cebu-blue tabular-nums">
+            {formatDuration(route.totalTimeSeconds)}
+          </span>
+        </div>
+
+        {/* Middle Info Column */}
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start gap-2">
+            <div>
+              <h3 className="text-body-md font-bold text-on-surface truncate">
+                {transitLegs.length > 0 ? routeLongName : "Walking Route"}
+              </h3>
+
+              {transitLegs.length > 0 && (
+                <div className="flex items-center flex-wrap gap-2 mt-1">
+                  <span className="text-xs text-on-surface-variant flex items-center gap-1">
+                    <span
+                      className="material-symbols-outlined text-[14px]"
+                      aria-hidden="true"
+                    >
+                      {primaryTransitLeg.route?.isModernized
+                        ? "electric_car"
+                        : "directions_bus"}
+                    </span>
+                    {vehicleTypeLabel}
+                  </span>
+
+                  {isAircon && (
+                    <span className="bg-aircon-cyan/10 text-aircon-cyan text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border border-aircon-cyan/20">
+                      Aircon
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Transfers indicator */}
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-on-surface-variant">
+                <span className="material-symbols-outlined text-[14px]">
+                  {route.transfers > 0 ? "alt_route" : "trending_flat"}
+                </span>
+                <span>
+                  {route.transfers === 0
+                    ? "Direct Route"
+                    : `${route.transfers} transfer${
+                        route.transfers > 1 ? "s" : ""
+                      }`}
+                </span>
+                {totalWalkingDistance > 0 && (
+                  <>
+                    <span className="text-outline-variant">•</span>
+                    <span className="flex items-center gap-0.5">
+                      <span className="material-symbols-outlined text-[12px]">
+                        directions_walk
+                      </span>
+                      {formatDistance(totalWalkingDistance)} walk
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Right Fare Column */}
+            <FareBadge
+              distanceKm={route.legs.reduce(
+                (acc, leg) => acc + leg.distanceMeters / 1000,
+                0
+              )}
+              transfers={route.transfers}
+              passengerType={passengerType}
+              showToggle={false}
+            />
+          </div>
+
+          {/* Crowding Indicator Bar */}
+          {transitLegs.length > 0 && (
+            <div className="mt-3 pt-2 border-t border-outline-variant/30">
+              <CrowdingIndicator
+                score={route.crowdingWorstLeg}
+                showLabel={true}
+                showIcon={true}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Expand/Collapse Toggle Button (Micro-Interaction) */}
+      <div className="mt-2 flex justify-center border-t border-outline-variant/30 pt-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+          className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-cebu-blue transition-colors px-2 py-1 rounded-md"
+          aria-expanded={isExpanded}
+        >
+          <span>{isExpanded ? "Hide Details" : "View Step-by-Step"}</span>
+          <span
+            className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${
+              isExpanded ? "rotate-180" : ""
+            }`}
+          >
+            expand_more
+          </span>
+        </button>
+      </div>
+
+      {/* Expandable Navigation Details */}
+      {isExpanded && (
+        <div
+          className="mt-4 pt-4 border-t border-outline-variant/60 space-y-4 animate-[fadeIn_0.3s_ease-out]"
+          onClick={(e) => e.stopPropagation()} // Prevent clicking details from closing it
+        >
+          <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+            Navigation Steps
+          </h4>
+
+          <div className="relative pl-6 space-y-4">
+            {route.legs.map((leg, legIdx) => {
+              const isLastLeg = legIdx === route.legs.length - 1;
+              const isTransit = leg.type === "transit";
+
+              return (
+                <div
+                  key={legIdx}
+                  className={`
+                    relative pb-1
+                    ${!isLastLeg ? "step-line" : "step-line-last"}
+                  `}
+                  style={
+                    {
+                      "--line-color": isTransit
+                        ? "var(--color-cebu-blue)"
+                        : "var(--color-outline-variant)",
+                    } as React.CSSProperties
+                  }
+                >
+                  {/* Step Bullet Icon */}
+                  <span
+                    className={`
+                      absolute -left-[27px] top-0.5
+                      w-6 h-6 rounded-full flex items-center justify-center text-[14px]
+                      ${
+                        isTransit
+                          ? "bg-cebu-blue text-white"
+                          : "bg-surface-container-highest text-on-surface-variant border border-outline-variant"
+                      }
+                    `}
+                  >
+                    <span className="material-symbols-outlined text-sm font-bold">
+                      {isTransit
+                        ? isAircon
+                          ? "electric_car"
+                          : "directions_bus"
+                        : "directions_walk"}
+                    </span>
+                  </span>
+
+                  {/* Leg Header Info */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h5 className="text-sm font-bold text-on-surface">
+                        {isTransit ? (
+                          <span className="flex items-center gap-1.5">
+                            Board <RouteCodeBadge code={leg.routeShortName || "JP"} size="sm" />
+                          </span>
+                        ) : (
+                          "Walk"
+                        )}
+                      </h5>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        From{" "}
+                        <span className="font-semibold">{leg.fromStop.stopName}</span> to{" "}
+                        <span className="font-semibold">{leg.toStop.stopName}</span>
+                      </p>
+                    </div>
+
+                    <div className="text-right flex flex-col items-end">
+                      <span className="text-xs font-semibold text-on-surface tabular-nums">
+                        {formatDuration(leg.durationSeconds)}
+                      </span>
+                      <span className="text-[10px] text-on-surface-variant tabular-nums">
+                        {formatDistance(leg.distanceMeters)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Step Instructions */}
+                  {leg.instructions && leg.instructions.length > 0 && (
+                    <ul className="mt-2 space-y-2.5 bg-surface-container/50 rounded-xl p-3 border border-outline-variant/10">
+                      {leg.instructions.map((inst) => {
+                        let actionIcon = "directions_run";
+                        switch (inst.action) {
+                          case "board":
+                            actionIcon = "login";
+                            break;
+                          case "ride":
+                            actionIcon = "directions_bus";
+                            break;
+                          case "alight":
+                            actionIcon = "logout";
+                            break;
+                          case "transfer":
+                            actionIcon = "alt_route";
+                            break;
+                          case "wait":
+                            actionIcon = "schedule";
+                            break;
+                        }
+
+                        return (
+                          <li
+                            key={inst.step}
+                            className="flex gap-2 items-start text-xs text-on-surface-variant"
+                          >
+                            <span
+                              className="material-symbols-outlined text-sm text-cebu-blue mt-0.5 shrink-0"
+                              aria-hidden="true"
+                            >
+                              {actionIcon}
+                            </span>
+                            <div className="flex-1">
+                              <span className="font-medium text-on-surface">
+                                {inst.description}
+                              </span>
+
+                              {/* Landmark Hint */}
+                              {inst.landmark && (
+                                <span className="block text-[10px] text-on-surface-variant font-medium mt-0.5 flex items-center gap-0.5">
+                                  <span className="material-symbols-outlined text-[12px] text-amber-500">
+                                    pin_drop
+                                  </span>
+                                  Landmark: {inst.landmark}
+                                </span>
+                              )}
+
+                              {/* Cebuano Cue Badge */}
+                              {(inst.cebuanoPhrase || inst.culturalCue) && (
+                                <div className="mt-1 flex flex-wrap gap-1.5 items-center">
+                                  {inst.cebuanoPhrase && (
+                                    <span className="bg-primary/5 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold border border-primary/10 italic">
+                                      "{inst.cebuanoPhrase}"
+                                    </span>
+                                  )}
+                                  {inst.culturalCue && (
+                                    <span className="bg-surface-container-highest text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-outline-variant/20">
+                                      <span className="material-symbols-outlined text-[12px] text-cebu-blue">
+                                        info
+                                      </span>
+                                      {inst.culturalCue}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
