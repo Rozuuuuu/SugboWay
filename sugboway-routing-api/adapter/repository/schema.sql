@@ -47,14 +47,16 @@ EXECUTE FUNCTION update_stop_location();
 
 -- 3. GTFS Routes with customized modernization tags
 CREATE TABLE IF NOT EXISTS routes (
-    route_id         TEXT PRIMARY KEY,
-    agency_id        TEXT REFERENCES agency(agency_id),
-    route_short_name TEXT NOT NULL,
-    route_long_name  TEXT NOT NULL,
-    route_type       INTEGER NOT NULL, -- 3 = Bus, etc.
-    route_color      TEXT,
-    is_modernized    BOOLEAN DEFAULT FALSE,
-    has_aircon       BOOLEAN DEFAULT FALSE
+    route_id               TEXT PRIMARY KEY,
+    agency_id              TEXT REFERENCES agency(agency_id),
+    route_short_name       TEXT NOT NULL,
+    route_long_name        TEXT NOT NULL,
+    route_type             INTEGER NOT NULL, -- 3 = Bus, etc.
+    route_color            TEXT,
+    is_modernized          BOOLEAN DEFAULT FALSE,
+    has_aircon             BOOLEAN DEFAULT FALSE,
+    daily_passenger_volume INTEGER DEFAULT 5000,
+    road_type              TEXT DEFAULT 'national'
 );
 
 -- 4. Trips

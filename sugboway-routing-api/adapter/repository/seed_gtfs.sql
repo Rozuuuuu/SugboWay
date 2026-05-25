@@ -21,11 +21,11 @@ VALUES
 ON CONFLICT (stop_id) DO NOTHING;
 
 -- 3. Routes
-INSERT INTO routes (route_id, agency_id, route_short_name, route_long_name, route_type, is_modernized)
+INSERT INTO routes (route_id, agency_id, route_short_name, route_long_name, route_type, is_modernized, daily_passenger_volume, road_type)
 VALUES
-    ('route_13c', 'CCT', '13C', 'Talamban - Colon via Banilad', 3, false),
-    ('route_17b', 'CCT', '17B', 'Lahug - Colon via Jones', 3, true),
-    ('route_mybus_1', 'MYB', 'MyBus', 'SM Seaside to IT Park', 700, true)
+    ('route_13c', 'CCT', '13C', 'Talamban - Colon via Banilad', 3, false, 11763, 'national'),
+    ('route_17b', 'CCT', '17B', 'Lahug - Colon via Jones', 3, true, 8000, 'barangay'),
+    ('route_mybus_1', 'MYB', 'MyBus', 'SM Seaside to IT Park', 700, true, 11782, 'national')
 ON CONFLICT (route_id) DO NOTHING;
 
 -- 4. Trips

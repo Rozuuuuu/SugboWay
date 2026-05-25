@@ -9,10 +9,12 @@ type GraphEdge struct {
 	RouteShortName string  `json:"routeShortName"`
 	RouteLongName  string  `json:"routeLongName"`
 	RouteType      string  `json:"routeType"` // "jeepney", "modern_ejeep", etc.
-	IsModernized   bool    `json:"isModernized"`
-	HasAircon      bool    `json:"hasAircon"`
-	DistanceMeters float64 `json:"distanceMeters"`
-	DurationSecs   float64 `json:"durationSecs"`
+	IsModernized         bool    `json:"isModernized"`
+	HasAircon            bool    `json:"hasAircon"`
+	DailyPassengerVolume int     `json:"dailyPassengerVolume"`
+	RoadType             string  `json:"roadType"`
+	DistanceMeters       float64 `json:"distanceMeters"`
+	DurationSecs         float64 `json:"durationSecs"`
 }
 
 // SpatialRepositoryPort defines what the Dijkstra engine needs from our PostGIS database.

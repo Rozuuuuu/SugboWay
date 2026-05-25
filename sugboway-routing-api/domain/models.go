@@ -34,6 +34,7 @@ type RoutePrefs struct {
 	AccessibilityMode    bool          `json:"accessibilityMode"`
 	AvoidRoutes          []string      `json:"avoidRoutes"`
 	TransferPenaltySecs  float64       `json:"transferPenaltySecs"`
+	DepartureTime        string        `json:"departureTime,omitempty"` // RFC3339 format
 }
 
 // GTFSRoute maps standard routes with Cebu specific attributes.
@@ -44,8 +45,10 @@ type GTFSRoute struct {
 	RouteType      string `json:"routeType"` // "jeepney", "modern_ejeep", "mybus", "ceres", "bus"
 	AgencyID       string `json:"agencyId"`
 	RouteColor     string `json:"routeColor,omitempty"`
-	IsModernized   bool   `json:"isModernized"`
-	HasAircon      bool   `json:"hasAircon"`
+	IsModernized         bool   `json:"isModernized"`
+	HasAircon            bool   `json:"hasAircon"`
+	DailyPassengerVolume int    `json:"dailyPassengerVolume"`
+	RoadType             string `json:"roadType"`
 }
 
 // GTFSStop maps standard stop nodes with spatial coordinates and PWD shelter flags.

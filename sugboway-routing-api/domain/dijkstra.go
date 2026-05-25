@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"fmt"
 	"math"
+	"time"
 )
 
 // Edge represents a directed connection between stops or walking nodes.
@@ -12,9 +13,11 @@ type Edge struct {
 	RouteID        string // Empty for walking/transfers
 	RouteShortName string
 	Route          *GTFSRoute
-	DistanceMeters float64
-	DurationSecs   float64
-	Type           string // "transit", "walking", "transfer"
+	DistanceMeters       float64
+	DurationSecs         float64
+	DailyPassengerVolume int
+	RoadType             string
+	Type                 string // "transit", "walking", "transfer"
 }
 
 // Graph contains nodes and directed edges mapped by stop ID.
@@ -111,16 +114,20 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 			RouteID:        dbEdge.RouteID,
 			RouteShortName: dbEdge.RouteShortName,
 			Route: &GTFSRoute{
-				RouteID:        dbEdge.RouteID,
-				RouteShortName: dbEdge.RouteShortName,
-				RouteLongName:  dbEdge.RouteLongName,
-				RouteType:      dbEdge.RouteType,
-				IsModernized:   dbEdge.IsModernized,
-				HasAircon:      dbEdge.HasAircon,
+				RouteID:              dbEdge.RouteID,
+				RouteShortName:       dbEdge.RouteShortName,
+				RouteLongName:        dbEdge.RouteLongName,
+				RouteType:            dbEdge.RouteType,
+				IsModernized:         dbEdge.IsModernized,
+				HasAircon:            dbEdge.HasAircon,
+				DailyPassengerVolume: dbEdge.DailyPassengerVolume,
+				RoadType:             dbEdge.RoadType,
 			},
-			DistanceMeters: dbEdge.DistanceMeters,
-			DurationSecs:   dbEdge.DurationSecs,
-			Type:           "transit",
+			DistanceMeters:       dbEdge.DistanceMeters,
+			DurationSecs:         dbEdge.DurationSecs,
+			DailyPassengerVolume: dbEdge.DailyPassengerVolume,
+			RoadType:             dbEdge.RoadType,
+			Type:                 "transit",
 		}
 		graph.Edges[dbEdge.FromStopID] = append(graph.Edges[dbEdge.FromStopID], edge)
 	}
@@ -192,6 +199,19 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 		})
 	}
 
+	// Parse departure time
+	var depTime time.Time
+	if prefs.DepartureTime != "" {
+		t, err := time.Parse(time.RFC3339, prefs.DepartureTime)
+		if err == nil {
+			depTime = t
+		} else {
+			depTime = time.Now()
+		}
+	} else {
+		depTime = time.Now()
+	}
+
 	// 4. Run modified Dijkstra algorithm
 	results := []RouteResult{}
 	pq := make(PriorityQueue, 0)
@@ -251,8 +271,14 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 				}
 			}
 
+			// Calculate real-time duration using BPR if transit
+			actualDuration := edge.DurationSecs
+			if edge.Type == "transit" {
+				actualDuration = CalculateBPRCost(edge.DistanceMeters, edge.DailyPassengerVolume, edge.RoadType, depTime)
+			}
+
 			// Calculate edge cost weight based on user minimize preference
-			edgeCost := edge.DurationSecs
+			edgeCost := actualDuration
 
 			isTransfer := false
 			transferPenalty := prefs.TransferPenaltySecs
@@ -283,7 +309,7 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 			}
 
 			newCost := curr.Cost + edgeCost
-			newDuration := curr.DurationSeconds + edge.DurationSecs
+			newDuration := curr.DurationSeconds + actualDuration
 			if isTransfer {
 				newDuration += 60.0 // Add a mock 60s wait time for boarding transfers
 			}
@@ -301,7 +327,7 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 				RouteID:        edge.RouteID,
 				RouteShortName: edge.RouteShortName,
 				DistanceMeters: edge.DistanceMeters,
-				DurationSecs:   edge.DurationSecs,
+				DurationSecs:   actualDuration,
 				Type:           edge.Type,
 			})
 

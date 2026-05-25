@@ -160,6 +160,8 @@ func (r *PostgresSpatialRepository) FetchGraphEdges() ([]domain.GraphEdge, error
 			r.route_type,
 			r.is_modernized,
 			r.has_aircon,
+			r.daily_passenger_volume,
+			r.road_type,
 			ST_Distance(s1.location, s2.location) AS distance_meters,
 			ST_Distance(s1.location, s2.location) / 8.0 AS duration_secs
 		FROM stop_times st1
@@ -189,6 +191,8 @@ func (r *PostgresSpatialRepository) FetchGraphEdges() ([]domain.GraphEdge, error
 			&rType,
 			&e.IsModernized,
 			&e.HasAircon,
+			&e.DailyPassengerVolume,
+			&e.RoadType,
 			&e.DistanceMeters,
 			&e.DurationSecs,
 		)
