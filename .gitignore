@@ -39,3 +39,10 @@ sugboway-routing-api/main.exe
 *.sw?
 .DS_Store
 Thumbs.db
+
+# --- Python & AI Service ---
+__pycache__/
+*.py[cod]
+*$py.class
+sugboway-ai-service/venv/
+sugboway-ai-service/env/

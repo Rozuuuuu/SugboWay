@@ -20,8 +20,8 @@ func main() {
 	// 1. Load Configurations from Env Variables
 	dbConnStr := os.Getenv("DATABASE_URL")
 	if dbConnStr == "" {
-		// Fallback to local default development address
-		dbConnStr = "postgres://postgres:dev_password@localhost:5432/sugboway?sslmode=disable"
+		// Fallback to local default development address or provided render url
+		dbConnStr = "postgresql://sugboway_user:icblLufDCbcAuk0KWbQdaoxyI8uU2zmF@dpg-d89tckegvqtc73cakufg-a.oregon-postgres.render.com/sugboway"
 	}
 
 	port := os.Getenv("PORT")
