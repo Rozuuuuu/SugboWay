@@ -23,9 +23,9 @@ class VectorStore:
         """
         with self.conn.cursor() as cur:
             # Add embedding column to stops if it doesn't exist.
-            # Using 1536 dimensions as standard for OpenAI embeddings.
+            # Using 768 dimensions as standard for Gemini embeddings.
             cur.execute("""
-                ALTER TABLE stops ADD COLUMN IF NOT EXISTS embedding vector(1536);
+                ALTER TABLE stops ADD COLUMN IF NOT EXISTS embedding vector(768);
             """)
             self.conn.commit()
 
