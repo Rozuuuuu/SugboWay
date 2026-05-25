@@ -25,7 +25,7 @@ def setup_agent():
     agent = create_tool_calling_agent(llm, tools, prompt)
 
     # Create the executor
-    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, max_iterations=3)
 
     return agent_executor
 

@@ -1,10 +1,20 @@
 import requests
+import os
 try:
     from langchain_classic.tools import tool
 except ImportError:
     from langchain.tools import tool
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 ROUTING_API_BASE_URL = "http://localhost:8080/api/v1"
+
+EMBEDDING_CACHE = {}
+
+def get_cached_embedding(text: str, embeddings) -> list:
+    key = text.strip().lower()
+    if key not in EMBEDDING_CACHE:
+        EMBEDDING_CACHE[key] = embeddings.embed_query(text)
+    return EMBEDDING_CACHE[key]
 
 @tool
 def get_route_options(origin: str, destination: str, prefs: str = "time") -> str:
@@ -20,9 +30,9 @@ def get_route_options(origin: str, destination: str, prefs: str = "time") -> str
             output_dimensionality=768
         )
         
-        # Embed origin and destination
-        orig_vector = embeddings.embed_query(origin)
-        dest_vector = embeddings.embed_query(destination)
+        # Embed origin and destination with caching to save API quota
+        orig_vector = get_cached_embedding(origin, embeddings)
+        dest_vector = get_cached_embedding(destination, embeddings)
         
         # Query DB for coordinates
         conn = psycopg2.connect(os.getenv("DATABASE_URL"))
@@ -204,7 +214,8 @@ def verify_stop(stop_name: str) -> str:
             google_api_key=os.getenv("GEMINI_API_KEY"), 
             output_dimensionality=768
         )
-        query_vector = embeddings.embed_query(stop_name)
+        # Query with caching to save API quota
+        query_vector = get_cached_embedding(stop_name, embeddings)
         
         vs = VectorStore()
         results = vs.search_similar_locations(query_vector, limit=3)

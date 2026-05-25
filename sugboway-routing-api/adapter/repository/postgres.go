@@ -86,7 +86,7 @@ func (r *PostgresSpatialRepository) FindNearbyStops(lat, lon float64, radiusMete
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan stop row: %w", err)
 		}
-		s.WheelchairAccessible = (wc == 1)
+		s.WheelchairAccessible = (wc != 2)
 		s.Aliases = []string{}
 		s.RouteIDs = []string{}
 		stops = append(stops, s)
@@ -136,7 +136,7 @@ func (r *PostgresSpatialRepository) FetchAllStops() ([]domain.GTFSStop, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan stop: %w", err)
 		}
-		s.WheelchairAccessible = (wc == 1)
+		s.WheelchairAccessible = (wc != 2)
 		s.Aliases = []string{}
 		s.RouteIDs = []string{}
 		stops = append(stops, s)
