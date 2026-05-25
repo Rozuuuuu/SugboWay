@@ -383,6 +383,9 @@ function resolveLocation(query: string, defaultCoords: { lat: number; lon: numbe
   return defaultCoords;
 }
 
+const ROUTING_API_URL = process.env.NEXT_PUBLIC_ROUTING_API_URL || "http://localhost:8080";
+const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000";
+
 export default function DemoPage() {
   // Shared States
   const [currentTab, setCurrentTab] = useState<"map" | "rush" | "chat" | "profile">("map");
@@ -428,7 +431,7 @@ export default function DemoPage() {
       const originCoords = resolveLocation(origin, { lat: 10.3662, lon: 123.9169 });
       const destCoords = resolveLocation(destination, { lat: 10.2974, lon: 123.8997 });
 
-      const url = `http://localhost:8080/api/v1/route/search?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lon}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lon}&passenger_type=${passengerType}&accessible=${isSafetyModeActive}`;
+      const url = `${ROUTING_API_URL}/api/v1/route/search?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lon}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lon}&passenger_type=${passengerType}&accessible=${isSafetyModeActive}`;
       
       const res = await fetch(url);
       if (!res.ok) {
@@ -445,7 +448,7 @@ export default function DemoPage() {
           const enrichedLegs = await Promise.all(route.legs.map(async (leg: RouteLeg) => {
             if (leg.type === "transit" && leg.routeId) {
               try {
-                const congRes = await fetch(`http://localhost:8080/api/v1/congestion?route_id=${leg.routeId}`);
+                const congRes = await fetch(`${ROUTING_API_URL}/api/v1/congestion?route_id=${leg.routeId}`);
                 if (congRes.ok) {
                   const congData = await congRes.json();
                   const flowRatio = congData.flow_ratio ?? 0.25;
@@ -651,7 +654,7 @@ export default function DemoPage() {
   const askAi = async (question: string) => {
     setIsAiLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/v1/chat", {
+      const res = await fetch(`${AI_API_URL}/api/v1/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
