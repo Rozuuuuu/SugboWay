@@ -20,7 +20,7 @@ def embed_all_stops():
         # Reset the embedding column for Gemini's 768 dimensions
         cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
         cur.execute("ALTER TABLE stops DROP COLUMN IF EXISTS embedding;")
-        cur.execute("ALTER TABLE stops ADD COLUMN embedding vector(768);")
+        cur.execute("ALTER TABLE stops ADD COLUMN embedding vector(3072);")
         conn.commit()
         
         # Get all stops

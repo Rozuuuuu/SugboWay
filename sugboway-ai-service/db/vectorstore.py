@@ -25,7 +25,7 @@ class VectorStore:
             # Add embedding column to stops if it doesn't exist.
             # Using 768 dimensions as standard for Gemini embeddings.
             cur.execute("""
-                ALTER TABLE stops ADD COLUMN IF NOT EXISTS embedding vector(768);
+                ALTER TABLE stops ADD COLUMN IF NOT EXISTS embedding vector(3072);
             """)
             self.conn.commit()
 
