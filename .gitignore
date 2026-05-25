@@ -1,0 +1,41 @@
+# ==========================================
+# SugboWay Global GitIgnore Configuration
+# ==========================================
+
+# --- Node & Next.js Frontend ---
+sugboway-web/node_modules/
+sugboway-web/.next/
+sugboway-web/out/
+sugboway-web/build/
+sugboway-web/npm-debug.log*
+sugboway-web/yarn-debug.log*
+sugboway-web/yarn-error.log*
+sugboway-web/.pnp*
+sugboway-web/.pnp.js
+
+# --- Go Routing API ---
+sugboway-routing-api/sugboway-routing-api
+sugboway-routing-api/sugboway-routing-api.exe
+sugboway-routing-api/*.exe
+sugboway-routing-api/*.test
+sugboway-routing-api/main
+sugboway-routing-api/main.exe
+
+# --- Local Secrets & Configs ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log
+
+# --- System & IDE files ---
+.idea/
+.vscode/
+*.suo
+*.ntvsca
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db

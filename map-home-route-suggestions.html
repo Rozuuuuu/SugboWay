@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SugboWay | Cebu Transit Guide</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .map-gradient-overlay {
+            background: linear-gradient(to bottom, rgba(249, 249, 255, 0.9) 0%, rgba(249, 249, 255, 0) 20%, rgba(249, 249, 255, 0) 80%, rgba(249, 249, 255, 0.8) 100%);
+        }
+        .bottom-sheet-transition {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed": "#351000",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#0056b3",
+                      "error-container": "#ffdad6",
+                      "on-primary-container": "#bbd0ff",
+                      "primary-fixed": "#d7e2ff",
+                      "secondary-container": "#a0f399",
+                      "on-secondary-container": "#217128",
+                      "on-tertiary-container": "#ffc2a7",
+                      "on-primary": "#ffffff",
+                      "inverse-on-surface": "#f0f0f9",
+                      "secondary-fixed": "#a3f69c",
+                      "on-surface": "#191c21",
+                      "outline": "#727784",
+                      "on-surface-variant": "#424752",
+                      "surface-container-highest": "#e1e2ea",
+                      "on-error-container": "#93000a",
+                      "aircon-cyan": "#00acc1",
+                      "surface-dim": "#d9d9e2",
+                      "tertiary-container": "#983c00",
+                      "secondary": "#1b6d24",
+                      "on-background": "#191c21",
+                      "inverse-surface": "#2e3037",
+                      "outline-variant": "#c2c6d4",
+                      "surface-container": "#ededf6",
+                      "tertiary": "#722b00",
+                      "on-error": "#ffffff",
+                      "safe-green": "#2e7d32",
+                      "surface-container-low": "#f2f3fc",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#e1e2ea",
+                      "surface-tint": "#115cb9",
+                      "on-tertiary-fixed-variant": "#7b2f00",
+                      "surface-bright": "#f9f9ff",
+                      "primary": "#003f87",
+                      "on-primary-fixed": "#001a40",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb694",
+                      "alert-amber": "#ffbf00",
+                      "surface": "#f9f9ff",
+                      "inverse-primary": "#acc7ff",
+                      "surface-container-high": "#e7e8f0",
+                      "on-primary-fixed-variant": "#004491",
+                      "primary-fixed-dim": "#acc7ff",
+                      "tertiary-fixed": "#ffdbcc",
+                      "on-secondary-fixed": "#002204",
+                      "background": "#f9f9ff",
+                      "secondary-fixed-dim": "#88d982",
+                      "cebu-blue": "#0056b3",
+                      "on-secondary-fixed-variant": "#005312",
+                      "error": "#ba1a1a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "touch-target-min": "48px",
+                      "base": "8px",
+                      "container-margin": "16px",
+                      "gutter": "12px"
+              },
+              "fontFamily": {
+                      "label-sm": ["Inter"],
+                      "route-code": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "headline-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "route-code": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden h-screen w-full">
+<!-- Top AppBar (JSON Component) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target-min bg-surface shadow-sm transition-all" id="main-header">
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="text-headline-md font-headline-md text-cebu-blue uppercase tracking-wider">SugboWay</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Full Screen Map Background -->
+<main class="relative h-screen w-full pt-touch-target-min">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover" data-alt="A sophisticated, high-resolution 3D digital map of Cebu City, specifically the IT Park and Ayala area, rendered in a modern Mapbox style. The aesthetic is clean and high-contrast, utilizing a professional color palette of soft greys, Cebu Blue transit lines, and vibrant Safe Green parks. The lighting suggests a bright, clear morning in a modern light-mode environment, with legible typography for street names and highly detailed urban structures that reflect the SugboWay brand identity." data-location="Cebu City IT Park" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBHa8mZvUwv6P3nhS_Cja4F_7MJo9OxI90CQudJ4ZAaNfYhSGIa0ouA8Aamiq8jyjPZxVczp1pDtwKAuTMXiMNpECCVJwVImrmtBBpzBbVUMXDYS_J2-jjWvsIVLMpe21dX-G7VIAb7bZhhKL9RVwxne0e4116n7AXE46D_nuiSWk2QXFMW0gRUR7xJFy7hHqJKdt-FQlQeOHt3YT2MXhA4ZNFQfmU4jVXI-Doay2zxbj3STtEnLdfOaShMMf5IFAJgjVCooN2IUA"/>
+<div class="absolute inset-0 map-gradient-overlay pointer-events-none"></div>
+</div>
+<!-- Over-Map Controls Cluster -->
+<div class="relative z-10 px-container-margin mt-base space-y-4 max-w-2xl mx-auto">
+<!-- Floating Search Bar -->
+<div class="bg-surface rounded-full shadow-lg flex items-center px-4 h-14 border border-outline-variant hover:border-cebu-blue transition-all group">
+<span class="material-symbols-outlined text-outline group-focus-within:text-cebu-blue" data-icon="search">search</span>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md px-3 placeholder:text-on-surface-variant italic" placeholder="Where to in Cebu?" type="text"/>
+<span class="material-symbols-outlined text-outline" data-icon="mic">mic</span>
+</div>
+<!-- Rush Hour Dashboard -->
+<div class="bg-surface-container-low/95 backdrop-blur-md rounded-xl p-4 shadow-lg border-l-4 border-alert-amber">
+<div class="flex justify-between items-center mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-alert-amber font-bold" data-icon="warning">warning</span>
+<span class="font-headline-sm text-headline-sm">Rush Hour Dashboard</span>
+</div>
+<span class="text-label-sm font-label-sm px-2 py-1 bg-alert-amber text-on-tertiary-fixed rounded-full animate-pulse">Traffic Density: High</span>
+</div>
+<div class="flex items-center justify-between gap-4">
+<div class="flex-1">
+<p class="text-label-sm font-label-sm text-on-surface-variant italic">CROWD METER (5 PM - 8 PM)</p>
+<div class="w-full bg-surface-container-highest h-2 rounded-full mt-1 overflow-hidden">
+<div class="bg-alert-amber h-full w-[85%] rounded-full shadow-[0_0_8px_rgba(255,191,0,0.5)]"></div>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-sm font-headline-sm text-on-surface">85%</span>
+<span class="block text-label-sm font-label-sm text-on-surface-variant">Congested</span>
+</div>
+</div>
+</div>
+<!-- Transit Mode Chips -->
+<div class="flex gap-2 overflow-x-auto hide-scrollbar pb-2">
+<button class="flex-shrink-0 bg-primary-container text-on-primary-container px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-2 shadow-sm transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[18px]" data-icon="directions_bus">directions_bus</span>
+                    Modern E-Jeep
+                    <span class="bg-aircon-cyan/20 text-aircon-cyan text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Aircon</span>
+</button>
+<button class="flex-shrink-0 bg-surface text-on-surface-variant border border-outline-variant px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="electric_rickshaw">electric_rickshaw</span>
+                    Traditional Jeepney
+                </button>
+<button class="flex-shrink-0 bg-surface text-on-surface-variant border border-outline-variant px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="commute">commute</span>
+                    MyBus
+                </button>
+<button class="flex-shrink-0 bg-surface text-on-surface-variant border border-outline-variant px-4 py-2 rounded-full font-label-sm text-label-sm flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-[18px]" data-icon="bus_alert">bus_alert</span>
+                    Ceres
+                </button>
+</div>
+</div>
+<!-- AI Chat FAB (JSON/Identity Hybrid) -->
+<button class="fixed bottom-28 right-container-margin z-[60] bg-cebu-blue text-white w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all group overflow-hidden">
+<div class="absolute inset-0 bg-white/10 group-hover:bg-transparent"></div>
+<span class="material-symbols-outlined text-[28px]" data-icon="smart_toy">smart_toy</span>
+</button>
+<!-- Bottom Sheet (Partially Expanded) -->
+<div class="fixed bottom-0 left-0 w-full z-[70] bg-surface rounded-t-[28px] shadow-[0_-8px_24px_rgba(0,0,0,0.12)] border-t border-outline-variant bottom-sheet-transition max-h-[618px] flex flex-col" id="bottom-sheet">
+<!-- Drag Handle -->
+<div class="w-full flex flex-col items-center py-3 cursor-grab active:cursor-grabbing" id="sheet-handle">
+<div class="w-8 h-1.5 bg-outline-variant rounded-full mb-2"></div>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Suggested Routes</h2>
+</div>
+<!-- Scrollable Content -->
+<div class="px-container-margin pb-24 overflow-y-auto space-y-4 flex-1">
+<!-- Card 1 -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-4 flex gap-4 hover:shadow-md transition-shadow cursor-pointer">
+<div class="flex flex-col items-center gap-1">
+<div class="bg-cebu-blue text-white text-route-code font-route-code px-3 py-1 rounded-lg">13C</div>
+<span class="text-label-sm font-label-sm text-cebu-blue font-bold">15 mins</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-md font-semibold text-on-surface">Talamban - Colon via Ramos</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="electric_bus">electric_car</span>
+                                        Modern E-Jeep
+                                    </span>
+<span class="bg-aircon-cyan/10 text-aircon-cyan text-[10px] px-1.5 py-0.5 rounded font-bold uppercase border border-aircon-cyan/20">Aircon</span>
+</div>
+</div>
+<span class="text-headline-sm font-headline-sm text-safe-green">₱13.00</span>
+</div>
+<p class="text-label-sm font-label-sm text-on-surface-variant italic mt-2">Plete: ₱13.00 (Student/Seniors discount applies)</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-4 flex gap-4 hover:shadow-md transition-shadow cursor-pointer">
+<div class="flex flex-col items-center gap-1">
+<div class="bg-cebu-blue text-white text-route-code font-route-code px-3 py-1 rounded-lg">04L</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-bold">22 mins</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-md font-semibold text-on-surface">Lahug - IT Park via SM</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="directions_bus">directions_bus</span>
+                                        Traditional Jeepney
+                                    </span>
+</div>
+</div>
+<span class="text-headline-sm font-headline-sm text-safe-green">₱13.00</span>
+</div>
+<p class="text-label-sm font-label-sm text-on-surface-variant italic mt-2">Plete: ₱13.00 (Student/Seniors discount applies)</p>
+</div>
+</div>
+<!-- Card 3 (Bonus for UI Depth) -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-4 flex gap-4 opacity-70">
+<div class="flex flex-col items-center gap-1">
+<div class="bg-outline text-white text-route-code font-route-code px-3 py-1 rounded-lg">MyBus</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-bold">40 mins</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<p class="text-body-md font-semibold text-on-surface">Talisay - SM City</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm font-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="airport_shuttle">airport_shuttle</span>
+                                        BRT System
+                                    </span>
+</div>
+</div>
+<span class="text-headline-sm font-headline-sm text-on-surface-variant">₱40.00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (JSON Component) -->
+<nav class="fixed bottom-0 left-0 w-full z-[80] bg-surface flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+<!-- Map (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-4 py-1 transition-all scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="text-label-sm font-label-sm">Map</span>
+</a>
+<!-- Rush Hour -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-label-sm font-label-sm">Rush Hour</span>
+</a>
+<!-- Chat -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="text-label-sm font-label-sm">Chat</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-label-sm font-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple Interaction logic for Bottom Sheet
+        const sheet = document.getElementById('bottom-sheet');
+        const handle = document.getElementById('sheet-handle');
+        let isExpanded = false;
+
+        handle.addEventListener('click', () => {
+            if (isExpanded) {
+                sheet.style.transform = 'translateY(0)';
+                isExpanded = false;
+            } else {
+                sheet.style.transform = 'translateY(-30%)';
+                isExpanded = true;
+            }
+        });
+
+        // Atmospheric micro-interaction for the "Rush Hour" indicator
+        setInterval(() => {
+            const badge = document.querySelector('.animate-pulse');
+            if (badge) {
+                badge.style.opacity = Math.random() * 0.3 + 0.7;
+            }
+        }, 1500);
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('main-header');
+            if (window.scrollY > 10) {
+                header.classList.add('bg-surface/90', 'backdrop-blur-md');
+            } else {
+                header.classList.remove('bg-surface/90', 'backdrop-blur-md');
+            }
+        });
+    </script>
+</body></html>

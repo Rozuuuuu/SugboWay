@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#351000",
+                    "on-secondary": "#ffffff",
+                    "primary-container": "#0056b3",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#bbd0ff",
+                    "primary-fixed": "#d7e2ff",
+                    "secondary-container": "#a0f399",
+                    "on-secondary-container": "#217128",
+                    "on-tertiary-container": "#ffc2a7",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#f0f0f9",
+                    "secondary-fixed": "#a3f69c",
+                    "on-surface": "#191c21",
+                    "outline": "#727784",
+                    "on-surface-variant": "#424752",
+                    "surface-container-highest": "#e1e2ea",
+                    "on-error-container": "#93000a",
+                    "aircon-cyan": "#00acc1",
+                    "surface-dim": "#d9d9e2",
+                    "tertiary-container": "#983c00",
+                    "secondary": "#1b6d24",
+                    "on-background": "#191c21",
+                    "inverse-surface": "#2e3037",
+                    "outline-variant": "#c2c6d4",
+                    "surface-container": "#ededf6",
+                    "tertiary": "#722b00",
+                    "on-error": "#ffffff",
+                    "safe-green": "#2e7d32",
+                    "surface-container-low": "#f2f3fc",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#e1e2ea",
+                    "surface-tint": "#115cb9",
+                    "on-tertiary-fixed-variant": "#7b2f00",
+                    "surface-bright": "#f9f9ff",
+                    "primary": "#003f87",
+                    "on-primary-fixed": "#001a40",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb694",
+                    "alert-amber": "#ffbf00",
+                    "surface": "#f9f9ff",
+                    "inverse-primary": "#acc7ff",
+                    "surface-container-high": "#e7e8f0",
+                    "on-primary-fixed-variant": "#004491",
+                    "primary-fixed-dim": "#acc7ff",
+                    "tertiary-fixed": "#ffdbcc",
+                    "on-secondary-fixed": "#002204",
+                    "background": "#f9f9ff",
+                    "secondary-fixed-dim": "#88d982",
+                    "cebu-blue": "#0056b3",
+                    "on-secondary-fixed-variant": "#005312",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "touch-target-min": "48px",
+                    "base": "8px",
+                    "container-margin": "16px",
+                    "gutter": "12px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Inter"],
+                    "route-code": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "route-code": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .chart-gradient {
+            background: linear-gradient(180deg, rgba(186, 26, 26, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+        }
+        .gauge-conic {
+            background: conic-gradient(from 180deg at 50% 100%, #2e7d32 0deg, #ffbf00 90deg, #ba1a1a 180deg);
+            mask: radial-gradient(circle at 50% 100%, transparent 60%, black 61%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen pb-24 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target-min bg-surface shadow-sm transition-all duration-150">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-cebu-blue p-2 hover:bg-surface-container transition-colors rounded-full" data-icon="menu">menu</button>
+<h1 class="text-headline-md font-headline-md text-cebu-blue uppercase tracking-wider">SugboWay</h1>
+</div>
+<div class="flex items-center">
+<button class="material-symbols-outlined text-cebu-blue p-2 hover:bg-surface-container transition-colors rounded-full" data-icon="account_circle">account_circle</button>
+</div>
+</header>
+<main class="mt-touch-target-min px-container-margin pt-6 max-w-4xl mx-auto">
+<!-- Hero Section: Traffic Density Gauge -->
+<section class="mb-8">
+<div class="bg-surface-container-low rounded-xl p-6 flex flex-col items-center text-center shadow-sm border border-outline-variant/30">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-4">Current Traffic Density</span>
+<div class="relative w-64 h-32 overflow-hidden mb-4">
+<div class="gauge-conic w-64 h-64 rounded-full"></div>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-2 h-24 bg-on-surface origin-bottom rotate-[45deg] rounded-full transition-transform duration-1000 ease-out" id="gauge-needle"></div>
+</div>
+<div class="flex flex-col items-center">
+<span class="text-display-lg font-display-lg text-alert-amber">High</span>
+<p class="text-body-md text-on-surface-variant max-w-xs mt-1 italic">"Daghang taw karon. Expect delays along Colon and Fuente Osmeña."</p>
+</div>
+</div>
+</section>
+<!-- Crowd Meter Analytics Chart -->
+<section class="mb-8">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-headline-sm font-headline-sm">Crowd Meter</h2>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-alert-amber"></span>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Live Data</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/20">
+<div class="relative h-48 w-full flex items-end justify-between gap-1">
+<!-- Simple Bar/Line visual representation -->
+<div class="h-1/4 w-full bg-surface-container rounded-t-sm relative group">
+<div class="absolute -top-6 left-0 hidden group-hover:block text-label-sm bg-inverse-surface text-inverse-on-surface px-1 rounded">4AM</div>
+</div>
+<div class="h-2/4 w-full bg-surface-container rounded-t-sm"></div>
+<div class="h-4/5 w-full bg-alert-amber/40 rounded-t-sm relative border-t-2 border-alert-amber">
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-label-sm font-bold text-on-surface py-1 px-2 bg-alert-amber rounded">High Volume</div>
+</div>
+<div class="h-full w-full bg-alert-amber/60 rounded-t-sm border-t-2 border-alert-amber"></div>
+<div class="h-4/5 w-full bg-alert-amber/40 rounded-t-sm border-t-2 border-alert-amber"></div>
+<div class="h-2/4 w-full bg-surface-container rounded-t-sm"></div>
+<div class="h-1/3 w-full bg-surface-container rounded-t-sm"></div>
+<div class="h-2/5 w-full bg-surface-container rounded-t-sm"></div>
+<div class="h-3/4 w-full bg-alert-amber/40 rounded-t-sm border-t-2 border-alert-amber"></div>
+<div class="h-[95%] w-full bg-alert-amber/60 rounded-t-sm border-t-2 border-alert-amber"></div>
+<div class="h-3/4 w-full bg-alert-amber/40 rounded-t-sm border-t-2 border-alert-amber"></div>
+<div class="h-1/2 w-full bg-surface-container rounded-t-sm"></div>
+</div>
+<div class="flex justify-between mt-4 text-label-sm font-label-sm text-on-surface-variant px-1">
+<span>4 AM</span>
+<span class="font-bold text-on-surface">Rush (7-9 AM)</span>
+<span>12 PM</span>
+<span class="font-bold text-on-surface">Rush (5-8 PM)</span>
+<span>11 PM</span>
+</div>
+</div>
+</section>
+<!-- Recommended Times & Safety Mode Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Recommended Times Section -->
+<section class="bg-surface-container-high rounded-xl p-6 shadow-sm">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-safe-green" data-icon="schedule">schedule</span>
+<h3 class="text-headline-sm font-headline-sm">Best Times to Travel</h3>
+</div>
+<ul class="space-y-4">
+<li class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg">
+<div>
+<p class="text-body-md font-bold">10:00 AM – 11:30 AM</p>
+<p class="text-label-sm italic text-on-surface-variant">Low volume, high modern jeep availability.</p>
+</div>
+<span class="text-safe-green font-bold text-label-sm">FAST</span>
+</li>
+<li class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg">
+<div>
+<p class="text-body-md font-bold">1:30 PM – 3:30 PM</p>
+<p class="text-label-sm italic text-on-surface-variant">Ideal for long-distance routes.</p>
+</div>
+<span class="text-safe-green font-bold text-label-sm">FAST</span>
+</li>
+<li class="flex items-center justify-between p-3 bg-surface-container-lowest rounded-lg">
+<div>
+<p class="text-body-md font-bold">Post-9:00 PM</p>
+<p class="text-label-sm italic text-on-surface-variant">Requires Safety Mode activation.</p>
+</div>
+<span class="text-aircon-cyan font-bold text-label-sm">SAFE</span>
+</li>
+</ul>
+</section>
+<!-- Safety Mode Card -->
+<section class="relative overflow-hidden bg-primary text-on-primary rounded-xl p-6 shadow-lg flex flex-col justify-between">
+<div class="z-10">
+<div class="flex items-center gap-2 mb-3">
+<span class="material-symbols-outlined text-alert-amber" data-icon="shield_with_heart" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+<h3 class="text-headline-sm font-headline-sm">Safety Mode</h3>
+</div>
+<p class="text-body-md opacity-90 mb-4">Late-night commuter? We've got you. Modernized Jeepneys are prioritized after 10 PM to ensure well-lit, CCTV-monitored travels.</p>
+<div class="flex flex-wrap gap-2 mb-4">
+<span class="bg-primary-container text-on-primary-container text-label-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="videocam">videocam</span> CCTV Active
+                        </span>
+<span class="bg-primary-container text-on-primary-container text-label-sm px-3 py-1 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="gps_fixed">gps_fixed</span> Live Tracking
+                        </span>
+</div>
+</div>
+<button class="z-10 w-full py-3 bg-on-primary text-primary font-bold rounded-xl active:scale-95 transition-transform">
+                    Activate Safety Mode
+                </button>
+<!-- Decorative background graphic -->
+<div class="absolute -right-12 -bottom-12 w-48 h-48 bg-primary-container opacity-20 rounded-full blur-3xl"></div>
+</section>
+</div>
+<!-- Featured Map Insight -->
+<section class="mt-8 mb-12">
+<div class="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/30">
+<div class="h-48 w-full bg-surface-dim relative">
+<img class="w-full h-full object-cover mix-blend-multiply opacity-60" data-alt="A stylized aerial view of Cebu City's urban landscape at dusk, featuring a network of glowing blue transit lines snaking through the high-density grid. The lighting is dramatic, with warm city lights contrasting against a cool blue evening atmosphere, creating a professional and data-driven transit visualization aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDuT2W648245rlZufzQRClte-z9KQ3cw-pnGtsTsMiua3tnEpvYV12fAZl-lE2gShX18Ca8LaTYvXNZuQcHWQhw9XMA9HPJ8FslpHdRf0TJRDzlq8qF7zwxoWCI0X_YmTxsk71ifCvARx4lffqeFbaZSC4Mzc6NkG6D3o3LMGRHeJuXQuid3iCOOW__yRg7Qd_3IzWiQ3jZ1imUJcCFu5dMnzZw426_0Y30_cfr1x9jcThErUIFgWkbKSAoC6pa6BL6njTwe1E7Bg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent"></div>
+<div class="absolute top-4 left-4 bg-error-container text-on-error-container px-3 py-1 rounded-full text-label-sm font-bold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span> Bottleneck: Colon St.
+                    </div>
+</div>
+<div class="p-4">
+<h4 class="text-body-lg font-bold mb-1">Route Deviation Warning</h4>
+<p class="text-body-md text-on-surface-variant">Ongoing construction near Capitol Site may cause 15-20 min delays for 04L and 17B routes.</p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="text-label-sm font-label-sm">Map</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-4 py-1 scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="text-label-sm font-label-sm font-bold">Rush Hour</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="text-label-sm font-label-sm">Chat</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-colors rounded-xl" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-label-sm font-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        // Subtle animation for the gauge needle
+        document.addEventListener('DOMContentLoaded', () => {
+            const needle = document.getElementById('gauge-needle');
+            // Random jitter to simulate "live" data
+            setInterval(() => {
+                const baseRotate = 55; // "High" range
+                const jitter = (Math.random() - 0.5) * 4;
+                needle.style.transform = `translateX(-50%) rotate(${baseRotate + jitter}deg)`;
+            }, 3000);
+        });
+    </script>
+</body></html>

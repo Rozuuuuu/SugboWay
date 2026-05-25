@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SugboWay AI Guide</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#351000",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#0056b3",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#bbd0ff",
+                        "primary-fixed": "#d7e2ff",
+                        "secondary-container": "#a0f399",
+                        "on-secondary-container": "#217128",
+                        "on-tertiary-container": "#ffc2a7",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f0f9",
+                        "secondary-fixed": "#a3f69c",
+                        "on-surface": "#191c21",
+                        "outline": "#727784",
+                        "on-surface-variant": "#424752",
+                        "surface-container-highest": "#e1e2ea",
+                        "on-error-container": "#93000a",
+                        "aircon-cyan": "#00acc1",
+                        "surface-dim": "#d9d9e2",
+                        "tertiary-container": "#983c00",
+                        "secondary": "#1b6d24",
+                        "on-background": "#191c21",
+                        "inverse-surface": "#2e3037",
+                        "outline-variant": "#c2c6d4",
+                        "surface-container": "#ededf6",
+                        "tertiary": "#722b00",
+                        "on-error": "#ffffff",
+                        "safe-green": "#2e7d32",
+                        "surface-container-low": "#f2f3fc",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e1e2ea",
+                        "surface-tint": "#115cb9",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "surface-bright": "#f9f9ff",
+                        "primary": "#003f87",
+                        "on-primary-fixed": "#001a40",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb694",
+                        "alert-amber": "#ffbf00",
+                        "surface": "#f9f9ff",
+                        "inverse-primary": "#acc7ff",
+                        "surface-container-high": "#e7e8f0",
+                        "on-primary-fixed-variant": "#004491",
+                        "primary-fixed-dim": "#acc7ff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-secondary-fixed": "#002204",
+                        "background": "#f9f9ff",
+                        "secondary-fixed-dim": "#88d982",
+                        "cebu-blue": "#0056b3",
+                        "on-secondary-fixed-variant": "#005312",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target-min": "48px",
+                        "base": "8px",
+                        "container-margin": "16px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "route-code": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "route-code": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "26px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .chat-container { height: calc(100vh - 64px - 140px); }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .message-glow {
+            box-shadow: 0 0 15px rgba(0, 86, 179, 0.1);
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        .fab-active-ring {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target-min bg-surface shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-cebu-blue p-2 hover:bg-surface-container transition-colors rounded-full" data-icon="menu">menu</button>
+<h1 class="text-headline-md font-headline-md text-cebu-blue uppercase tracking-wider">SugboWay AI Guide</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-cebu-blue p-2 hover:bg-surface-container transition-colors rounded-full" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Main Chat Canvas -->
+<main class="mt-[64px] px-container-margin overflow-y-auto chat-container flex flex-col gap-gutter py-6">
+<!-- Welcome Prompt -->
+<div class="flex flex-col items-center justify-center py-8 text-center opacity-60">
+<div class="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-cebu-blue text-4xl" data-icon="smart_toy">smart_toy</span>
+</div>
+<p class="font-headline-sm text-headline-sm">Maayong adlaw! Ready to commute?</p>
+<p class="font-label-sm text-label-sm italic">SugboWay AI helps you navigate Cebu's traffic.</p>
+</div>
+<!-- User Message -->
+<div class="flex flex-col items-end w-full">
+<div class="max-w-[85%] bg-cebu-blue text-on-primary rounded-t-xl rounded-bl-xl p-4 shadow-sm">
+<p class="font-body-md text-body-md">Asa dapit ang sakayan padung Colon?</p>
+<p class="font-label-sm text-label-sm opacity-80 mt-1 italic text-right">Where is the terminal to Colon?</p>
+</div>
+<span class="text-label-sm font-label-sm text-outline mt-1 px-2">10:42 AM</span>
+</div>
+<!-- AI Assistant Message -->
+<div class="flex flex-col items-start w-full">
+<div class="flex items-start gap-2 max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container text-lg" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="bg-surface-container-low border border-outline-variant text-on-surface rounded-t-xl rounded-br-xl p-4 message-glow">
+<p class="font-body-md text-body-md mb-2">
+                        The nearest terminal for <span class="bg-cebu-blue text-white px-2 py-0.5 rounded-full font-route-code text-route-code">01K</span> or <span class="bg-cebu-blue text-white px-2 py-0.5 rounded-full font-route-code text-route-code">13C</span> going to Colon is just 200m away at the <span class="font-bold underline">Ayala PUJ Terminal</span>.
+                    </p>
+<p class="font-body-md text-body-md text-cebu-blue font-semibold">
+                        Unsa pa akong ma tabang?
+                    </p>
+<p class="font-label-sm text-label-sm text-outline italic mt-2">What else can I help with?</p>
+</div>
+</div>
+<span class="text-label-sm font-label-sm text-outline mt-1 px-10">AI Guide • Just now</span>
+</div>
+<!-- Contextual Route Card (AI suggested) -->
+<div class="ml-10 max-w-[90%]">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="h-32 w-full relative">
+<img class="w-full h-full object-cover" data-alt="A detailed, clean vector-style map of Cebu City's urban center featuring the Ayala PUJ Terminal. The map uses a sophisticated color palette of Cebu Blue and soft greys, with bright safe-green path lines highlighting the route to Colon Street. The visual style is modern, minimalist, and highly legible, optimized for a light-mode mobile interface with subtle tonal depth." data-location="Cebu City" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCYrrY-UagZwSikZjeY5yuQwruRIMUMDCaIpdSC0RdD43XE1UTFMgsY6e3xYms65qmJjK4NjrUbkz1woulFWSUwbDvuVnvh2kBfDFdp2gLeFmwNGz_l9QOxRpjsyMZ43qcg0j4BD5MPGK-k3WWnIvA27okKIHwyxHs9ir-t2vALXQCc8BmFguzVG0cCJh04Vsc1hxfSjWOSd1GIMpySJwBScns-c309Byw3WUCgBjA4em8LPpQCKmM3Vpnx9L03RqP0w0hZrWD7kg"/>
+<div class="absolute top-2 left-2 bg-safe-green text-white px-3 py-1 rounded-full text-label-sm font-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="my_location">my_location</span>
+                        Nearby
+                    </div>
+</div>
+<div class="p-3 flex justify-between items-center bg-surface-container-low">
+<div>
+<p class="font-label-sm font-bold text-on-surface">Ayala Terminal</p>
+<p class="text-label-sm text-outline">Est. 4 mins walk</p>
+</div>
+<button class="bg-cebu-blue text-white px-4 py-2 rounded-lg text-label-sm font-label-sm">Get Directions</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Actions & Interaction Shell -->
+<div class="fixed bottom-0 left-0 w-full bg-surface shadow-[0_-4px_10px_rgba(0,0,0,0.05)] pt-2 pb-container-margin px-container-margin z-50">
+<!-- Quick Action Chips -->
+<div class="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
+<button class="shrink-0 bg-surface-container-high hover:bg-surface-container-highest px-4 py-2 rounded-full text-label-sm font-label-sm text-on-surface-variant transition-all border border-outline-variant">
+                How much is the fare?
+            </button>
+<button class="shrink-0 bg-surface-container-high hover:bg-surface-container-highest px-4 py-2 rounded-full text-label-sm font-label-sm text-on-surface-variant transition-all border border-outline-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-alert-amber text-sm" data-icon="bolt">bolt</span>
+                Is it rush hour?
+            </button>
+<button class="shrink-0 bg-surface-container-high hover:bg-surface-container-highest px-4 py-2 rounded-full text-label-sm font-label-sm text-on-surface-variant transition-all border border-outline-variant">
+                Safe routes tonight?
+            </button>
+</div>
+<!-- Chat Input Field -->
+<div class="flex items-center gap-2 bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant">
+<button class="material-symbols-outlined text-outline" data-icon="add_circle">add_circle</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-body-md placeholder-outline-variant" placeholder="Ask SugboWay Guide..." type="text"/>
+<button class="material-symbols-outlined text-outline" data-icon="mic">mic</button>
+<button class="bg-cebu-blue text-white p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+</div>
+<!-- Active FAB (AI "Thinking" or Active State) -->
+<div class="fixed bottom-24 right-container-margin z-[60]">
+<div class="relative flex items-center justify-center">
+<!-- Pulsing Active Ring -->
+<div class="absolute w-16 h-16 bg-cebu-blue rounded-full fab-active-ring"></div>
+<button class="relative w-14 h-14 bg-cebu-blue text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="smart_toy" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<!-- Small status indicator -->
+<span class="absolute top-0 right-0 w-4 h-4 bg-safe-green border-2 border-white rounded-full"></span>
+</button>
+</div>
+</div>
+<!-- BottomNavBar (Hidden on desktop, logic from Shared Components) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-2px_4px_rgba(0,0,0,0.1)] md:hidden">
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="text-label-sm font-label-sm">Map</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-label-sm font-label-sm">Rush Hour</span>
+</div>
+<!-- Active Tab: Chat -->
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-xl px-4 py-1">
+<span class="material-symbols-outlined" data-icon="smart_toy" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<span class="text-label-sm font-label-sm">Chat</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-label-sm font-label-sm">Profile</span>
+</div>
+</nav>
+<script>
+        // Simple micro-interaction for chips
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('scale-95');
+                setTimeout(() => this.classList.remove('scale-95'), 150);
+            });
+        });
+
+        // Focus chat input on load
+        window.onload = () => {
+            const input = document.querySelector('input[type="text"]');
+            if(input) input.focus();
+        };
+    </script>
+</body></html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SugboWay - Route 13C Navigation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .step-line::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: -24px;
+            width: 2px;
+            background: repeating-linear-gradient(to bottom, #0056b3 0%, #0056b3 50%, transparent 50%, transparent 100%);
+            background-size: 2px 8px;
+        }
+        .step-line-last::before {
+            display: none;
+        }
+        .glass-blur {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#351000",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#0056b3",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#bbd0ff",
+                        "primary-fixed": "#d7e2ff",
+                        "secondary-container": "#a0f399",
+                        "on-secondary-container": "#217128",
+                        "on-tertiary-container": "#ffc2a7",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f0f9",
+                        "secondary-fixed": "#a3f69c",
+                        "on-surface": "#191c21",
+                        "outline": "#727784",
+                        "on-surface-variant": "#424752",
+                        "surface-container-highest": "#e1e2ea",
+                        "on-error-container": "#93000a",
+                        "aircon-cyan": "#00acc1",
+                        "surface-dim": "#d9d9e2",
+                        "tertiary-container": "#983c00",
+                        "secondary": "#1b6d24",
+                        "on-background": "#191c21",
+                        "inverse-surface": "#2e3037",
+                        "outline-variant": "#c2c6d4",
+                        "surface-container": "#ededf6",
+                        "tertiary": "#722b00",
+                        "on-error": "#ffffff",
+                        "safe-green": "#2e7d32",
+                        "surface-container-low": "#f2f3fc",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e1e2ea",
+                        "surface-tint": "#115cb9",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "surface-bright": "#f9f9ff",
+                        "primary": "#003f87",
+                        "on-primary-fixed": "#001a40",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb694",
+                        "alert-amber": "#ffbf00",
+                        "surface": "#f9f9ff",
+                        "inverse-primary": "#acc7ff",
+                        "surface-container-high": "#e7e8f0",
+                        "on-primary-fixed-variant": "#004491",
+                        "primary-fixed-dim": "#acc7ff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-secondary-fixed": "#002204",
+                        "background": "#f9f9ff",
+                        "secondary-fixed-dim": "#88d982",
+                        "cebu-blue": "#0056b3",
+                        "on-secondary-fixed-variant": "#005312",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "touch-target-min": "48px",
+                        "base": "8px",
+                        "container-margin": "16px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "route-code": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "route-code": ["14px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-touch-target-min bg-surface dark:bg-surface-dim shadow-sm dark:shadow-none">
+<button class="p-2 hover:bg-surface-container transition-colors rounded-full" onclick="toggleDrawer()">
+<span class="material-symbols-outlined text-cebu-blue dark:text-inverse-primary" data-icon="menu">menu</span>
+</button>
+<h1 class="text-headline-md font-headline-md text-cebu-blue dark:text-inverse-primary uppercase tracking-wider">SugboWay</h1>
+<button class="p-2 hover:bg-surface-container transition-colors rounded-full">
+<span class="material-symbols-outlined text-cebu-blue dark:text-inverse-primary" data-icon="account_circle">account_circle</span>
+</button>
+</header>
+<!-- Navigation Drawer (SideNav) -->
+<aside class="fixed inset-y-0 left-0 z-[60] flex flex-col h-full w-80 rounded-r-xl bg-surface-container-low dark:bg-inverse-surface shadow-lg transform -translate-x-full transition-transform duration-300" id="nav-drawer">
+<div class="p-6 flex flex-col gap-4">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img alt="Sugbo Commuter" class="w-full h-full object-cover" data-alt="A professional headshot of a friendly smiling young man in a clean casual polo shirt, lit with soft natural studio lighting to convey reliability. The background is a soft neutral grey, maintaining a clean corporate aesthetic aligned with a modern digital service interface. High-quality portrait photography with sharp focus on the subject's face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBkrApdkzNyHCRLWFP-Gf5TJorPjMt_Di-jZ2NrKpLQsil32W8nSYlLBln9g4zZmVgJ36Jcp17cknKCqPhetXgTHPzZqKQ3u0ZUV2F_vbZpJ7CiB-cZZqzJPZMGX_hDi3uPAsnp7UG1O1FZ61nDhc88YFY2syfanJB_ozrOiw-ttG3DbMP0AtjkybjjxtFfblxAdnh62eixYLAs0r37OcdFOR5alDPQrs6bgW48zClKgZhgGcRv4d7_37QVoyc0Tz9NFuOe2KRCFA"/>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm text-cebu-blue">Sugbo Commuter</h2>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Student Account</p>
+<p class="text-label-sm font-label-sm text-cebu-blue italic font-bold">"Lugar lang"</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-2 space-y-1">
+<a class="bg-primary-container text-on-primary-container rounded-full mx-2 px-4 py-3 flex items-center gap-3 scale-95 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="directions_bus">directions_bus</span>
+<span class="font-body-md">Route Finder</span>
+</a>
+<a class="text-on-surface-variant dark:text-outline-variant mx-2 px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-colors rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="shield_with_heart" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+<span class="font-body-md">Safety Mode</span>
+</a>
+<a class="text-on-surface-variant dark:text-outline-variant mx-2 px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-colors rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-body-md">Fare Calculator</span>
+</a>
+<a class="text-on-surface-variant dark:text-outline-variant mx-2 px-4 py-3 flex items-center gap-3 hover:bg-surface-container-highest transition-colors rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="bookmarks">bookmarks</span>
+<span class="font-body-md">Saved Trips</span>
+</a>
+</nav>
+<button class="m-4 text-on-surface-variant flex items-center gap-2 px-4 py-2 hover:bg-surface-container-highest rounded-full transition-colors self-start" onclick="toggleDrawer()">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+<span>Close</span>
+</button>
+</aside>
+<!-- Overlay -->
+<div class="fixed inset-0 bg-black/50 z-[55] hidden transition-opacity duration-300 opacity-0" id="drawer-overlay" onclick="toggleDrawer()"></div>
+<main class="mt-[48px] pb-32 max-w-screen-md mx-auto min-h-screen p-container-margin">
+<!-- Route Summary Header -->
+<section class="bg-surface-container p-6 rounded-xl mb-6 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2 bg-cebu-blue text-white px-3 py-1 rounded-full">
+<span class="font-route-code text-route-code">13C</span>
+</div>
+<span class="text-label-sm font-label-sm bg-aircon-cyan/20 text-aircon-cyan px-2 py-1 rounded">Modernized e-Jeep</span>
+</div>
+<h2 class="text-headline-sm font-headline-sm mb-1">Ayala Center to IT Park</h2>
+<p class="text-on-surface-variant text-body-md">Estimated duration: 18 mins • 3.2 km</p>
+</section>
+<!-- Safety Mode Highlight -->
+<section class="bg-secondary-container/30 border border-secondary-container p-4 rounded-xl mb-6 flex items-start gap-4">
+<div class="p-2 bg-secondary-container rounded-lg">
+<span class="material-symbols-outlined text-secondary" data-icon="shield_with_heart" style="font-variation-settings: 'FILL' 1;">shield_with_heart</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<h3 class="font-bold text-secondary">Safety Mode Active</h3>
+<div class="w-10 h-5 bg-secondary rounded-full relative flex items-center px-1">
+<div class="w-3 h-3 bg-white rounded-full ml-auto"></div>
+</div>
+</div>
+<p class="text-label-sm text-on-secondary-container">GPS Tracked &amp; CCTV monitored Modernized Jeepney. Your location is being shared with emergency contacts.</p>
+</div>
+</section>
+<!-- Step-by-Step Navigation -->
+<section class="space-y-0 relative">
+<!-- Step 1 -->
+<div class="relative pl-10 pb-8 step-line">
+<div class="absolute left-0 top-0 w-6 h-6 rounded-full bg-surface-container flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-cebu-blue text-[18px]" data-icon="directions_walk">directions_walk</span>
+</div>
+<h4 class="font-bold text-on-surface">Walk to Ayala Terminal</h4>
+<p class="text-on-surface-variant text-label-sm">300m • About 4 mins</p>
+<div class="mt-2 text-label-sm italic text-outline">Puntaha ang Ayala Terminal</div>
+</div>
+<!-- Step 2 -->
+<div class="relative pl-10 pb-8 step-line">
+<div class="absolute left-0 top-0 w-6 h-6 rounded-full bg-primary-container flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-white text-[18px]" data-icon="schedule">schedule</span>
+</div>
+<h4 class="font-bold text-on-surface">Wait for 13C Jeepney</h4>
+<p class="text-on-surface-variant text-label-sm">Est. 5 mins wait • High demand</p>
+<div class="mt-2 inline-flex items-center gap-1 bg-alert-amber/10 text-on-tertiary-fixed-variant px-2 py-1 rounded text-[11px] font-bold">
+<span class="material-symbols-outlined text-[14px]" data-icon="warning">warning</span>
+                    RUSH HOUR ACTIVE
+                </div>
+</div>
+<!-- Step 3 -->
+<div class="relative pl-10 pb-8 step-line">
+<div class="absolute left-0 top-0 w-6 h-6 rounded-full bg-cebu-blue flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-white text-[18px]" data-icon="directions_bus">directions_bus</span>
+</div>
+<h4 class="font-bold text-on-surface">Ride to IT Park Entrance</h4>
+<p class="text-on-surface-variant text-label-sm">5 stops • 12 mins</p>
+<div class="mt-3 bg-surface-container-high p-3 rounded-lg border-l-4 border-cebu-blue">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-cebu-blue text-[20px]" data-icon="campaign">campaign</span>
+<span class="font-bold text-cebu-blue text-label-sm uppercase">Special Cue</span>
+</div>
+<p class="text-on-surface font-medium italic">Signal to stop: Say "Lugar lang"</p>
+<p class="text-outline text-[11px] mt-1">This informs the driver to pull over at the next designated stop.</p>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="relative pl-10 step-line-last">
+<div class="absolute left-0 top-0 w-6 h-6 rounded-full bg-safe-green flex items-center justify-center z-10">
+<span class="material-symbols-outlined text-white text-[18px]" data-icon="location_on" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<h4 class="font-bold text-on-surface">Alight at IT Park</h4>
+<p class="text-on-surface-variant text-label-sm">Arrival: 10:42 AM</p>
+<div class="mt-2 text-label-sm italic text-outline">Manaog sa IT Park</div>
+</div>
+</section>
+</main>
+<!-- Fare Breakdown Component (Sticky Bottom) -->
+<div class="fixed bottom-0 left-0 w-full z-40 px-4 pb-20 md:pb-6">
+<div class="max-w-screen-md mx-auto bg-surface dark:bg-inverse-surface shadow-lg rounded-2xl border border-outline-variant/30 overflow-hidden">
+<div class="p-4 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Total Fare</span>
+<div class="flex items-baseline gap-2">
+<span class="text-headline-md font-bold text-cebu-blue" id="fare-display">₱13.00</span>
+<span class="text-label-sm line-through text-outline hidden" id="original-fare">₱15.00</span>
+</div>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-xl">
+<span class="text-label-sm font-label-sm font-medium text-on-surface-variant">Student Discount</span>
+<button class="w-12 h-6 bg-primary-container rounded-full relative transition-colors duration-300" onclick="toggleDiscount(this)">
+<div class="w-4 h-4 bg-white rounded-full absolute top-1 right-1 transition-all duration-300" id="toggle-knob"></div>
+</button>
+</div>
+</div>
+<div class="h-[1px] bg-outline-variant/30 w-full"></div>
+<div class="flex items-center justify-between text-label-sm">
+<span class="text-on-surface-variant">Payment Method</span>
+<span class="font-bold text-cebu-blue">CASH / BEIPASS</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-4 pt-2 bg-surface dark:bg-inverse-surface shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="text-label-sm font-label-sm">Map</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-xl px-4 py-1 scale-90 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="text-label-sm font-label-sm">Rush Hour</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="text-label-sm font-label-sm">Chat</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-label-sm font-label-sm">Profile</span>
+</a>
+</nav>
+<script>
+        function toggleDrawer() {
+            const drawer = document.getElementById('nav-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            const isOpen = !drawer.classList.contains('-translate-x-full');
+            
+            if (isOpen) {
+                drawer.classList.add('-translate-x-full');
+                overlay.classList.add('hidden', 'opacity-0');
+            } else {
+                drawer.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            }
+        }
+
+        function toggleDiscount(btn) {
+            const knob = document.getElementById('toggle-knob');
+            const fareDisplay = document.getElementById('fare-display');
+            const originalFare = document.getElementById('original-fare');
+            const isActive = knob.classList.contains('right-1');
+            
+            if (isActive) {
+                // Turn OFF
+                knob.classList.remove('right-1');
+                knob.classList.add('left-1');
+                btn.classList.remove('bg-primary-container');
+                btn.classList.add('bg-outline-variant');
+                fareDisplay.innerText = "₱15.00";
+                originalFare.classList.add('hidden');
+            } else {
+                // Turn ON
+                knob.classList.remove('left-1');
+                knob.classList.add('right-1');
+                btn.classList.remove('bg-outline-variant');
+                btn.classList.add('bg-primary-container');
+                fareDisplay.innerText = "₱13.00";
+                originalFare.classList.remove('hidden');
+            }
+        }
+
+        // Mini pulse effect for the special cue
+        setInterval(() => {
+            const cue = document.querySelector('.border-cebu-blue');
+            if(cue) {
+                cue.classList.add('brightness-110');
+                setTimeout(() => cue.classList.remove('brightness-110'), 500);
+            }
+        }, 3000);
+    </script>
+</body></html>
