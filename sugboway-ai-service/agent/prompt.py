@@ -1,4 +1,7 @@
-from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+try:
+    from langchain_classic.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
+except ImportError:
+    from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 
 SYSTEM_PROMPT_TEMPLATE = """
 You are the SugboWay Transit Assistant, a helpful and deeply knowledgeable guide for navigating public transit in Cebu.
@@ -29,5 +32,6 @@ You have access to tools that query the Phase 2 Go/Fiber Routing API, calculate 
 def get_chat_prompt():
     return ChatPromptTemplate.from_messages([
         SystemMessagePromptTemplate.from_template(SYSTEM_PROMPT_TEMPLATE),
-        HumanMessagePromptTemplate.from_template("{input}")
+        HumanMessagePromptTemplate.from_template("{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad")
     ])

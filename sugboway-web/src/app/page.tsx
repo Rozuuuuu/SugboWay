@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import type { RouteResult, PassengerType } from "@/domain";
+import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
 import { calculateFare, formatPHP } from "@/domain";
+import maplibregl from "maplibre-gl";
+import type { Map } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 
 // Helper to format travel time into readable hours and minutes
 function formatDuration(seconds: number): string {
@@ -352,17 +355,48 @@ interface ChatMessage {
   };
 }
 
+// Predefined fuzzy search mappings for Cebu spots to coordinates
+const STOP_COORDINATES: Record<string, { lat: number; lon: number }> = {
+  "cebu it park": { lat: 10.3292, lon: 123.9067 },
+  "it park": { lat: 10.3292, lon: 123.9067 },
+  "talamban": { lat: 10.3662, lon: 123.9169 },
+  "talamban gym": { lat: 10.3662, lon: 123.9169 },
+  "uc banilad": { lat: 10.3429, lon: 123.9118 },
+  "ayala": { lat: 10.3182, lon: 123.9048 },
+  "ayala center cebu": { lat: 10.3182, lon: 123.9048 },
+  "colon": { lat: 10.2974, lon: 123.8997 },
+  "downtown colon st.": { lat: 10.2974, lon: 123.8997 },
+  "colon obelisk": { lat: 10.2974, lon: 123.8997 },
+  "sm seaside": { lat: 10.2818, lon: 123.8805 },
+  "sm seaside city cebu": { lat: 10.2818, lon: 123.8805 },
+  "lahug": { lat: 10.3308, lon: 123.8973 },
+  "lahug (jy square)": { lat: 10.3308, lon: 123.8973 },
+};
+
+function resolveLocation(query: string, defaultCoords: { lat: number; lon: number }): { lat: number; lon: number } {
+  const normalized = query.trim().toLowerCase();
+  for (const [key, coords] of Object.entries(STOP_COORDINATES)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return coords;
+    }
+  }
+  return defaultCoords;
+}
+
 export default function DemoPage() {
   // Shared States
   const [currentTab, setCurrentTab] = useState<"map" | "rush" | "chat" | "profile">("map");
   const [passengerType, setPassengerType] = useState<PassengerType>("regular");
   const [isSafetyModeActive, setIsSafetyModeActive] = useState(false);
 
-  // Tab 1: Map States
+  // Tab 1: Map & Routing States
+  const [routes, setRoutes] = useState<RouteResult[]>(MOCK_ROUTES);
   const [selectedRouteIdx, setSelectedRouteIdx] = useState<number | null>(0);
-  const [origin, setOrigin] = useState("Cebu IT Park");
-  const [destination, setDestination] = useState("Downtown Colon St.");
+  const [origin, setOrigin] = useState("Talamban");
+  const [destination, setDestination] = useState("Colon");
   const [isTrafficBannerOpen, setIsTrafficBannerOpen] = useState(true);
+  const [isRoutingLoading, setIsRoutingLoading] = useState(false);
+  const [routingError, setRoutingError] = useState<string | null>(null);
 
   // Tab 2: Rush Hour States
   const [gaugeRotate, setGaugeRotate] = useState(45);
@@ -379,12 +413,229 @@ export default function DemoPage() {
     },
   ]);
   const [inputText, setInputText] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  
+  const chatInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<Map | null>(null);
+
+  // Fetch optimal routes from Go Fiber Routing Engine
+  const fetchRoutes = async () => {
+    setIsRoutingLoading(true);
+    setRoutingError(null);
+    try {
+      const originCoords = resolveLocation(origin, { lat: 10.3662, lon: 123.9169 });
+      const destCoords = resolveLocation(destination, { lat: 10.2974, lon: 123.8997 });
+
+      const url = `http://localhost:8080/api/v1/route/search?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lon}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lon}&passenger_type=${passengerType}&accessible=${isSafetyModeActive}`;
+      
+      const res = await fetch(url);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Routing request failed: ${res.statusText}`);
+      }
+      const data = await res.json();
+      
+      if (Array.isArray(data)) {
+        // Fetch real-time BPR congestion metrics for each route's legs
+        const enrichedRoutes = await Promise.all(data.map(async (route: RouteResult) => {
+          let maxCrowding = 0.25; // Default safe level
+          
+          const enrichedLegs = await Promise.all(route.legs.map(async (leg: RouteLeg) => {
+            if (leg.type === "transit" && leg.routeId) {
+              try {
+                const congRes = await fetch(`http://localhost:8080/api/v1/congestion?route_id=${leg.routeId}`);
+                if (congRes.ok) {
+                  const congData = await congRes.json();
+                  const flowRatio = congData.flow_ratio ?? 0.25;
+                  
+                  // Map flow ratio and multipliers correctly to score
+                  let score = flowRatio;
+                  if (congData.is_peak) {
+                    // Apply peak window loading adjustments
+                    score = Math.min(score * 1.2, 1.0);
+                  }
+                  
+                  leg.fromStop.crowdingScore = score;
+                  leg.toStop.crowdingScore = score;
+                  if (score > maxCrowding) {
+                    maxCrowding = score;
+                  }
+                }
+              } catch (e) {
+                // Fail silently and use fallback
+              }
+            }
+            return leg;
+          }));
+
+          return {
+            ...route,
+            legs: enrichedLegs,
+            crowdingWorstLeg: maxCrowding,
+          };
+        }));
+
+        setRoutes(enrichedRoutes);
+        if (enrichedRoutes.length > 0) {
+          setSelectedRouteIdx(0);
+        }
+      } else {
+        throw new Error("Invalid response format from routing engine");
+      }
+    } catch (err: any) {
+      setRoutes([]);
+      setRoutingError(err.message || "Failed to connect to the spatial routing engine.");
+    } finally {
+      setIsRoutingLoading(false);
+    }
+  };
+
+  // Trigger route fetch when preferences change
+  useEffect(() => {
+    fetchRoutes();
+  }, [passengerType, isSafetyModeActive]);
+
+  // Initialize MapLibre GL Map snapped to Cebu City
+  useEffect(() => {
+    if (typeof window === "undefined" || !mapContainerRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: "https://tiles.openfreemap.org/styles/bright",
+      center: [123.8854, 10.3157], // Cebu City coordinates
+      zoom: 12,
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+    };
+  }, []);
+
+  // Update Route Polyline and Markers on Selected Route index change
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const drawOnMap = () => {
+      // Clean up previous route layer
+      if (map.getLayer("route-line")) {
+        map.removeLayer("route-line");
+      }
+      if (map.getSource("route-source")) {
+        map.removeSource("route-source");
+      }
+
+      // Clean up previous markers
+      const markers = document.querySelectorAll(".maplibregl-marker");
+      markers.forEach((m) => m.remove());
+
+      if (selectedRouteIdx === null) return;
+      const selectedRoute = routes[selectedRouteIdx];
+      if (!selectedRoute) return;
+
+      // If route has geometry data or fallback, draw it
+      let geoJson = selectedRoute.geoJson;
+      if (!geoJson || !geoJson.features || geoJson.features.length === 0) {
+        const coordinates: [number, number][] = [];
+        selectedRoute.legs.forEach((leg) => {
+          coordinates.push([leg.fromStop.location.lon, leg.fromStop.location.lat]);
+          coordinates.push([leg.toStop.location.lon, leg.toStop.location.lat]);
+        });
+        geoJson = {
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              geometry: {
+                type: "LineString",
+                coordinates: coordinates,
+              },
+            },
+          ],
+        };
+      }
+
+      if (geoJson && geoJson.features && geoJson.features.length > 0) {
+        map.addSource("route-source", {
+          type: "geojson",
+          data: geoJson as any,
+        });
+
+        map.addLayer({
+          id: "route-line",
+          type: "line",
+          source: "route-source",
+          layout: {
+            "line-join": "round",
+            "line-cap": "round",
+          },
+          paint: {
+            "line-color": "#0056B3", // Cebu Blue
+            "line-width": 6,
+            "line-opacity": 0.85,
+          },
+        });
+
+        // Add Start/End stop markers color-coded based on crowding score
+        selectedRoute.legs.forEach((leg) => {
+          // Boarding stop
+          const elFrom = document.createElement("div");
+          const crowdScore = leg.fromStop.crowdingScore ?? 0.22;
+          const colorClass = crowdScore > 0.8 ? "bg-error" : crowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
+          elFrom.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${colorClass}`;
+          new maplibregl.Marker(elFrom)
+            .setLngLat([leg.fromStop.location.lon, leg.fromStop.location.lat])
+            .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.fromStop.stopName}</b></h6><p>Crowding: ${Math.round(crowdScore * 100)}%</p>`))
+            .addTo(map);
+
+          // Alighting stop
+          const elTo = document.createElement("div");
+          const toCrowdScore = leg.toStop.crowdingScore ?? 0.22;
+          const toColorClass = toCrowdScore > 0.8 ? "bg-error" : toCrowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
+          elTo.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${toColorClass}`;
+          new maplibregl.Marker(elTo)
+            .setLngLat([leg.toStop.location.lon, leg.toStop.location.lat])
+            .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.toStop.stopName}</b></h6><p>Crowding: ${Math.round(toCrowdScore * 100)}%</p>`))
+            .addTo(map);
+        });
+
+        // Snaps bounds of the map to the geometry line
+        try {
+          const coords: [number, number][] = [];
+          geoJson.features.forEach((feat) => {
+            if (feat.geometry.type === "LineString") {
+              const c = feat.geometry.coordinates as [number, number][];
+              coords.push(...c);
+            }
+          });
+          if (coords.length > 0) {
+            const bounds = coords.reduce(
+              (b, coord) => b.extend(coord),
+              new maplibregl.LngLatBounds(coords[0], coords[0])
+            );
+            map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+          }
+        } catch (e) {
+          // Fallback gracefully if bounds fit fails
+        }
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      drawOnMap();
+    } else {
+      map.once("style.load", drawOnMap);
+    }
+  }, [selectedRouteIdx, routes]);
 
   // Auto-scroll chat to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages, currentTab]);
+  }, [chatMessages, isAiLoading]);
 
   // Traffic Gauge Pointer Jitter Effect
   useEffect(() => {
@@ -396,36 +647,84 @@ export default function DemoPage() {
     return () => clearInterval(interval);
   }, [isSafetyModeActive]);
 
-  // Handling quick question chips in chat
-  const handleQuickQuestion = (question: string) => {
-    let responseText = "";
-    let responseCeb = "";
-    let suggestedStop = undefined;
+  // Send message to FastAPI AI assistant layer (Port 8000)
+  const askAi = async (question: string) => {
+    setIsAiLoading(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: question }),
+      });
 
-    const lowerQ = question.toLowerCase();
-    if (lowerQ.includes("fare") || lowerQ.includes("plete")) {
-      const fare = calculateFare(4.5, passengerType, 0);
-      const studentTag = passengerType !== "regular" ? " (Discount Applied)" : "";
-      responseText = `According to LTFRB Order 2023, the base fare is ${formatPHP(13.0)} for the first 4 kilometers, plus ${formatPHP(1.8)} per extra km. For a standard 4.5km route, your total fare is ${formatPHP(fare.totalFare)}${studentTag}.`;
-      responseCeb = `Matod sa LTFRB Order 2023, ang pliti kay ${formatPHP(13.0)} sa unang 4 kilometro, unya dugang ${formatPHP(1.8)} kada kilometro human ana.`;
-    } else if (lowerQ.includes("rush") || lowerQ.includes("traffic")) {
-      responseText = isSafetyModeActive 
-        ? "We are currently in Safety Mode. CCTV monitors report heavy delays along Ramos St, but modernized E-Jeeps are moving smoothly." 
-        : "Standard rush-hour traffic detected. Fuente Osmeña circle and Metro Colon are currently bottlenecks (Congestion: 85%). Expect 15-20 min delays on traditional routes.";
-      responseCeb = "Dungag trapik sa Fuente Osmeña ug Colon. Likayi ang traditional jeepney ug sakay sa modernong e-jeep.";
-    } else if (lowerQ.includes("safe") || lowerQ.includes("tonight") || lowerQ.includes("late")) {
-      responseText = "Commuting late? Switch on Safety Mode! Next.js prioritized routing engine filters for modernized corridors featuring on-board CCTVs and live GPS tracking for emergency Sinulog coordinates.";
-      responseCeb = "Gabiing commute? I-on ang Safety Mode para mas hayag ug naay CCTV imong masakyan.";
-    } else {
-      responseText = "The nearest terminal for 13C or 04L going downtown is just 200m away at the Ayala Transit Terminal Hub. You can wave your palm down to board modern vehicles.";
-      responseCeb = "Ang pinakaduol nga terminal padung Colon kay naa sa Ayala PUJ Terminal, mga 4 minutos nga lakaw.";
-      suggestedStop = {
-        name: "Ayala Transit Terminal Hub",
-        walkTime: "4 mins walk",
-        routeIds: ["13C", "04L"],
+      if (!res.ok) {
+        throw new Error(`AI request failed: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      const replyText = data.reply || "Sorry, I encountered an issue parsing the response.";
+
+      // Check if the reply lists any specific Cebuano suggestions or stops
+      let suggestedStop = undefined;
+      const lowerReply = replyText.toLowerCase();
+      if (lowerReply.includes("ayala")) {
+        suggestedStop = {
+          name: "Ayala Transit Terminal Hub",
+          walkTime: "4 mins walk",
+          routeIds: ["13C", "04L"],
+        };
+      } else if (lowerReply.includes("it park") || lowerReply.includes("lahug")) {
+        suggestedStop = {
+          name: "Cebu IT Park Transit Terminal",
+          walkTime: "5 mins walk",
+          routeIds: ["04L", "MyBus", "17B"],
+        };
+      } else if (lowerReply.includes("colon")) {
+        suggestedStop = {
+          name: "Colon Obelisk Station",
+          walkTime: "2 mins walk",
+          routeIds: ["13C", "17B"],
+        };
+      }
+
+      const newAiMsg: ChatMessage = {
+        id: Math.random().toString(),
+        sender: "ai",
+        text: replyText,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        suggestedStop,
       };
-    }
 
+      setChatMessages((prev) => [...prev, newAiMsg]);
+    } catch (err: any) {
+      console.error(err);
+      
+      // Resilient fallback to offline mock responses in case server is down
+      let fallbackText = "I am currently operating in resilient offline mode. LTFRB fare is ₱13.00 for the first 4km and ₱1.80 per extra km.";
+      let fallbackCeb = "Naka-offline mode ko karon. Ang plete kay ₱13.00 sa unang 4km unya dungag ₱1.80 kada km.";
+      
+      if (question.toLowerCase().includes("fare") || question.toLowerCase().includes("plete")) {
+        fallbackText = "According to LTFRB regulations, Cebu base fare is ₱13.00 for traditional jeepneys and ₱15.00 for modern e-jeeps.";
+        fallbackCeb = "Matod sa LTFRB, ang pliti kay ₱13.00 sa traditional ug ₱15.00 sa modernong e-jeep.";
+      }
+
+      const newAiMsg: ChatMessage = {
+        id: Math.random().toString(),
+        sender: "ai",
+        text: fallbackText,
+        cebuanoText: fallbackCeb,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      setChatMessages((prev) => [...prev, newAiMsg]);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  const handleQuickQuestion = (question: string) => {
     const newUserMsg: ChatMessage = {
       id: Math.random().toString(),
       sender: "user",
@@ -433,19 +732,10 @@ export default function DemoPage() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    const newAiMsg: ChatMessage = {
-      id: Math.random().toString(),
-      sender: "ai",
-      text: responseText,
-      cebuanoText: responseCeb,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      suggestedStop,
-    };
-
-    setChatMessages((prev) => [...prev, newUserMsg, newAiMsg]);
+    setChatMessages((prev) => [...prev, newUserMsg]);
+    askAi(question);
   };
 
-  // Chat send custom message
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
@@ -461,11 +751,7 @@ export default function DemoPage() {
     };
 
     setChatMessages((prev) => [...prev, newUserMsg]);
-
-    // Mock typing effect delay
-    setTimeout(() => {
-      handleQuickQuestion(userText);
-    }, 800);
+    askAi(userText);
   };
 
   return (
@@ -656,6 +942,27 @@ export default function DemoPage() {
                     })}
                   </div>
                 </div>
+
+                {/* Real-time search trigger button */}
+                <div className="pt-2">
+                  <button
+                    onClick={fetchRoutes}
+                    disabled={isRoutingLoading}
+                    className="w-full bg-cebu-blue hover:bg-primary disabled:bg-cebu-blue/50 text-white font-bold py-3 px-6 rounded-2xl shadow-sm transition-all duration-200 active:scale-98 flex items-center justify-center gap-2 select-none text-xs"
+                  >
+                    {isRoutingLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Searching Optimal Cebu Routes...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm">search</span>
+                        <span>Search Cebu Routes</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </section>
 
               {/* Rush Hour Dashboard (Traffic Forecast) */}
@@ -690,7 +997,7 @@ export default function DemoPage() {
               <section className="space-y-3">
                 <div className="flex justify-between items-center">
                   <h2 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">
-                    Suggested Routes ({MOCK_ROUTES.length})
+                    Suggested Routes ({routes.length})
                   </h2>
                   <span className="text-xs text-on-surface-variant">
                     Filters: {passengerType.toUpperCase()}
@@ -698,19 +1005,39 @@ export default function DemoPage() {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {MOCK_ROUTES.map((route, idx) => (
-                    <RouteCard
-                      key={idx}
-                      route={route}
-                      passengerType={passengerType}
-                      isSelected={selectedRouteIdx === idx}
-                      onClick={() => setSelectedRouteIdx(idx)}
-                    />
-                  ))}
+                  {isRoutingLoading ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
+                      <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-on-surface-variant font-semibold">Loading real-time Dijkstra routes...</p>
+                    </div>
+                  ) : routingError ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
+                      <span className="material-symbols-outlined text-error text-3xl">error</span>
+                      <p className="text-xs text-error font-bold">{routingError}</p>
+                      <p className="text-[10px] text-on-surface-variant">Fuzzy snapped locations. Showing offline fallbacks instead.</p>
+                      <button onClick={fetchRoutes} className="mt-2 text-xs font-bold text-cebu-blue hover:underline">Retry Connection</button>
+                    </div>
+                  ) : routes.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
+                      <span className="material-symbols-outlined text-outline text-3xl">sentiment_dissatisfied</span>
+                      <p className="text-xs text-on-surface-variant font-bold mt-2">No routes found.</p>
+                      <p className="text-[10px] text-outline mt-1">Please try modifying your search inputs.</p>
+                    </div>
+                  ) : (
+                    routes.map((route, idx) => (
+                      <RouteCard
+                        key={idx}
+                        route={route}
+                        passengerType={passengerType}
+                        isSelected={selectedRouteIdx === idx}
+                        onClick={() => setSelectedRouteIdx(idx)}
+                      />
+                    ))
+                  )}
                 </div>
               </section>
 
-              {/* Dynamic Map Mock Representation */}
+              {/* Dynamic Map Representation */}
               <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-5 space-y-4">
                 <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
                   <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
@@ -723,53 +1050,8 @@ export default function DemoPage() {
                 </div>
 
                 <div className="relative h-64 rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
-                  {/* Visual background map */}
-                  <div className="absolute inset-0 z-0 bg-[#f4f3f0]">
-                    <div 
-                      className="absolute inset-0 opacity-80" 
-                      style={{
-                        backgroundImage: "radial-gradient(#d5d3ce 1.5px, transparent 1.5px), radial-gradient(#d5d3ce 1.5px, #f4f3f0 1.5px)",
-                        backgroundSize: "24px 24px",
-                        backgroundPosition: "0 0, 12px 12px"
-                      }}
-                    />
-                    
-                    {/* Fake OSM streets / lines */}
-                    <div className="absolute top-[20%] left-0 right-0 h-4 bg-white/60 border-y border-outline-variant/20 -rotate-3" />
-                    <div className="absolute top-0 bottom-0 left-[35%] w-6 bg-white/60 border-x border-outline-variant/20 rotate-12" />
-                    <div className="absolute top-0 bottom-0 right-[25%] w-4 bg-white/60 border-x border-outline-variant/20 -rotate-45" />
-
-                    {/* Selected Route Path drawing */}
-                    {selectedRouteIdx !== null && selectedRouteIdx < 3 && (
-                      <div 
-                        className="absolute top-[35%] left-[20%] right-[30%] h-1 bg-cebu-blue rounded-full border border-white shadow-xs transition-all duration-300 animate-[fadeIn_0.5s_ease-out]"
-                        style={{ transform: "rotate(15deg)" }}
-                      >
-                        {/* Glowing pulses */}
-                        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-3 h-3 bg-cebu-blue rounded-full border border-white animate-ping" />
-                        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-3 h-3 bg-cebu-blue rounded-full border border-white animate-ping" />
-                      </div>
-                    )}
-
-                    {/* Stop Markers */}
-                    <div className="absolute top-[40%] left-[22%] -translate-y-1/2 flex flex-col items-center">
-                      <span className="w-5 h-5 bg-safe-green rounded-full border-2 border-white shadow-xs flex items-center justify-center text-[10px] text-white font-bold">
-                        S
-                      </span>
-                      <span className="bg-white/90 backdrop-blur-sm border border-outline-variant text-[9px] font-bold px-1 rounded mt-1 select-none shadow-xs text-on-surface">
-                        IT Park
-                      </span>
-                    </div>
-
-                    <div className="absolute top-[52%] right-[28%] -translate-y-1/2 flex flex-col items-center">
-                      <span className="w-5 h-5 bg-error rounded-full border-2 border-white shadow-xs flex items-center justify-center text-[10px] text-white font-bold">
-                        D
-                      </span>
-                      <span className="bg-white/90 backdrop-blur-sm border border-outline-variant text-[9px] font-bold px-1 rounded mt-1 select-none shadow-xs text-on-surface">
-                        Colon St
-                      </span>
-                    </div>
-                  </div>
+                  {/* Real MapContainer */}
+                  <div ref={mapContainerRef} className="absolute inset-0 z-0" />
 
                   {/* Glassmorphism Over-Map Control */}
                   <div className="absolute bottom-4 left-4 right-4 bg-surface-container-lowest/80 backdrop-blur-md border border-outline-variant rounded-xl p-3 flex justify-between items-center z-10 shadow-xs">
@@ -777,10 +1059,10 @@ export default function DemoPage() {
                       <span className="material-symbols-outlined text-cebu-blue">directions_bus</span>
                       <div className="flex flex-col">
                         <span className="text-xs font-bold text-on-surface">
-                          {selectedRouteIdx !== null ? `Selected Option: Route ${MOCK_ROUTES[selectedRouteIdx].legs[0]?.routeShortName || "Walk"}` : "Select a Route above"}
+                          {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `Selected Option: Route ${routes[selectedRouteIdx].legs[0]?.routeShortName || "Walk"}` : "Select a Route above"}
                         </span>
                         <span className="text-[10px] text-on-surface-variant">
-                          {selectedRouteIdx !== null ? `${formatDuration(MOCK_ROUTES[selectedRouteIdx].totalTimeSeconds)} total duration` : "Click on a card to preview"}
+                          {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `${formatDuration(routes[selectedRouteIdx].totalTimeSeconds)} total duration` : "Click on a card to preview"}
                         </span>
                       </div>
                     </div>
@@ -1070,6 +1352,21 @@ export default function DemoPage() {
                     </span>
                   </div>
                 ))}
+
+                {isAiLoading && (
+                  <div className="flex gap-2 max-w-[85%] items-start animate-[fadeIn_0.2s_ease-out]">
+                    <div className="w-7 h-7 bg-secondary-container rounded-full flex items-center justify-center shrink-0 border border-outline-variant/20 mt-0.5">
+                      <span className="material-symbols-outlined text-on-secondary-container text-sm animate-pulse">smart_toy</span>
+                    </div>
+                    <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-low text-on-surface border border-outline-variant/40 shadow-2xs">
+                      <div className="flex space-x-1.5 items-center py-1">
+                        <div className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div ref={chatEndRef} />
               </div>

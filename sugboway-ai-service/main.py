@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Map GEMINI_API_KEY to GOOGLE_API_KEY for langchain-google-genai
+if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
+    os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
+
+# Touch file to force auto-reload of imports
 app = FastAPI(
     title="SugboWay AI Service",
     description="Conversational layer and RAG pipeline for SugboWay.",

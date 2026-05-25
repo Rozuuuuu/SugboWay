@@ -13,6 +13,7 @@ export type {
   LegType,
   CrowdingLevel,
   GTFSRoute,
+  TransitRoute,
   GTFSStop,
   SpatialQueryResponse,
   RouteResult,

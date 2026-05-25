@@ -80,6 +80,9 @@ export interface GTFSRoute {
   hasAircon: boolean;
 }
 
+/** Alias to match phase 5 domain blueprint */
+export type TransitRoute = GTFSRoute;
+
 /**
  * A GTFS stop / station in the Cebu transit network.
  * Maps to `stops.txt` with spatial and crowding extensions.

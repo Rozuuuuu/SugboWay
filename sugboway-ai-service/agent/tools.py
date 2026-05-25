@@ -1,7 +1,10 @@
 import requests
-from langchain.tools import tool
+try:
+    from langchain_classic.tools import tool
+except ImportError:
+    from langchain.tools import tool
 
-ROUTING_API_BASE_URL = "http://localhost:3000/api/v1" # Placeholder for Go Phase 2 routing API
+ROUTING_API_BASE_URL = "http://localhost:8080/api/v1"
 
 @tool
 def get_route_options(origin: str, destination: str, prefs: str = "time") -> str:
@@ -9,18 +12,67 @@ def get_route_options(origin: str, destination: str, prefs: str = "time") -> str
     Calls the Go/Fiber API to run the Dijkstra engine and return verified route codes (e.g., 13C, 62B, 12L).
     Always use this to check for routes before providing an answer.
     """
-    # In a real scenario, this would query the local Go routing engine
     try:
-        response = requests.get(f"{ROUTING_API_BASE_URL}/route/search", params={
-            "origin": origin,
-            "destination": destination,
-            "prefs": prefs
-        })
+        # Initialize Gemini embeddings
+        embeddings = GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001", 
+            google_api_key=os.getenv("GEMINI_API_KEY"), 
+            output_dimensionality=768
+        )
+        
+        # Embed origin and destination
+        orig_vector = embeddings.embed_query(origin)
+        dest_vector = embeddings.embed_query(destination)
+        
+        # Query DB for coordinates
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+        cur = conn.cursor()
+        
+        # Get nearest stop to origin
+        cur.execute("""
+            SELECT stop_name, stop_lat, stop_lon 
+            FROM stops 
+            ORDER BY embedding <-> %s::vector 
+            LIMIT 1
+        """, (orig_vector,))
+        orig_stop = cur.fetchone()
+        
+        # Get nearest stop to destination
+        cur.execute("""
+            SELECT stop_name, stop_lat, stop_lon 
+            FROM stops 
+            ORDER BY embedding <-> %s::vector 
+            LIMIT 1
+        """, (dest_vector,))
+        dest_stop = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if not orig_stop or not dest_stop:
+            return "No verified routes found."
+            
+        orig_name, orig_lat, orig_lon = orig_stop
+        dest_name, dest_lat, dest_lon = dest_stop
+        
+        # Query local Go Routing API on port 8080
+        url = f"{ROUTING_API_BASE_URL}/route/search"
+        params = {
+            "origin_lat": str(orig_lat),
+            "origin_lon": str(orig_lon),
+            "dest_lat": str(dest_lat),
+            "dest_lon": str(dest_lon),
+            "passenger_type": "regular",
+            "accessible": "false"
+        }
+        
+        response = requests.get(url, params=params)
         if response.status_code == 200:
             return response.text
-        return "No verified routes found."
+        else:
+            return f"No verified routes found between {orig_name} and {dest_name}."
     except Exception as e:
-        return "No verified routes found."
+        return f"No verified routes found due to error: {str(e)}"
 
 @tool
 def calculate_fare(distance_km: float, discount_type: str = "none") -> str:
