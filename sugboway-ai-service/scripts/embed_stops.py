@@ -1,20 +1,15 @@
 import os
 import psycopg2
-import google.generativeai as genai
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from dotenv import load_dotenv
 
 load_dotenv()
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 db_url = os.getenv("DATABASE_URL")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=os.getenv("GEMINI_API_KEY"))
 
 def get_embedding(text: str) -> list[float]:
-    result = genai.embed_content(
-        model="models/embedding-001",
-        content=text,
-        task_type="retrieval_document"
-    )
-    return result['embedding']
+    return embeddings.embed_query(text)
 
 def embed_all_stops():
     print("Connecting to database...")

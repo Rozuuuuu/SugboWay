@@ -6,7 +6,7 @@ import os
 
 def setup_agent():
     # Initialize the LLM with Gemini
-    llm = ChatGoogleGenerativeAI(temperature=0, model="gemini-1.5-pro-latest")
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
 
     # Define the tools available to the agent
     tools = [get_route_options, calculate_fare, check_congestion]
