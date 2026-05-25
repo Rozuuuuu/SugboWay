@@ -56,9 +56,9 @@ func main() {
 	// Inject standard middlewares (Logger and CORS)
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000, https://sugboway.app",
+		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
-		AllowMethods: "GET, OPTIONS",
+		AllowMethods: "GET, POST, HEAD, PUT, DELETE, OPTIONS",
 	}))
 
 	// Bind endpoints matching RAG fencing specifications
