@@ -27,6 +27,9 @@ type SpatialRepositoryPort interface {
 
 	// FetchGraphEdges loads routing edges based on GTFS schedules (stop_times & trips)
 	FetchGraphEdges() ([]GraphEdge, error)
+
+	// FetchRouteCongestionParams fetches BPR dynamic congestion variables
+	FetchRouteCongestionParams(routeID string) (int, string, error)
 }
 
 // RoutingServicePort specifies the core transit query functions exposed to our API layers.

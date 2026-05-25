@@ -1,7 +1,7 @@
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_google_genai import ChatGoogleGenerativeAI
 from .prompt import get_chat_prompt
-from .tools import get_route_options, calculate_fare, check_congestion
+from .tools import get_route_options, calculate_fare, check_congestion, verify_stop
 import os
 
 def setup_agent():
@@ -9,7 +9,7 @@ def setup_agent():
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
 
     # Define the tools available to the agent
-    tools = [get_route_options, calculate_fare, check_congestion]
+    tools = [get_route_options, calculate_fare, check_congestion, verify_stop]
 
     # Get the system prompt
     prompt = get_chat_prompt()

@@ -2,7 +2,9 @@ package api
 
 import (
 	"fmt"
+	"math"
 	"strconv"
+	"time"
 
 	"sugboway-routing-api/domain"
 
@@ -132,3 +134,77 @@ func (h *RoutingHandler) SearchRoute(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(results)
 }
+
+// GetCongestion calculates the BPR dynamic congestion variables and crowding level for a route.
+// GET /api/v1/congestion?route_id=route_13c&departure_time=2026-05-25T18:00:00Z
+func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
+	routeID := c.Query("route_id")
+	depTimeStr := c.Query("departure_time")
+
+	if routeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Missing 'route_id' query parameter",
+		})
+	}
+
+	pv, roadType, err := h.Repo.FetchRouteCongestionParams(routeID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": fmt.Sprintf("Route not found or database error: %v", err),
+		})
+	}
+
+	var depTime time.Time
+	if depTimeStr != "" {
+		depTime, err = time.Parse(time.RFC3339, depTimeStr)
+		if err != nil {
+			depTime = time.Now()
+		}
+	} else {
+		depTime = time.Now()
+	}
+
+	hour := depTime.Hour()
+	isPeak := (hour >= 7 && hour < 9) || (hour >= 17 && hour < 20)
+
+	var alpha, beta float64
+	if isPeak {
+		alpha = 0.15
+		beta = 4.0
+	} else {
+		alpha = 0.10
+		beta = 3.0
+	}
+
+	var capacity float64
+	if roadType == "national" {
+		capacity = 10000.0
+	} else {
+		capacity = 5000.0
+	}
+
+	flowRatio := float64(pv) / capacity
+	congestionFactor := alpha * math.Pow(flowRatio, beta)
+	timeMultiplier := 1.0 + congestionFactor
+
+	var crowding string
+	if flowRatio > 1.0 && isPeak {
+		crowding = "HIGH"
+	} else if flowRatio > 0.6 {
+		crowding = "MEDIUM"
+	} else {
+		crowding = "LOW"
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"route_id":               routeID,
+		"is_peak":                isPeak,
+		"daily_passenger_volume": pv,
+		"road_type":              roadType,
+		"capacity":               capacity,
+		"flow_ratio":             flowRatio,
+		"crowding":               crowding,
+		"time_multiplier":        timeMultiplier,
+	})
+}
+

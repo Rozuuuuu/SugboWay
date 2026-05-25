@@ -258,3 +258,21 @@ func (r *PostgresSpatialRepository) attachRouteIDs(stops []domain.GTFSStop) ([]d
 
 	return stops, nil
 }
+
+// FetchRouteCongestionParams queries the routes table for passenger volume and road type.
+func (r *PostgresSpatialRepository) FetchRouteCongestionParams(routeID string) (int, string, error) {
+	ctx := context.Background()
+	query := `
+		SELECT daily_passenger_volume, road_type 
+		FROM routes 
+		WHERE route_id = $1;
+	`
+	var pv int
+	var roadType string
+	err := r.Pool.QueryRow(ctx, query, routeID).Scan(&pv, &roadType)
+	if err != nil {
+		return 0, "", err
+	}
+	return pv, roadType, nil
+}
+
