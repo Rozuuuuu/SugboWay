@@ -13,6 +13,7 @@ type GraphEdge struct {
 	HasAircon            bool    `json:"hasAircon"`
 	DailyPassengerVolume int     `json:"dailyPassengerVolume"`
 	RoadType             string  `json:"roadType"`
+	RoadCapacity         int     `json:"roadCapacity"`
 	DistanceMeters       float64 `json:"distanceMeters"`
 	DurationSecs         float64 `json:"durationSecs"`
 }
@@ -29,7 +30,7 @@ type SpatialRepositoryPort interface {
 	FetchGraphEdges() ([]GraphEdge, error)
 
 	// FetchRouteCongestionParams fetches BPR dynamic congestion variables
-	FetchRouteCongestionParams(routeID string) (int, string, error)
+	FetchRouteCongestionParams(routeID string) (int, string, int, error)
 }
 
 // RoutingServicePort specifies the core transit query functions exposed to our API layers.

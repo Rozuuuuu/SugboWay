@@ -49,6 +49,7 @@ type GTFSRoute struct {
 	HasAircon            bool   `json:"hasAircon"`
 	DailyPassengerVolume int    `json:"dailyPassengerVolume"`
 	RoadType             string `json:"roadType"`
+	RoadCapacity         int    `json:"roadCapacity"`
 }
 
 // GTFSStop maps standard stop nodes with spatial coordinates and PWD shelter flags.

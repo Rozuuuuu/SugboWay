@@ -1,20 +1,67 @@
-import requests
 import os
+import psycopg2
+from psycopg2 import pool
+import math
+import requests
+import json
+import functools
+from datetime import datetime
+
 try:
     from langchain_classic.tools import tool
 except ImportError:
     from langchain.tools import tool
+
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-ROUTING_API_BASE_URL = "http://localhost:8080/api/v1"
+ROUTING_API_BASE_URL = os.getenv("ROUTING_API_URL", "http://localhost:8080/api/v1")
 
-EMBEDDING_CACHE = {}
+# =====================================================================
+# 1. Singletons and Connection Pooling for Cost and Resource Hardening
+# =====================================================================
 
-def get_cached_embedding(text: str, embeddings) -> list:
+_embeddings_singleton = None
+_db_pool = None
+try:
+    import redis
+    # Use 127.0.0.1 or localhost. Default Render Redis URLs can be parsed.
+    redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"), decode_responses=True, socket_connect_timeout=2)
+except Exception as e:
+    redis_client = None
+
+def get_embeddings_client():
+    global _embeddings_singleton
+    if _embeddings_singleton is None:
+        _embeddings_singleton = GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001", 
+            google_api_key=os.getenv("GEMINI_API_KEY"), 
+            output_dimensionality=768
+        )
+    return _embeddings_singleton
+
+@functools.lru_cache(maxsize=256)
+def get_cached_embedding(text: str) -> list:
+    """Computes and caches embeddings to drastically minimize Google API quota exhaustion."""
     key = text.strip().lower()
-    if key not in EMBEDDING_CACHE:
-        EMBEDDING_CACHE[key] = embeddings.embed_query(text)
-    return EMBEDDING_CACHE[key]
+    client = get_embeddings_client()
+    return client.embed_query(key)
+
+def get_db_connection():
+    global _db_pool
+    if _db_pool is None:
+        db_url = os.getenv("DATABASE_URL")
+        # Simple psycopg2 connection pool (min=1, max=5)
+        _db_pool = psycopg2.pool.SimpleConnectionPool(1, 5, db_url)
+    return _db_pool.getconn()
+
+def release_db_connection(conn):
+    global _db_pool
+    if _db_pool and conn:
+        _db_pool.putconn(conn)
+
+# =====================================================================
+# 2. Agent Tools
+# =====================================================================
 
 @tool
 def get_route_options(origin: str, destination: str, prefs: str = "time") -> str:
@@ -22,20 +69,14 @@ def get_route_options(origin: str, destination: str, prefs: str = "time") -> str
     Calls the Go/Fiber API to run the Dijkstra engine and return verified route codes (e.g., 13C, 62B, 12L).
     Always use this to check for routes before providing an answer.
     """
+    conn = None
     try:
-        # Initialize Gemini embeddings
-        embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001", 
-            google_api_key=os.getenv("GEMINI_API_KEY"), 
-            output_dimensionality=768
-        )
-        
         # Embed origin and destination with caching to save API quota
-        orig_vector = get_cached_embedding(origin, embeddings)
-        dest_vector = get_cached_embedding(destination, embeddings)
+        orig_vector = get_cached_embedding(origin)
+        dest_vector = get_cached_embedding(destination)
         
-        # Query DB for coordinates
-        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+        # Query DB using pooled connection
+        conn = get_db_connection()
         cur = conn.cursor()
         
         # Get nearest stop to origin
@@ -57,7 +98,6 @@ def get_route_options(origin: str, destination: str, prefs: str = "time") -> str
         dest_stop = cur.fetchone()
         
         cur.close()
-        conn.close()
         
         if not orig_stop or not dest_stop:
             return "No verified routes found."
@@ -83,6 +123,9 @@ def get_route_options(origin: str, destination: str, prefs: str = "time") -> str
             return f"No verified routes found between {orig_name} and {dest_name}."
     except Exception as e:
         return f"No verified routes found due to error: {str(e)}"
+    finally:
+        if conn:
+            release_db_connection(conn)
 
 @tool
 def calculate_fare(distance_km: float, discount_type: str = "none") -> str:
@@ -104,19 +147,6 @@ def calculate_fare(distance_km: float, discount_type: str = "none") -> str:
         total_fare = total_fare * 0.80 # 20% discount
 
     return f"₱{total_fare:.2f}"
-
-import os
-import psycopg2
-import math
-from datetime import datetime
-
-try:
-    import redis
-    import json
-    # Use 127.0.0.1 or localhost. Default Render Redis URLs can be parsed.
-    redis_client = redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"), decode_responses=True, socket_connect_timeout=2)
-except Exception as e:
-    redis_client = None
 
 @tool
 def check_congestion(route_id: str, departure_time: str = None) -> str:
@@ -150,26 +180,31 @@ def check_congestion(route_id: str, departure_time: str = None) -> str:
         except Exception as e:
             pass # Fall back to PostgreSQL if Redis fails
 
-    # Query DB for passenger volume and road type
+    # Query DB for passenger volume, road type, and road capacity using connection pool
+    conn = None
     try:
-        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+        conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT daily_passenger_volume, road_type FROM routes WHERE route_id = %s", (route_id,))
+        cur.execute("SELECT daily_passenger_volume, road_type, road_capacity FROM routes WHERE route_id = %s", (route_id,))
         result = cur.fetchone()
         cur.close()
-        conn.close()
         
         if result:
-            pv, road_type = result
+            pv, road_type, road_capacity = result
         else:
             return "Data unavailable. NOTE: Providing a standard schedule estimate rather than a real-time traffic prediction."
             
     except Exception as e:
         return "Data unavailable. NOTE: Providing a standard schedule estimate rather than a real-time traffic prediction."
+    finally:
+        if conn:
+            release_db_connection(conn)
         
     alpha = 0.15 if is_peak else 0.10
     beta = 4.0 if is_peak else 3.0
-    capacity = 10000.0 if road_type == "national" else 5000.0
+    
+    # Calibrated road capacity from database
+    capacity = float(road_capacity) if road_capacity and road_capacity > 0 else 5000.0
     
     flow_ratio = float(pv) / capacity
     
@@ -199,7 +234,6 @@ def check_congestion(route_id: str, departure_time: str = None) -> str:
     return f"CrowdingLevel: {crowding}. BPR Time Multiplier: {time_multiplier:.2f}x standard travel time. (Peak: {is_peak})"
 
 from db.vectorstore import VectorStore
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 @tool
 def verify_stop(stop_name: str) -> str:
@@ -209,13 +243,8 @@ def verify_stop(stop_name: str) -> str:
     Always use this tool to verify locations mentioned by the user and to look up correct stop names.
     """
     try:
-        embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001", 
-            google_api_key=os.getenv("GEMINI_API_KEY"), 
-            output_dimensionality=768
-        )
         # Query with caching to save API quota
-        query_vector = get_cached_embedding(stop_name, embeddings)
+        query_vector = get_cached_embedding(stop_name)
         
         vs = VectorStore()
         results = vs.search_similar_locations(query_vector, limit=3)
@@ -229,4 +258,3 @@ def verify_stop(stop_name: str) -> str:
         return "Nearest matching verified stops:\n" + "\n".join(stops_str)
     except Exception as e:
         return f"Error verifying stop semantically: {str(e)}"
-

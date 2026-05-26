@@ -162,6 +162,7 @@ func (r *PostgresSpatialRepository) FetchGraphEdges() ([]domain.GraphEdge, error
 			r.has_aircon,
 			r.daily_passenger_volume,
 			r.road_type,
+			r.road_capacity,
 			ST_Distance(s1.location, s2.location) AS distance_meters,
 			ST_Distance(s1.location, s2.location) / 8.0 AS duration_secs
 		FROM stop_times st1
@@ -193,6 +194,7 @@ func (r *PostgresSpatialRepository) FetchGraphEdges() ([]domain.GraphEdge, error
 			&e.HasAircon,
 			&e.DailyPassengerVolume,
 			&e.RoadType,
+			&e.RoadCapacity,
 			&e.DistanceMeters,
 			&e.DurationSecs,
 		)
@@ -259,20 +261,21 @@ func (r *PostgresSpatialRepository) attachRouteIDs(stops []domain.GTFSStop) ([]d
 	return stops, nil
 }
 
-// FetchRouteCongestionParams queries the routes table for passenger volume and road type.
-func (r *PostgresSpatialRepository) FetchRouteCongestionParams(routeID string) (int, string, error) {
+// FetchRouteCongestionParams queries the routes table for passenger volume, road type, and road capacity.
+func (r *PostgresSpatialRepository) FetchRouteCongestionParams(routeID string) (int, string, int, error) {
 	ctx := context.Background()
 	query := `
-		SELECT daily_passenger_volume, road_type 
+		SELECT daily_passenger_volume, road_type, road_capacity 
 		FROM routes 
 		WHERE route_id = $1;
 	`
 	var pv int
 	var roadType string
-	err := r.Pool.QueryRow(ctx, query, routeID).Scan(&pv, &roadType)
+	var roadCapacity int
+	err := r.Pool.QueryRow(ctx, query, routeID).Scan(&pv, &roadType, &roadCapacity)
 	if err != nil {
-		return 0, "", err
+		return 0, "", 0, err
 	}
-	return pv, roadType, nil
+	return pv, roadType, roadCapacity, nil
 }
 

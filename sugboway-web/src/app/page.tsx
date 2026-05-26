@@ -5,10 +5,14 @@ import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
 import NavigationDrawer from "@/components/route/NavigationDrawer";
+import ProximityAlert from "@/components/route/ProximityAlert";
 import { calculateFare, formatPHP } from "@/domain";
 import maplibregl from "maplibre-gl";
 import type { Map } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { Protocol } from "pmtiles";
+import { useOfflineMap } from "@/hooks/useOfflineMap";
+import { useProximityEtiquette } from "@/hooks/useProximityEtiquette";
 
 // Helper to format travel time into readable hours and minutes
 function formatDuration(seconds: number): string {
@@ -388,6 +392,8 @@ const ROUTING_API_URL = process.env.NEXT_PUBLIC_ROUTING_API_URL || "http://local
 const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000";
 
 export default function DemoPage() {
+  const { isOffline, mapStyle } = useOfflineMap();
+
   // Shared States
   const [currentTab, setCurrentTab] = useState<"map" | "rush" | "chat" | "profile">("map");
   const [passengerType, setPassengerType] = useState<PassengerType>("regular");
@@ -411,6 +417,25 @@ export default function DemoPage() {
   const [isTrafficBannerOpen, setIsTrafficBannerOpen] = useState(true);
   const [isRoutingLoading, setIsRoutingLoading] = useState(false);
   const [routingError, setRoutingError] = useState<string | null>(null);
+
+  // Proximity tracking hook for "Lugar lang" alerts
+  const selectedRoute = selectedRouteIdx !== null && routes[selectedRouteIdx] ? routes[selectedRouteIdx] : null;
+  const activeTransitLeg = selectedRoute?.legs.find((leg) => leg.type === "transit") || null;
+
+  const {
+    isApproaching,
+    distanceToStop,
+    nextStopName,
+    isMuted,
+    toggleMute,
+    dismissAlert,
+  } = useProximityEtiquette(isNavDrawerOpen ? activeTransitLeg : null);
+
+  // Freemium Quota & Premium States
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [remainingQuota, setRemainingQuota] = useState(5);
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [rateLimitResetSeconds, setRateLimitResetSeconds] = useState(0);
 
   // Tab 2: Rush Hour States
   const [gaugeRotate, setGaugeRotate] = useState(45);
@@ -515,9 +540,13 @@ export default function DemoPage() {
   useEffect(() => {
     if (typeof window === "undefined" || !mapContainerRef.current) return;
 
+    // Register PMTiles protocol handler
+    const p = new Protocol();
+    maplibregl.addProtocol("pmtiles", p.tile);
+
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: "https://tiles.openfreemap.org/styles/bright",
+      style: mapStyle,
       center: [123.8854, 10.3157], // Cebu City coordinates
       zoom: 12,
     });
@@ -526,8 +555,16 @@ export default function DemoPage() {
 
     return () => {
       map.remove();
+      maplibregl.removeProtocol("pmtiles");
     };
   }, []);
+
+  // Update map style when switching between online/offline modes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.setStyle(mapStyle);
+  }, [mapStyle]);
 
   // Update Route Polyline and Markers on Selected Route index change
   useEffect(() => {
@@ -674,10 +711,31 @@ export default function DemoPage() {
       });
 
       if (!res.ok) {
+        if (res.status === 429) {
+          const errData = await res.json().catch(() => ({}));
+          setIsRateLimited(true);
+          setRateLimitResetSeconds(errData.reset_seconds || 3600);
+          
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: String(prev.length + 1),
+              sender: "ai",
+              text: `⚠️ **Rate Limit Exceeded:** You have reached the maximum allowance of **5 free AI queries per hour**. Please upgrade to **SugboWay Premium** to unlock unlimited transit planning!`,
+              cebuanoText: "⚠️ Nakaabot na ka sa limit nga 5 ka AI chat matag oras. Palihug pag-upgrade sa Premium!",
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            }
+          ]);
+          setIsAiLoading(false);
+          return;
+        }
         throw new Error(`AI request failed: ${res.statusText}`);
       }
 
       const data = await res.json();
+      if (typeof data.remaining === "number") {
+        setRemainingQuota(data.remaining);
+      }
       const replyText = data.reply || "Sorry, I encountered an issue parsing the response.";
 
       // Check if the reply lists any specific Cebuano suggestions or stops
@@ -1067,6 +1125,14 @@ export default function DemoPage() {
                 <div className="relative h-64 rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
                   {/* Real MapContainer */}
                   <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+
+                  {/* Offline Mode Banner */}
+                  {isOffline && (
+                    <div className="absolute top-4 left-4 z-20 bg-surface-container-highest/90 backdrop-blur-md border border-amber-500/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg animate-fade-in text-amber-500">
+                      <span className="material-symbols-outlined text-sm animate-pulse">cloud_off</span>
+                      <span className="text-xs font-bold font-mono">Offline Map Mode</span>
+                    </div>
+                  )}
 
                   {/* Pulsing ChatFAB Floating Voice/AI Button in Map Corner (WOW Element) */}
                   <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
@@ -1484,6 +1550,56 @@ export default function DemoPage() {
                 </div>
               </section>
 
+              {/* SugboWay Premium Subscription Card */}
+              <section className="bg-gradient-to-tr from-cebu-blue/20 via-surface-container-lowest to-purple-500/20 border border-cebu-blue/40 rounded-3xl p-5 space-y-4 shadow-md relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 animate-pulse" />
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-amber-500 animate-spin">stars</span>
+                      SugboWay Premium Plan
+                    </h3>
+                    <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                      Say goodbye to limits. Get unlimited AI route queries, RAG multi-hop scheduling, offline map caching, and priority BPR crowding forecasts!
+                    </p>
+                  </div>
+                  <span className="bg-amber-500/10 text-amber-500 border border-amber-500/30 text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
+                    {isPremiumUser ? "Pro Active" : "Free Tier"}
+                  </span>
+                </div>
+
+                <div className="bg-surface-container-high/60 border border-outline-variant/30 rounded-2xl p-4 flex justify-between items-center text-xs">
+                  <div className="flex flex-col">
+                    <span className="text-on-surface-variant text-[10px] uppercase font-mono tracking-wider">
+                      AI Chat Quota
+                    </span>
+                    <span className="text-sm font-bold text-on-surface mt-1">
+                      {isPremiumUser ? "∞ Unlimited Queries" : `${remainingQuota} / 5 remaining`}
+                    </span>
+                  </div>
+                  
+                  {!isPremiumUser && (
+                    <button
+                      onClick={() => {
+                        setIsPremiumUser(true);
+                        setRemainingQuota(9999);
+                        setIsRateLimited(false);
+                      }}
+                      className="bg-gradient-to-r from-cebu-blue to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition-all duration-300 shadow-md hover:scale-[1.03] active:scale-95 flex items-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-sm">bolt</span>
+                      Upgrade to Premium
+                    </button>
+                  )}
+                </div>
+
+                {!isPremiumUser && (
+                  <p className="text-[10px] text-on-surface-variant italic text-center">
+                    Billed locally at ₱49/month — help keep Cebu's local mapping servers running!
+                  </p>
+                )}
+              </section>
+
               {/* Sinulog Emergency Center */}
               <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-5 space-y-4">
                 <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
@@ -1583,6 +1699,65 @@ export default function DemoPage() {
           isOpen={isNavDrawerOpen} 
           onClose={() => setIsNavDrawerOpen(false)} 
         />
+
+        {isApproaching && (
+          <ProximityAlert
+            distanceToStop={distanceToStop}
+            nextStopName={nextStopName}
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+            onDismiss={dismissAlert}
+          />
+        )}
+
+        {/* Premium Upgrade Modal when Rate Limited */}
+        {isRateLimited && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+            <div className="bg-surface-container-high border border-outline-variant/30 shadow-2xl rounded-3xl p-6 max-w-sm w-full space-y-4 animate-[scaleUp_0.3s_ease-out] text-center relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 animate-pulse" />
+              
+              <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto text-amber-500 animate-bounce">
+                <span className="material-symbols-outlined text-3xl">stars</span>
+              </div>
+              
+              <div className="space-y-1">
+                <h3 className="text-lg font-extrabold text-on-surface">SugboWay Limit Reached</h3>
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  You have exceeded the free tier allowance of **5 AI queries per hour**. Upgrade to **SugboWay Premium** to unlock unlimited mapping, offline capabilities, and RAG multi-hop routing!
+                </p>
+              </div>
+
+              <div className="bg-surface-container-highest/60 border border-outline-variant/30 rounded-2xl py-2 px-3 text-xs font-mono text-on-surface-variant flex justify-between items-center">
+                <span>Free Reset:</span>
+                <span className="font-bold text-cebu-blue">
+                  {rateLimitResetSeconds > 60 
+                    ? `~${Math.ceil(rateLimitResetSeconds / 60)} mins` 
+                    : `~${rateLimitResetSeconds}s`}
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    setIsPremiumUser(true);
+                    setRemainingQuota(9999);
+                    setIsRateLimited(false);
+                  }}
+                  className="w-full bg-gradient-to-r from-cebu-blue to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold text-xs py-3 rounded-2xl transition-all duration-300 shadow-md hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-sm">bolt</span>
+                  Upgrade to Premium (₱49)
+                </button>
+                <button
+                  onClick={() => setIsRateLimited(false)}
+                  className="w-full bg-surface-container-highest hover:bg-on-surface/5 border border-outline-variant/30 text-on-surface text-xs py-2.5 rounded-2xl transition-all font-medium"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

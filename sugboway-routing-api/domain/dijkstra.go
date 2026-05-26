@@ -17,6 +17,7 @@ type Edge struct {
 	DurationSecs         float64
 	DailyPassengerVolume int
 	RoadType             string
+	RoadCapacity         int
 	Type                 string // "transit", "walking", "transfer"
 }
 
@@ -122,11 +123,13 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 				HasAircon:            dbEdge.HasAircon,
 				DailyPassengerVolume: dbEdge.DailyPassengerVolume,
 				RoadType:             dbEdge.RoadType,
+				RoadCapacity:         dbEdge.RoadCapacity,
 			},
 			DistanceMeters:       dbEdge.DistanceMeters,
 			DurationSecs:         dbEdge.DurationSecs,
 			DailyPassengerVolume: dbEdge.DailyPassengerVolume,
 			RoadType:             dbEdge.RoadType,
+			RoadCapacity:         dbEdge.RoadCapacity,
 			Type:                 "transit",
 		}
 		graph.Edges[dbEdge.FromStopID] = append(graph.Edges[dbEdge.FromStopID], edge)
@@ -274,7 +277,7 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 			// Calculate real-time duration using BPR if transit
 			actualDuration := edge.DurationSecs
 			if edge.Type == "transit" {
-				actualDuration = CalculateBPRCost(edge.DistanceMeters, edge.DailyPassengerVolume, edge.RoadType, depTime)
+				actualDuration = CalculateBPRCost(edge.DistanceMeters, edge.DailyPassengerVolume, edge.RoadType, edge.RoadCapacity, depTime)
 			}
 
 			// Calculate edge cost weight based on user minimize preference

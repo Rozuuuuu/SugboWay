@@ -22,6 +22,10 @@ func (m *MockSpatialRepository) FetchGraphEdges() ([]GraphEdge, error) {
 	return m.Edges, nil
 }
 
+func (m *MockSpatialRepository) FetchRouteCongestionParams(routeID string) (int, string, int, error) {
+	return 10000, "national", 10000, nil
+}
+
 func TestDijkstraSearch(t *testing.T) {
 	// 1. Arrange Mock Nodes and Edges representing Cebu lines
 	mockStops := []GTFSStop{

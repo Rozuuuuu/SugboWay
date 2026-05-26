@@ -147,7 +147,7 @@ func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
 		})
 	}
 
-	pv, roadType, err := h.Repo.FetchRouteCongestionParams(routeID)
+	pv, roadType, roadCapacity, err := h.Repo.FetchRouteCongestionParams(routeID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": fmt.Sprintf("Route not found or database error: %v", err),
@@ -176,10 +176,8 @@ func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
 		beta = 3.0
 	}
 
-	var capacity float64
-	if roadType == "national" {
-		capacity = 10000.0
-	} else {
+	capacity := float64(roadCapacity)
+	if capacity <= 0 {
 		capacity = 5000.0
 	}
 

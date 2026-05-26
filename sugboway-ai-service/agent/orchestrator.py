@@ -7,6 +7,8 @@ from .prompt import get_chat_prompt
 from .tools import get_route_options, calculate_fare, check_congestion, verify_stop
 import os
 
+_agent_executor_singleton = None
+
 def setup_agent():
     # Map GEMINI_API_KEY to GOOGLE_API_KEY for langchain-google-genai
     if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
@@ -29,11 +31,17 @@ def setup_agent():
 
     return agent_executor
 
+def get_agent_executor():
+    global _agent_executor_singleton
+    if _agent_executor_singleton is None:
+        _agent_executor_singleton = setup_agent()
+    return _agent_executor_singleton
+
 def process_message(message: str) -> str:
     """
     Main entry point for processing a user's chat message.
     """
-    agent_executor = setup_agent()
+    agent_executor = get_agent_executor()
     
     try:
         response = agent_executor.invoke({"input": message})

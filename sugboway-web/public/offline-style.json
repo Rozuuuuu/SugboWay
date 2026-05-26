@@ -1,0 +1,113 @@
+{
+  "version": 8,
+  "name": "SugboWay Offline Map Style",
+  "metadata": {},
+  "sources": {
+    "openmaptiles": {
+      "type": "vector",
+      "url": "pmtiles:///cebu-tiles.pmtiles"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#f1f3f5"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#a5d8ff"
+      }
+    },
+    {
+      "id": "landcover",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "landcover",
+      "paint": {
+        "fill-color": "#d3f9d8"
+      }
+    },
+    {
+      "id": "landuse",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "landuse",
+      "paint": {
+        "fill-color": "#ebfbee"
+      }
+    },
+    {
+      "id": "roads-casing",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "paint": {
+        "line-color": "#dee2e6",
+        "line-width": {
+          "base": 1.2,
+          "stops": [
+            [10, 1.5],
+            [13, 2.5],
+            [16, 6.0]
+          ]
+        }
+      }
+    },
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": {
+          "base": 1.2,
+          "stops": [
+            [10, 0.8],
+            [13, 1.5],
+            [16, 4.0]
+          ]
+        }
+      }
+    },
+    {
+      "id": "buildings",
+      "type": "fill",
+      "source": "openmaptiles",
+      "source-layer": "building",
+      "paint": {
+        "fill-color": "#e9ecef",
+        "fill-outline-color": "#ced4da"
+      }
+    },
+    {
+      "id": "places",
+      "type": "symbol",
+      "source": "openmaptiles",
+      "source-layer": "place",
+      "layout": {
+        "text-field": "{name:latin}",
+        "text-size": {
+          "stops": [
+            [10, 10],
+            [14, 14]
+          ]
+        },
+        "text-max-width": 8,
+        "text-offset": [0, 0]
+      },
+      "paint": {
+        "text-color": "#495057",
+        "text-halo-color": "#ffffff",
+        "text-halo-width": 1.5
+      }
+    }
+  ]
+}
