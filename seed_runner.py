@@ -10,17 +10,26 @@ db_url = os.getenv('DATABASE_URL')
 gemini_key = os.getenv('GEMINI_API_KEY')
 
 def run_seed():
-    print("Reading seed SQL...")
+    print("Reading seed SQL scripts...")
     with open('sugboway-routing-api/adapter/repository/seed_gtfs.sql', 'r', encoding='utf-8') as f:
-        sql = f.read()
+        gtfs_sql = f.read()
+    with open('sugboway-routing-api/adapter/repository/seed_lptrp.sql', 'r', encoding='utf-8') as f:
+        lptrp_sql = f.read()
 
     try:
-        print("Executing SQL Seed...")
+        print("Connecting to database...")
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
-        cur.execute(sql)
+        
+        print("Executing GTFS SQL Seed...")
+        cur.execute(gtfs_sql)
         conn.commit()
-        print('SQL Seed Executed Successfully!')
+        print('GTFS SQL Seed Executed Successfully!')
+        
+        print("Executing LPTRP SQL Seed...")
+        cur.execute(lptrp_sql)
+        conn.commit()
+        print('LPTRP SQL Seed Executed Successfully!')
         
         # Re-index stops table using text-embedding-004 (768-dimensions)
         print("Re-indexing stops table with Gemini 768-dim embeddings...")
@@ -37,14 +46,26 @@ def run_seed():
             return
             
         print(f"Generating embeddings for {len(stops)} stops based on stop_name and stop_desc...")
+        import time
         embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001", google_api_key=gemini_key, output_dimensionality=768)
         
         for stop_id, stop_name, stop_desc in stops:
             desc = stop_desc if stop_desc else ""
             text_to_embed = f"{stop_name} - {desc}".strip()
             
-            # Generate 768-dimension embedding
-            embedding = embeddings.embed_query(text_to_embed)
+            # Robust retry-loop for Google API embedding generation
+            embedding = None
+            max_retries = 5
+            base_delay = 2.0
+            for attempt in range(max_retries):
+                try:
+                    embedding = embeddings.embed_query(text_to_embed)
+                    break
+                except Exception as ex:
+                    print(f"Embedding failed for '{text_to_embed}' (attempt {attempt + 1}/{max_retries}): {ex}")
+                    if attempt == max_retries - 1:
+                        raise ex
+                    time.sleep(base_delay * (2 ** attempt))
             
             cur.execute(
                 "UPDATE stops SET embedding = %s WHERE stop_id = %s",

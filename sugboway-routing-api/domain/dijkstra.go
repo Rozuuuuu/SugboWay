@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 )
 
@@ -85,9 +86,13 @@ func NewDijkstraRoutingEngine(repo SpatialRepositoryPort) *DijkstraRoutingEngine
 	return &DijkstraRoutingEngine{Repo: repo}
 }
 
-// FindBestRoutes snaps coordinates to nearby GTFS nodes, executes the Dijkstra solver,
-// and packages the resulting legs into clean, structured RouteResult objects.
 func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs RoutePrefs) ([]RouteResult, error) {
+	// Contextual Fence: coordinates must be within the Metro Cebu urban core bounds [123.82, 10.25] to [123.96, 10.42]
+	if origin.Lat < 10.25 || origin.Lat > 10.42 || origin.Lon < 123.82 || origin.Lon > 123.96 ||
+		dest.Lat < 10.25 || dest.Lat > 10.42 || dest.Lon < 123.82 || dest.Lon > 123.96 {
+		return []RouteResult{}, nil
+	}
+
 	// 1. Fetch GTFS Stops and compile schedules from PostgreSQL adapter
 	stopsList, err := e.Repo.FetchAllStops()
 	if err != nil {
@@ -282,6 +287,24 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 
 			// Calculate edge cost weight based on user minimize preference
 			edgeCost := actualDuration
+
+			// Safety Mode adjustments: Prioritize modernized e-jeeps (Aircon/CCTV) and well-lit hubs
+			if prefs.SafetyMode {
+				if edge.Type == "transit" {
+					if edge.Route != nil && (edge.Route.IsModernized || edge.Route.HasAircon) {
+						// Favor modernized jeepneys (with Aircon/CCTV) by lowering search cost
+						edgeCost = edgeCost * 0.7
+					} else {
+						// De-prioritize traditional jeepneys by increasing search cost
+						edgeCost = edgeCost * 1.5
+					}
+				}
+				// Prioritize well-lit hubs (IT Park, Ayala)
+				if strings.Contains(strings.ToLower(edge.ToStopID), "it_park") || 
+				   strings.Contains(strings.ToLower(edge.ToStopID), "ayala") {
+					edgeCost = edgeCost * 0.8
+				}
+			}
 
 			isTransfer := false
 			transferPenalty := prefs.TransferPenaltySecs

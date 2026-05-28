@@ -104,12 +104,17 @@ func (h *RoutingHandler) SearchRoute(c *fiber.Ctx) error {
 	passTypeVal := domain.PassengerType(c.Query("passenger_type", "regular"))
 	maxWalkVal, _ := strconv.ParseFloat(c.Query("max_walk", "500"), 64)
 	accessModeVal, _ := strconv.ParseBool(c.Query("accessible", "false"))
+	safetyModeVal, _ := strconv.ParseBool(c.Query("safety_mode", "false"))
+	if accessModeVal {
+		safetyModeVal = true
+	}
 
 	prefs := domain.RoutePrefs{
 		Minimize:          minimizeVal,
 		PassengerType:     passTypeVal,
 		MaxWalkingMeters:  maxWalkVal,
 		AccessibilityMode: accessModeVal,
+		SafetyMode:        safetyModeVal,
 		AvoidRoutes:       []string{},
 	}
 

@@ -71,9 +71,9 @@ export default function ProximityAlert({
               Approaching {nextStopName}
             </h3>
             
-            <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-              Prepare your fare (<span className="italic font-semibold text-cebu-blue">"Plete palihug"</span>). 
-              Say <span className="italic font-semibold text-safe-green">"Lugar lang"</span> clearly to disembark!
+            <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed font-semibold">
+              Prepare your fare (<span className="italic text-cebu-blue">"Bayad po"</span> / <span className="italic text-cebu-blue">"Plete palihug"</span>). 
+              Say <span className="italic text-safe-green">"Lugar lang"</span> to disembark!
             </p>
           </div>
         </div>

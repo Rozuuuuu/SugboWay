@@ -32,6 +32,7 @@ type RoutePrefs struct {
 	PassengerType        PassengerType `json:"passengerType"`
 	MaxWalkingMeters     float64       `json:"maxWalkingMeters"`
 	AccessibilityMode    bool          `json:"accessibilityMode"`
+	SafetyMode           bool          `json:"safetyMode"`
 	AvoidRoutes          []string      `json:"avoidRoutes"`
 	TransferPenaltySecs  float64       `json:"transferPenaltySecs"`
 	DepartureTime        string        `json:"departureTime,omitempty"` // RFC3339 format

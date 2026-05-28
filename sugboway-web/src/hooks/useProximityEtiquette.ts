@@ -17,6 +17,7 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
   });
 
   const watchIdRef = useRef<number | null>(null);
+  const timerIdRef = useRef<NodeJS.Timeout | null>(null);
   const lastAlertStopIdRef = useRef<string | null>(null);
 
   // Initialize and load mute setting
@@ -69,9 +70,9 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
   };
 
   const triggerEtiquetteActions = (stopName: string) => {
-    // 1. Vibration alert (2 short pulses)
+    // 1. Vibration alert: exactly 200ms haptic feedback
     if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate([150, 100, 150]);
+      navigator.vibrate(200);
     }
 
     // 2. Audio Chime (if not muted)
@@ -125,49 +126,119 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
       Notification.requestPermission();
     }
 
-    console.log(`[ProximityEtiquette] Tracking approach to stop: ${stopName} (${targetLat}, ${targetLon})`);
+    console.log(`[ProximityEtiquette] Starting battery-optimized geolocator to stop: ${stopName}`);
 
-    const onPositionUpdate = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      const distance = getDistanceMeters(latitude, longitude, targetLat, targetLon);
+    // Dual-mode state machine refs to clean up correctly
+    let isFineMode = false;
 
-      console.log(`[ProximityEtiquette] Live position: (${latitude}, ${longitude}). Distance to ${stopName}: ${distance.toFixed(1)}m`);
-
-      const inRange = distance <= 200;
-
-      setState((prev) => {
-        const wasApproaching = prev.isApproaching;
-        
-        // Trigger actions if we just entered the 200m radius for this stop
-        if (inRange && !wasApproaching && lastAlertStopIdRef.current !== stopId) {
-          lastAlertStopIdRef.current = stopId;
-          triggerEtiquetteActions(stopName);
-        }
-
-        return {
-          ...prev,
-          isApproaching: inRange,
-          distanceToStop: Math.round(distance),
-          nextStopName: stopName,
-        };
-      });
-    };
-
-    const onError = (error: GeolocationPositionError) => {
-      console.warn("[ProximityEtiquette] Geolocation error:", error.message);
-    };
-
-    watchIdRef.current = navigator.geolocation.watchPosition(onPositionUpdate, onError, {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 5000,
-    });
-
-    return () => {
+    const clearTimersAndWatchers = () => {
+      if (timerIdRef.current !== null) {
+        clearTimeout(timerIdRef.current);
+        timerIdRef.current = null;
+      }
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
+    };
+
+    const switchToCoarseMode = () => {
+      clearTimersAndWatchers();
+      isFineMode = false;
+      console.log("[ProximityEtiquette] Switching to Coarse Mode (>500m). Polling every 15s.");
+      checkPositionCoarse();
+    };
+
+    const switchToFineMode = () => {
+      clearTimersAndWatchers();
+      isFineMode = true;
+      console.log("[ProximityEtiquette] Switching to Fine Mode (<=500m). WatchPosition active.");
+      
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const distance = getDistanceMeters(latitude, longitude, targetLat, targetLon);
+          
+          console.log(`[ProximityEtiquette] Fine live update: Distance to ${stopName}: ${distance.toFixed(1)}m`);
+          
+          if (distance > 500) {
+            // Revert back to coarse mode if user moves away from stop
+            switchToCoarseMode();
+            return;
+          }
+
+          const inRange = distance <= 200;
+
+          setState((prev) => {
+            const wasApproaching = prev.isApproaching;
+            
+            // Trigger alerts when entering the 200m radius
+            if (inRange && !wasApproaching && lastAlertStopIdRef.current !== stopId) {
+              lastAlertStopIdRef.current = stopId;
+              triggerEtiquetteActions(stopName);
+            }
+
+            return {
+              ...prev,
+              isApproaching: inRange,
+              distanceToStop: Math.round(distance),
+              nextStopName: stopName,
+            };
+          });
+        },
+        (error) => {
+          console.warn("[ProximityEtiquette] Fine watchPosition error:", error.message);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 5000,
+        }
+      );
+    };
+
+    const checkPositionCoarse = () => {
+      if (typeof navigator === "undefined" || !navigator.geolocation) return;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const distance = getDistanceMeters(latitude, longitude, targetLat, targetLon);
+
+          console.log(`[ProximityEtiquette] Coarse poll: Distance to ${stopName}: ${distance.toFixed(1)}m`);
+
+          if (distance <= 500) {
+            // Dynamically scale up to High-Frequency WatchPosition
+            switchToFineMode();
+          } else {
+            // Remain in Coarse mode and schedule next poll in 15 seconds
+            setState((prev) => ({
+              ...prev,
+              isApproaching: false,
+              distanceToStop: Math.round(distance),
+              nextStopName: stopName,
+            }));
+            timerIdRef.current = setTimeout(checkPositionCoarse, 15000);
+          }
+        },
+        (error) => {
+          console.warn("[ProximityEtiquette] Coarse poll error:", error.message);
+          // Retry coarse polling after 15 seconds on error
+          timerIdRef.current = setTimeout(checkPositionCoarse, 15000);
+        },
+        {
+          enableHighAccuracy: false, // Saves battery
+          maximumAge: 10000,
+          timeout: 10000,
+        }
+      );
+    };
+
+    // Initially start in coarse mode
+    switchToCoarseMode();
+
+    return () => {
+      clearTimersAndWatchers();
     };
   }, [activeLeg]);
 

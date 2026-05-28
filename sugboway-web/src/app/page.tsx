@@ -14,6 +14,16 @@ import { Protocol } from "pmtiles";
 import { useOfflineMap } from "@/hooks/useOfflineMap";
 import { useProximityEtiquette } from "@/hooks/useProximityEtiquette";
 
+// Register PMTiles protocol handler globally once in the browser environment
+if (typeof window !== "undefined") {
+  const p = new Protocol();
+  try {
+    maplibregl.addProtocol("pmtiles", p.tile);
+  } catch (e) {
+    console.warn("[SugboWay] PMTiles protocol already registered or failed to register:", e);
+  }
+}
+
 // Helper to format travel time into readable hours and minutes
 function formatDuration(seconds: number): string {
   const mins = Math.round(seconds / 60);
@@ -540,10 +550,6 @@ export default function DemoPage() {
   useEffect(() => {
     if (typeof window === "undefined" || !mapContainerRef.current) return;
 
-    // Register PMTiles protocol handler
-    const p = new Protocol();
-    maplibregl.addProtocol("pmtiles", p.tile);
-
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: mapStyle,
@@ -555,7 +561,6 @@ export default function DemoPage() {
 
     return () => {
       map.remove();
-      maplibregl.removeProtocol("pmtiles");
     };
   }, []);
 

@@ -5,7 +5,7 @@
   "sources": {
     "openmaptiles": {
       "type": "vector",
-      "url": "pmtiles:///cebu-tiles.pmtiles"
+      "url": "pmtiles:///cebu-urban.pmtiles"
     }
   },
   "layers": [

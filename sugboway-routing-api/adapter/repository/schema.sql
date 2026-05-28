@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS routes (
     is_modernized          BOOLEAN DEFAULT FALSE,
     has_aircon             BOOLEAN DEFAULT FALSE,
     daily_passenger_volume INTEGER DEFAULT 5000,
-    road_type              TEXT DEFAULT 'national'
+    road_type              TEXT DEFAULT 'national',
+    road_capacity          INTEGER DEFAULT 5000
 );
 
 -- 4. Trips
