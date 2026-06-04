@@ -53,10 +53,10 @@ const MOCK_ROUTES: RouteResult[] = [
     legs: [
       {
         type: "transit",
-        routeId: "13C",
+        routeId: "route_13c",
         routeShortName: "13C",
         route: {
-          routeId: "13C",
+          routeId: "route_13c",
           routeShortName: "13C",
           routeLongName: "Talamban - Colon via Ramos",
           routeType: "modern_ejeep",
@@ -123,10 +123,10 @@ const MOCK_ROUTES: RouteResult[] = [
     legs: [
       {
         type: "transit",
-        routeId: "17B",
+        routeId: "route_17b",
         routeShortName: "17B",
         route: {
-          routeId: "17B",
+          routeId: "route_17b",
           routeShortName: "17B",
           routeLongName: "Apas - Colon via Ramos",
           routeType: "jeepney",
@@ -226,10 +226,10 @@ const MOCK_ROUTES: RouteResult[] = [
       },
       {
         type: "transit",
-        routeId: "04L",
+        routeId: "route_04l",
         routeShortName: "04L",
         route: {
-          routeId: "04L",
+          routeId: "route_04l",
           routeShortName: "04L",
           routeLongName: "Lahug - IT Park via SM",
           routeType: "jeepney",
@@ -296,10 +296,10 @@ const MOCK_ROUTES: RouteResult[] = [
     legs: [
       {
         type: "transit",
-        routeId: "mybus_srp",
+        routeId: "route_mybus_1",
         routeShortName: "MyBus",
         route: {
-          routeId: "mybus_srp",
+          routeId: "route_mybus_1",
           routeShortName: "MyBus",
           routeLongName: "SM Seaside - Ayala Center Cebu via SRP",
           routeType: "mybus",

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"sugboway-routing-api/domain"
@@ -152,6 +153,16 @@ func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
 		})
 	}
 
+	// Normalize route_id format (e.g. 13C -> route_13c)
+	routeID = strings.ToLower(routeID)
+	if !strings.HasPrefix(routeID, "route_") {
+		if routeID == "mybus_srp" || routeID == "mybus" {
+			routeID = "route_mybus_1"
+		} else {
+			routeID = "route_" + routeID
+		}
+	}
+
 	pv, roadType, roadCapacity, err := h.Repo.FetchRouteCongestionParams(routeID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -220,6 +231,17 @@ func (h *RoutingHandler) GetRouteShape(c *fiber.Ctx) error {
 			"error": "Missing 'route_id' query parameter",
 		})
 	}
+
+	// Normalize route_id format (e.g. 13C -> route_13c)
+	routeID = strings.ToLower(routeID)
+	if !strings.HasPrefix(routeID, "route_") {
+		if routeID == "mybus_srp" || routeID == "mybus" {
+			routeID = "route_mybus_1"
+		} else {
+			routeID = "route_" + routeID
+		}
+	}
+
 	geoJSON, err := h.Repo.FetchRouteShape(routeID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -241,6 +263,17 @@ func (h *RoutingHandler) GetRouteStops(c *fiber.Ctx) error {
 			"error": "Missing 'route_id' query parameter",
 		})
 	}
+
+	// Normalize route_id format (e.g. 13C -> route_13c)
+	routeID = strings.ToLower(routeID)
+	if !strings.HasPrefix(routeID, "route_") {
+		if routeID == "mybus_srp" || routeID == "mybus" {
+			routeID = "route_mybus_1"
+		} else {
+			routeID = "route_" + routeID
+		}
+	}
+
 	stops, err := h.Repo.FetchRouteStops(routeID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
