@@ -89,7 +89,10 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request):
     try:
         from agent.orchestrator import process_message
         reply = process_message(request.message)
-        return {"reply": reply, "remaining": remaining}
+        response = JSONResponse(content={"reply": reply, "remaining": remaining})
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
+        response.headers["X-RateLimit-Reset"] = "3600"
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

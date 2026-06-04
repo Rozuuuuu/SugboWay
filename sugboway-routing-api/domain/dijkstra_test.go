@@ -26,6 +26,14 @@ func (m *MockSpatialRepository) FetchRouteCongestionParams(routeID string) (int,
 	return 10000, "national", 10000, nil
 }
 
+func (m *MockSpatialRepository) FetchRouteShape(routeID string) (string, error) {
+	return `{"type":"LineString","coordinates":[[123.9181,10.3705],[123.9020,10.3150],[123.9016,10.2985]]}`, nil
+}
+
+func (m *MockSpatialRepository) FetchRouteStops(routeID string) ([]GTFSStop, error) {
+	return m.Stops, nil
+}
+
 func TestDijkstraSearch(t *testing.T) {
 	// 1. Arrange Mock Nodes and Edges representing Cebu lines
 	mockStops := []GTFSStop{

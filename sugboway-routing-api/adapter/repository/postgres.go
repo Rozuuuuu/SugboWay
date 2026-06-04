@@ -279,3 +279,55 @@ func (r *PostgresSpatialRepository) FetchRouteCongestionParams(routeID string) (
 	return pv, roadType, roadCapacity, nil
 }
 
+func (r *PostgresSpatialRepository) FetchRouteShape(routeID string) (string, error) {
+	ctx := context.Background()
+	query := `
+		SELECT ST_AsGeoJSON(rs.geom)
+		FROM route_shapes rs
+		JOIN trips t ON t.shape_id = rs.shape_id
+		WHERE t.route_id = $1
+		LIMIT 1;
+	`
+	var geoJSON string
+	err := r.Pool.QueryRow(ctx, query, routeID).Scan(&geoJSON)
+	if err != nil {
+		return "", fmt.Errorf("route shape not found for %s: %w", routeID, err)
+	}
+	return geoJSON, nil
+}
+
+func (r *PostgresSpatialRepository) FetchRouteStops(routeID string) ([]domain.GTFSStop, error) {
+	ctx := context.Background()
+	query := `
+		SELECT s.stop_id, s.stop_name, s.stop_lat, s.stop_lon,
+		       s.wheelchair_boarding, s.has_shelter, s.is_terminal
+		FROM stops s
+		JOIN stop_times st ON s.stop_id = st.stop_id
+		JOIN trips t ON st.trip_id = t.trip_id
+		WHERE t.route_id = $1
+		GROUP BY s.stop_id, s.stop_name, s.stop_lat, s.stop_lon,
+		         s.wheelchair_boarding, s.has_shelter, s.is_terminal
+		ORDER BY MIN(st.stop_sequence);
+	`
+	rows, err := r.Pool.Query(ctx, query, routeID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch stops for route %s: %w", routeID, err)
+	}
+	defer rows.Close()
+
+	var stops []domain.GTFSStop
+	for rows.Next() {
+		var s domain.GTFSStop
+		var wc int
+		if err := rows.Scan(&s.StopID, &s.StopName, &s.Location.Lat, &s.Location.Lon,
+			&wc, &s.HasShelter, &s.IsTerminal); err != nil {
+			return nil, fmt.Errorf("failed to scan route stop: %w", err)
+		}
+		s.WheelchairAccessible = (wc != 2)
+		s.Aliases = []string{}
+		s.RouteIDs = []string{routeID}
+		stops = append(stops, s)
+	}
+	return stops, nil
+}
+

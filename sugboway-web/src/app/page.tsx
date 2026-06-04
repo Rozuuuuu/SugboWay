@@ -576,7 +576,7 @@ export default function DemoPage() {
     const map = mapRef.current;
     if (!map) return;
 
-    const drawOnMap = () => {
+    const drawOnMap = async () => {
       // Clean up previous route layer
       if (map.getLayer("route-line")) {
         map.removeLayer("route-line");
@@ -593,98 +593,145 @@ export default function DemoPage() {
       const selectedRoute = routes[selectedRouteIdx];
       if (!selectedRoute) return;
 
-      // If route has geometry data or fallback, draw it
-      let geoJson = selectedRoute.geoJson;
-      if (!geoJson || !geoJson.features || geoJson.features.length === 0) {
+      // Parallel fetch: shape geometry + intermediate stops for all transit legs
+      const transitLegs = selectedRoute.legs.filter(
+        (leg) => leg.type === "transit" && leg.routeId
+      );
+
+      const [shapeResults, stopResults] = await Promise.all([
+        // Fetch shapes for all transit legs in parallel
+        Promise.allSettled(
+          transitLegs.map((leg) =>
+            fetch(`${ROUTING_API_URL}/api/v1/route/shape?route_id=${leg.routeId}`)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null)
+          )
+        ),
+        // Fetch stops for all transit legs in parallel
+        Promise.allSettled(
+          transitLegs.map((leg) =>
+            fetch(`${ROUTING_API_URL}/api/v1/route/stops?route_id=${leg.routeId}`)
+              .then((r) => (r.ok ? r.json() : null))
+              .catch(() => null)
+          )
+        ),
+      ]);
+
+      // Build GeoJSON features from fetched shapes (with fallback)
+      let shapeFeatures: any[] = [];
+      shapeResults.forEach((result) => {
+        if (result.status === "fulfilled" && result.value?.geojson) {
+          try {
+            const parsed = JSON.parse(result.value.geojson);
+            shapeFeatures.push({ type: "Feature", geometry: parsed });
+          } catch { /* skip malformed */ }
+        }
+      });
+
+      // Fallback: straight-line interpolation from stop coordinates
+      if (shapeFeatures.length === 0) {
         const coordinates: [number, number][] = [];
         selectedRoute.legs.forEach((leg) => {
           coordinates.push([leg.fromStop.location.lon, leg.fromStop.location.lat]);
           coordinates.push([leg.toStop.location.lon, leg.toStop.location.lat]);
         });
-        geoJson = {
-          type: "FeatureCollection",
-          features: [
-            {
-              type: "Feature",
-              geometry: {
-                type: "LineString",
-                coordinates: coordinates,
-              },
+        shapeFeatures = [
+          {
+            type: "Feature",
+            geometry: {
+              type: "LineString",
+              coordinates: coordinates,
             },
-          ],
-        };
+          },
+        ];
       }
 
-      if (geoJson && geoJson.features && geoJson.features.length > 0) {
-        map.addSource("route-source", {
-          type: "geojson",
-          data: geoJson as any,
-        });
+      const geoJson = { type: "FeatureCollection", features: shapeFeatures };
 
-        map.addLayer({
-          id: "route-line",
-          type: "line",
-          source: "route-source",
-          layout: {
-            "line-join": "round",
-            "line-cap": "round",
-          },
-          paint: {
-            "line-color": "#0056B3", // Cebu Blue
-            "line-width": 6,
-            "line-opacity": 0.85,
-          },
-        });
+      // Draw route polyline
+      map.addSource("route-source", {
+        type: "geojson",
+        data: geoJson as any,
+      });
 
-        // Add Start/End stop markers color-coded based on crowding score
-        selectedRoute.legs.forEach((leg) => {
-          // Boarding stop
-          const elFrom = document.createElement("div");
-          const crowdScore = leg.fromStop.crowdingScore ?? 0.22;
-          const colorClass = crowdScore > 0.8 ? "bg-error" : crowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
-          elFrom.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${colorClass}`;
-          new maplibregl.Marker(elFrom)
-            .setLngLat([leg.fromStop.location.lon, leg.fromStop.location.lat])
-            .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.fromStop.stopName}</b></h6><p>Crowding: ${Math.round(crowdScore * 100)}%</p>`))
-            .addTo(map);
+      map.addLayer({
+        id: "route-line",
+        type: "line",
+        source: "route-source",
+        layout: {
+          "line-join": "round",
+          "line-cap": "round",
+        },
+        paint: {
+          "line-color": "#0056B3", // Cebu Blue
+          "line-width": 6,
+          "line-opacity": 0.85,
+        },
+      });
 
-          // Alighting stop
-          const elTo = document.createElement("div");
-          const toCrowdScore = leg.toStop.crowdingScore ?? 0.22;
-          const toColorClass = toCrowdScore > 0.8 ? "bg-error" : toCrowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
-          elTo.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${toColorClass}`;
-          new maplibregl.Marker(elTo)
-            .setLngLat([leg.toStop.location.lon, leg.toStop.location.lat])
-            .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.toStop.stopName}</b></h6><p>Crowding: ${Math.round(toCrowdScore * 100)}%</p>`))
-            .addTo(map);
-        });
+      // Add Start/End stop markers color-coded based on crowding score
+      selectedRoute.legs.forEach((leg) => {
+        // Boarding stop
+        const elFrom = document.createElement("div");
+        const crowdScore = leg.fromStop.crowdingScore ?? 0.22;
+        const colorClass = crowdScore > 0.8 ? "bg-error" : crowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
+        elFrom.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${colorClass}`;
+        new maplibregl.Marker(elFrom)
+          .setLngLat([leg.fromStop.location.lon, leg.fromStop.location.lat])
+          .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.fromStop.stopName}</b></h6><p>Crowding: ${Math.round(crowdScore * 100)}%</p>`))
+          .addTo(map);
 
-        // Snaps bounds of the map to the geometry line
-        try {
-          const coords: [number, number][] = [];
-          geoJson.features.forEach((feat) => {
-            if (feat.geometry.type === "LineString") {
-              const c = feat.geometry.coordinates as [number, number][];
-              coords.push(...c);
-            }
+        // Alighting stop
+        const elTo = document.createElement("div");
+        const toCrowdScore = leg.toStop.crowdingScore ?? 0.22;
+        const toColorClass = toCrowdScore > 0.8 ? "bg-error" : toCrowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
+        elTo.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${toColorClass}`;
+        new maplibregl.Marker(elTo)
+          .setLngLat([leg.toStop.location.lon, leg.toStop.location.lat])
+          .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.toStop.stopName}</b></h6><p>Crowding: ${Math.round(toCrowdScore * 100)}%</p>`))
+          .addTo(map);
+      });
+
+      // Render intermediate stop markers from fetched per-route stops
+      stopResults.forEach((result) => {
+        if (result.status === "fulfilled" && result.value?.stops) {
+          const routeStops = result.value.stops || [];
+          routeStops.forEach((stop: any) => {
+            const el = document.createElement("div");
+            el.className = "w-3 h-3 rounded-full bg-cebu-blue/60 border border-white shadow-sm";
+            new maplibregl.Marker(el)
+              .setLngLat([stop.location.lon, stop.location.lat])
+              .setPopup(new maplibregl.Popup({ offset: 8 }).setHTML(`<b>${stop.stopName}</b>`))
+              .addTo(map);
           });
-          if (coords.length > 0) {
-            const bounds = coords.reduce(
-              (b, coord) => b.extend(coord),
-              new maplibregl.LngLatBounds(coords[0], coords[0])
-            );
-            map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
-          }
-        } catch (e) {
-          // Fallback gracefully if bounds fit fails
         }
+      });
+
+      // Snaps bounds of the map to the geometry line
+      try {
+        const coords: [number, number][] = [];
+        geoJson.features.forEach((feat) => {
+          if (feat.geometry.type === "LineString") {
+            const c = feat.geometry.coordinates as [number, number][];
+            coords.push(...c);
+          }
+        });
+        if (coords.length > 0) {
+          const bounds = coords.reduce(
+            (b, coord) => b.extend(coord),
+            new maplibregl.LngLatBounds(coords[0], coords[0])
+          );
+          map.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+        }
+      } catch (e) {
+        // Fallback gracefully if bounds fit fails
       }
     };
 
     if (map.isStyleLoaded()) {
-      drawOnMap();
+      drawOnMap().catch(console.error);
     } else {
-      map.once("style.load", drawOnMap);
+      map.once("style.load", () => drawOnMap().catch(console.error));
     }
   }, [selectedRouteIdx, routes]);
 

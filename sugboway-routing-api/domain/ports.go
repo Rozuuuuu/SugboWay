@@ -31,6 +31,12 @@ type SpatialRepositoryPort interface {
 
 	// FetchRouteCongestionParams fetches BPR dynamic congestion variables
 	FetchRouteCongestionParams(routeID string) (int, string, int, error)
+
+	// FetchRouteShape returns a GeoJSON representation of a route's shape
+	FetchRouteShape(routeID string) (string, error)
+
+	// FetchRouteStops returns the ordered list of stops served by a specific route
+	FetchRouteStops(routeID string) ([]GTFSStop, error)
 }
 
 // RoutingServicePort specifies the core transit query functions exposed to our API layers.

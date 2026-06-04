@@ -57,3 +57,25 @@ VALUES
     ('trip_62b_north', '08:25:00', '08:30:00', 'stop_talamban', 2),
     ('trip_62b_north', '08:50:00', '08:55:00', 'stop_carbon', 3)
 ON CONFLICT (trip_id, stop_sequence) DO NOTHING;
+
+-- 7. Defensive schema patch: ensure has_aircon column exists on routes table
+-- (FetchGraphEdges in postgres.go scans this column, but schema.sql may not include it)
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS has_aircon BOOLEAN DEFAULT FALSE;
+
+-- 8. Seed route shapes with realistic Metro Cebu polylines
+INSERT INTO route_shapes (shape_id, geom) VALUES
+    ('shape_13c', ST_GeogFromText('SRID=4326;LINESTRING(123.9181 10.3705, 123.9150 10.3550, 123.9100 10.3400, 123.9050 10.3250, 123.9020 10.3150, 123.9016 10.2985)')),
+    ('shape_17b', ST_GeogFromText('SRID=4326;LINESTRING(123.9048 10.3392, 123.9030 10.3300, 123.9025 10.3200, 123.9020 10.3100, 123.9022 10.2979)')),
+    ('shape_mybus_1', ST_GeogFromText('SRID=4326;LINESTRING(123.8809 10.2818, 123.8850 10.2900, 123.8900 10.2980, 123.8950 10.3050, 123.9054 10.3178)')),
+    ('shape_04l', ST_GeogFromText('SRID=4326;LINESTRING(123.8973 10.3308, 123.9000 10.3290, 123.9061 10.3298, 123.9100 10.3200, 123.9183 10.3117)')),
+    ('shape_12l', ST_GeogFromText('SRID=4326;LINESTRING(123.8821 10.2995, 123.8900 10.2974, 123.8997 10.2974, 123.9048 10.3182)')),
+    ('shape_62b', ST_GeogFromText('SRID=4326;LINESTRING(123.9260 10.3950, 123.9200 10.3800, 123.9169 10.3662, 123.9100 10.3400, 123.9016 10.2902)'))
+ON CONFLICT (shape_id) DO NOTHING;
+
+-- 9. Link existing trips to their route shapes
+UPDATE trips SET shape_id = 'shape_13c' WHERE route_id = 'route_13c' AND shape_id IS NULL;
+UPDATE trips SET shape_id = 'shape_17b' WHERE route_id = 'route_17b' AND shape_id IS NULL;
+UPDATE trips SET shape_id = 'shape_mybus_1' WHERE route_id = 'route_mybus_1' AND shape_id IS NULL;
+UPDATE trips SET shape_id = 'shape_04l' WHERE route_id = 'route_04l' AND shape_id IS NULL;
+UPDATE trips SET shape_id = 'shape_12l' WHERE route_id = 'route_12l' AND shape_id IS NULL;
+UPDATE trips SET shape_id = 'shape_62b' WHERE route_id = 'route_62b' AND shape_id IS NULL;

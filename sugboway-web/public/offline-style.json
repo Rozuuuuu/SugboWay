@@ -1,112 +1,58 @@
 {
   "version": 8,
-  "name": "SugboWay Offline Map Style",
-  "metadata": {},
+  "name": "SugboWay Offline",
   "sources": {
-    "openmaptiles": {
+    "cebu-offline": {
       "type": "vector",
-      "url": "pmtiles:///cebu-urban.pmtiles"
+      "url": "pmtiles:///cebu-tiles.pmtiles"
     }
   },
   "layers": [
     {
       "id": "background",
       "type": "background",
-      "paint": {
-        "background-color": "#f1f3f5"
-      }
+      "paint": { "background-color": "#1a1a2e" }
     },
     {
       "id": "water",
       "type": "fill",
-      "source": "openmaptiles",
+      "source": "cebu-offline",
       "source-layer": "water",
-      "paint": {
-        "fill-color": "#a5d8ff"
-      }
-    },
-    {
-      "id": "landcover",
-      "type": "fill",
-      "source": "openmaptiles",
-      "source-layer": "landcover",
-      "paint": {
-        "fill-color": "#d3f9d8"
-      }
-    },
-    {
-      "id": "landuse",
-      "type": "fill",
-      "source": "openmaptiles",
-      "source-layer": "landuse",
-      "paint": {
-        "fill-color": "#ebfbee"
-      }
-    },
-    {
-      "id": "roads-casing",
-      "type": "line",
-      "source": "openmaptiles",
-      "source-layer": "transportation",
-      "paint": {
-        "line-color": "#dee2e6",
-        "line-width": {
-          "base": 1.2,
-          "stops": [
-            [10, 1.5],
-            [13, 2.5],
-            [16, 6.0]
-          ]
-        }
-      }
+      "paint": { "fill-color": "#16213e" }
     },
     {
       "id": "roads",
       "type": "line",
-      "source": "openmaptiles",
+      "source": "cebu-offline",
       "source-layer": "transportation",
       "paint": {
-        "line-color": "#ffffff",
-        "line-width": {
-          "base": 1.2,
-          "stops": [
-            [10, 0.8],
-            [13, 1.5],
-            [16, 4.0]
-          ]
-        }
+        "line-color": "#334155",
+        "line-width": 1.5
       }
     },
     {
       "id": "buildings",
       "type": "fill",
-      "source": "openmaptiles",
+      "source": "cebu-offline",
       "source-layer": "building",
       "paint": {
-        "fill-color": "#e9ecef",
-        "fill-outline-color": "#ced4da"
+        "fill-color": "#1e293b",
+        "fill-opacity": 0.6
       }
     },
     {
-      "id": "places",
+      "id": "labels",
       "type": "symbol",
-      "source": "openmaptiles",
+      "source": "cebu-offline",
       "source-layer": "place",
       "layout": {
-        "text-field": "{name:latin}",
-        "text-size": {
-          "stops": [
-            [10, 10],
-            [14, 14]
-          ]
-        },
-        "text-max-width": 8,
-        "text-offset": [0, 0]
+        "text-field": "{name}",
+        "text-size": 11
       },
       "paint": {
-        "text-color": "#495057",
-        "text-halo-color": "#ffffff",
-        "text-halo-width": 1.5
+        "text-color": "#94a3b8",
+        "text-halo-color": "#0f172a",
+        "text-halo-width": 1
       }
     }
   ]

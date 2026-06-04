@@ -211,3 +211,45 @@ func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
 	})
 }
 
+// GetRouteShape returns the PostGIS GeoJSON geometry for a route's spatial path.
+// GET /api/v1/route/shape?route_id=route_13c
+func (h *RoutingHandler) GetRouteShape(c *fiber.Ctx) error {
+	routeID := c.Query("route_id")
+	if routeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Missing 'route_id' query parameter",
+		})
+	}
+	geoJSON, err := h.Repo.FetchRouteShape(routeID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": fmt.Sprintf("Shape not found: %v", err),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"route_id": routeID,
+		"geojson":  geoJSON,
+	})
+}
+
+// GetRouteStops returns the ordered list of stops served by a specific route.
+// GET /api/v1/route/stops?route_id=route_13c
+func (h *RoutingHandler) GetRouteStops(c *fiber.Ctx) error {
+	routeID := c.Query("route_id")
+	if routeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Missing 'route_id' query parameter",
+		})
+	}
+	stops, err := h.Repo.FetchRouteStops(routeID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to fetch route stops: %v", err),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"route_id": routeID,
+		"stops":    stops,
+	})
+}
+
