@@ -291,7 +291,7 @@ func (e *DijkstraRoutingEngine) FindBestRoutes(origin, dest Coordinate, prefs Ro
 			// Safety Mode adjustments: Prioritize modernized e-jeeps (Aircon/CCTV) and well-lit hubs
 			if prefs.SafetyMode {
 				if edge.Type == "transit" {
-					if edge.Route != nil && (edge.Route.IsModernized || edge.Route.HasAircon) {
+					if edge.Route != nil && edge.Route.HasAircon {
 						// Favor modernized jeepneys (with Aircon/CCTV) by lowering search cost
 						edgeCost = edgeCost * 0.7
 					} else {

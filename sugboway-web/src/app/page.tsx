@@ -553,8 +553,8 @@ export default function DemoPage() {
     const map = new maplibregl.Map({
       container: mapContainerRef.current,
       style: mapStyle,
-      center: [123.8854, 10.3157], // Cebu City coordinates
-      zoom: 12,
+      center: [123.89, 10.31], // Metro Cebu coordinates
+      zoom: 13,
     });
 
     mapRef.current = map;
