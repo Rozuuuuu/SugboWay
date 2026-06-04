@@ -557,6 +557,18 @@ export default function DemoPage() {
       zoom: 13,
     });
 
+    map.once("load", () => {
+      map.resize();
+    });
+
+    // Handle initial zero-size container hydration delay
+    setTimeout(() => {
+      map.resize();
+    }, 100);
+    setTimeout(() => {
+      map.resize();
+    }, 500);
+
     mapRef.current = map;
 
     return () => {
@@ -565,11 +577,24 @@ export default function DemoPage() {
   }, []);
 
   // Update map style when switching between online/offline modes
+  const lastStyleRef = useRef<string>(mapStyle);
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    map.setStyle(mapStyle);
+    if (lastStyleRef.current !== mapStyle) {
+      map.setStyle(mapStyle);
+      lastStyleRef.current = mapStyle;
+    }
   }, [mapStyle]);
+
+  // Call map.resize() when switching back to the map tab to prevent grey/blank canvas issues
+  useEffect(() => {
+    if (currentTab === "map" && mapRef.current) {
+      setTimeout(() => {
+        mapRef.current?.resize();
+      }, 50); // Small timeout to ensure DOM layout has updated
+    }
+  }, [currentTab]);
 
   // Update Route Polyline and Markers on Selected Route index change
   useEffect(() => {
@@ -966,8 +991,7 @@ export default function DemoPage() {
         <div className="flex-1 p-4 md:py-6 max-w-4xl w-full mx-auto pb-24 md:pb-6 space-y-6">
           
           {/* TAB 1: MAP FINDER */}
-          {currentTab === "map" && (
-            <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
+          <div className={currentTab === "map" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
               {/* Navigation & Search Area */}
               <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-xs space-y-4">
@@ -1247,12 +1271,10 @@ export default function DemoPage() {
                   </div>
                 </div>
               </section>
-            </div>
-          )}
+          </div>
 
           {/* TAB 2: RUSH HOUR TRAFFIC ANALYTICS */}
-          {currentTab === "rush" && (
-            <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
+          <div className={currentTab === "rush" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
               {/* Traffic Density Needle Gauge (WOW Component) */}
               <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-6 flex flex-col items-center text-center shadow-xs">
@@ -1446,12 +1468,10 @@ export default function DemoPage() {
                   </p>
                 </div>
               </section>
-            </div>
-          )}
+          </div>
 
           {/* TAB 3: CONVERSATIONAL AI TRANSIT GUIDE */}
-          {currentTab === "chat" && (
-            <div className="flex flex-col bg-surface-container-lowest border border-outline-variant rounded-3xl h-[560px] overflow-hidden shadow-xs animate-[fadeIn_0.3s_ease-out]">
+          <div className={currentTab === "chat" ? "flex flex-col bg-surface-container-lowest border border-outline-variant rounded-3xl h-[560px] overflow-hidden shadow-xs animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
               {/* Chat Thread Container */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -1579,12 +1599,10 @@ export default function DemoPage() {
                   <span className="material-symbols-outlined text-sm">send</span>
                 </button>
               </form>
-            </div>
-          )}
+          </div>
 
           {/* TAB 4: PROFILE & EMERGENCY HUB */}
-          {currentTab === "profile" && (
-            <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
+          <div className={currentTab === "profile" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
               {/* Profile Card */}
               <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-xs flex items-center gap-4">
@@ -1704,8 +1722,7 @@ export default function DemoPage() {
                   ))}
                 </div>
               </section>
-            </div>
-          )}
+          </div>
 
         </div>
 

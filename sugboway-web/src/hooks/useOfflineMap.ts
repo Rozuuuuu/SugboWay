@@ -30,7 +30,7 @@ export function useOfflineMap() {
 
   const mapStyle = isOffline
     ? "/offline-style.json"
-    : "https://tiles.openfreemap.org/styles/bright";
+    : "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
   return { isOffline, mapStyle };
 }
