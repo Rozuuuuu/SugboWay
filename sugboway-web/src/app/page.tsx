@@ -1200,7 +1200,11 @@ export default function DemoPage() {
 
                 <div className="relative h-64 rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
                   {/* Real MapContainer */}
-                  <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+                  <div 
+                    ref={mapContainerRef} 
+                    className="absolute inset-0 z-0 w-full h-full" 
+                    style={{ position: 'absolute', width: '100%', height: '100%' }} 
+                  />
 
                   {/* Offline Mode Banner */}
                   {isOffline && (
