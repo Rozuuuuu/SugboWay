@@ -116,17 +116,29 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
       return;
     }
 
-    const targetLat = activeLeg.toStop.location.lat;
-    const targetLon = activeLeg.toStop.location.lon;
-    const stopId = activeLeg.toStop.stopId;
-    const stopName = activeLeg.toStop.stopName;
+    const routeId = activeLeg.routeId;
+    let stopsList: any[] = [activeLeg.toStop]; // Default/fallback to destination stop
+    let isCancelled = false;
+
+    const routingApiUrl = process.env.NEXT_PUBLIC_ROUTING_API_URL || "http://localhost:8080";
+
+    if (routeId) {
+      fetch(`${routingApiUrl}/api/v1/route/stops?route_id=${routeId}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (isCancelled) return;
+          if (data && data.stops && data.stops.length > 0) {
+            stopsList = data.stops;
+            console.log(`[ProximityEtiquette] Loaded ${stopsList.length} route stops for tracking.`);
+          }
+        })
+        .catch((err) => console.error("[ProximityEtiquette] Failed to fetch route stops:", err));
+    }
 
     // Request Notification permission proactively
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission();
     }
-
-    console.log(`[ProximityEtiquette] Starting battery-optimized geolocator to stop: ${stopName}`);
 
     // Dual-mode state machine refs to clean up correctly
     let isFineMode = false;
@@ -140,6 +152,34 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
+    };
+
+    const getClosestStopDetails = (latitude: number, longitude: number) => {
+      const eligibleStops = stopsList.filter(s => s.stopId !== activeLeg.fromStop.stopId);
+      if (eligibleStops.length === 0) {
+        return {
+          distance: getDistanceMeters(latitude, longitude, activeLeg.toStop.location.lat, activeLeg.toStop.location.lon),
+          stopId: activeLeg.toStop.stopId,
+          stopName: activeLeg.toStop.stopName
+        };
+      }
+
+      let minDistance = Infinity;
+      let closestStop = eligibleStops[0];
+
+      eligibleStops.forEach((stop) => {
+        const dist = getDistanceMeters(latitude, longitude, stop.location.lat, stop.location.lon);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestStop = stop;
+        }
+      });
+
+      return {
+        distance: minDistance,
+        stopId: closestStop.stopId,
+        stopName: closestStop.stopName
+      };
     };
 
     const switchToCoarseMode = () => {
@@ -157,12 +197,12 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const distance = getDistanceMeters(latitude, longitude, targetLat, targetLon);
+          const { distance, stopId, stopName } = getClosestStopDetails(latitude, longitude);
           
-          console.log(`[ProximityEtiquette] Fine live update: Distance to ${stopName}: ${distance.toFixed(1)}m`);
+          console.log(`[ProximityEtiquette] Fine live update: Distance to closest stop ${stopName}: ${distance.toFixed(1)}m`);
           
           if (distance > 500) {
-            // Revert back to coarse mode if user moves away from stop
+            // Revert back to coarse mode if user moves away from closest stop
             switchToCoarseMode();
             return;
           }
@@ -203,9 +243,9 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const distance = getDistanceMeters(latitude, longitude, targetLat, targetLon);
+          const { distance, stopName } = getClosestStopDetails(latitude, longitude);
 
-          console.log(`[ProximityEtiquette] Coarse poll: Distance to ${stopName}: ${distance.toFixed(1)}m`);
+          console.log(`[ProximityEtiquette] Coarse poll: Distance to closest stop ${stopName}: ${distance.toFixed(1)}m`);
 
           if (distance <= 500) {
             // Dynamically scale up to High-Frequency WatchPosition
@@ -238,6 +278,7 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
     switchToCoarseMode();
 
     return () => {
+      isCancelled = true;
       clearTimersAndWatchers();
     };
   }, [activeLeg]);

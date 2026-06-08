@@ -69,7 +69,9 @@ INSERT INTO route_shapes (shape_id, geom) VALUES
     ('shape_mybus_1', ST_GeogFromText('SRID=4326;LINESTRING(123.8809 10.2818, 123.8850 10.2900, 123.8900 10.2980, 123.8950 10.3050, 123.9054 10.3178)')),
     ('shape_04l', ST_GeogFromText('SRID=4326;LINESTRING(123.8973 10.3308, 123.9000 10.3290, 123.9061 10.3298, 123.9100 10.3200, 123.9183 10.3117)')),
     ('shape_12l', ST_GeogFromText('SRID=4326;LINESTRING(123.8821 10.2995, 123.8900 10.2974, 123.8997 10.2974, 123.9048 10.3182)')),
-    ('shape_62b', ST_GeogFromText('SRID=4326;LINESTRING(123.9260 10.3950, 123.9200 10.3800, 123.9169 10.3662, 123.9100 10.3400, 123.9016 10.2902)'))
+    ('shape_62b', ST_GeogFromText('SRID=4326;LINESTRING(123.9260 10.3950, 123.9200 10.3800, 123.9169 10.3662, 123.9100 10.3400, 123.9016 10.2902)')),
+    ('shape_01b', ST_GeogFromText('SRID=4326;LINESTRING(123.8821 10.2995, 123.8890 10.3010, 123.8960 10.2990, 123.8997 10.2974, 123.9020 10.2980, 123.9070 10.3030, 123.9120 10.3050, 123.9120 10.2940, 123.9090 10.2910)')),
+    ('shape_03b', ST_GeogFromText('SRID=4326;LINESTRING(123.9120 10.3220, 123.9110 10.3210, 123.9080 10.3160, 123.9020 10.3150, 123.8935 10.3117, 123.8950 10.3080, 123.8970 10.3040, 123.8980 10.3010, 123.8997 10.2974)'))
 ON CONFLICT (shape_id) DO NOTHING;
 
 -- 9. Link existing trips to their route shapes
@@ -79,3 +81,5 @@ UPDATE trips SET shape_id = 'shape_mybus_1' WHERE route_id = 'route_mybus_1' AND
 UPDATE trips SET shape_id = 'shape_04l' WHERE route_id = 'route_04l' AND shape_id IS NULL;
 UPDATE trips SET shape_id = 'shape_12l' WHERE route_id = 'route_12l' AND shape_id IS NULL;
 UPDATE trips SET shape_id = 'shape_62b' WHERE route_id = 'route_62b' AND shape_id IS NULL;
+UPDATE trips SET shape_id = 'shape_01b' WHERE route_id = 'route_01b' AND shape_id IS NULL;
+UPDATE trips SET shape_id = 'shape_03b' WHERE route_id = 'route_03b' AND shape_id IS NULL;
