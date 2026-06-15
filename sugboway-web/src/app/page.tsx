@@ -1091,7 +1091,7 @@ export default function DemoPage() {
                             transition-all duration-200 select-none
                             ${
                               isSelected
-                                ? "bg-cebu-blue text-white shadow-xs scale-102"
+                                ? "bg-cebu-blue text-white dark:text-on-primary-fixed shadow-xs scale-102 font-extrabold"
                                 : "bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest border border-outline-variant/30"
                             }
                             active:scale-98
@@ -1112,7 +1112,7 @@ export default function DemoPage() {
                   <button
                     onClick={fetchRoutes}
                     disabled={isRoutingLoading}
-                    className="w-full bg-cebu-blue hover:bg-primary disabled:bg-cebu-blue/50 text-white font-bold min-h-[48px] py-3 px-6 rounded-2xl shadow-sm transition-all duration-200 active:scale-98 flex items-center justify-center gap-2 select-none text-sm"
+                    className="w-full bg-cebu-blue hover:bg-primary disabled:bg-cebu-blue/50 text-white dark:text-on-primary-fixed font-bold min-h-[48px] py-3 px-6 rounded-2xl shadow-sm transition-all duration-200 active:scale-98 flex items-center justify-center gap-2 select-none text-sm"
                   >
                     {isRoutingLoading ? (
                       <>
@@ -1156,51 +1156,6 @@ export default function DemoPage() {
                   </button>
                 </div>
               )}
-
-              {/* Suggested Routes Listing */}
-              <section className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">
-                    Suggested Routes ({routes.length})
-                  </h2>
-                  <span className="text-xs text-on-surface-variant">
-                    Filters: {passengerType.toUpperCase()}
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  {isRoutingLoading ? (
-                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
-                      <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs text-on-surface-variant font-semibold">Loading real-time Dijkstra routes...</p>
-                    </div>
-                  ) : routingError ? (
-                    <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
-                      <span className="material-symbols-outlined text-error text-3xl">error</span>
-                      <p className="text-xs text-error font-bold">{routingError}</p>
-                      <p className="text-[10px] text-on-surface-variant">Fuzzy snapped locations. Showing offline fallbacks instead.</p>
-                      <button onClick={fetchRoutes} className="mt-2 text-xs font-bold text-cebu-blue hover:underline">Retry Connection</button>
-                    </div>
-                  ) : routes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
-                      <span className="material-symbols-outlined text-outline text-3xl">sentiment_dissatisfied</span>
-                      <p className="text-xs text-on-surface-variant font-bold mt-2">No routes found.</p>
-                      <p className="text-[10px] text-outline mt-1">Please try modifying your search inputs.</p>
-                    </div>
-                  ) : (
-                    routes.map((route, idx) => (
-                      <RouteCard
-                        key={idx}
-                        route={route}
-                        passengerType={passengerType}
-                        isSelected={selectedRouteIdx === idx}
-                        onClick={() => setSelectedRouteIdx(idx)}
-                        onStartNavigation={() => setIsNavDrawerOpen(true)}
-                      />
-                    ))
-                  )}
-                </div>
-              </section>
 
               {/* Dynamic Map Representation */}
               <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-5 space-y-4">
@@ -1289,6 +1244,51 @@ export default function DemoPage() {
                       Ask AI Guide
                     </button>
                   </div>
+                </div>
+              </section>
+
+              {/* Suggested Routes Listing */}
+              <section className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">
+                    Suggested Routes ({routes.length})
+                  </h2>
+                  <span className="text-xs text-on-surface-variant">
+                    Filters: {passengerType.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {isRoutingLoading ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
+                      <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
+                      <p className="text-xs text-on-surface-variant font-semibold">Loading real-time Dijkstra routes...</p>
+                    </div>
+                  ) : routingError ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
+                      <span className="material-symbols-outlined text-error text-3xl">error</span>
+                      <p className="text-xs text-error font-bold">{routingError}</p>
+                      <p className="text-[10px] text-on-surface-variant">Fuzzy snapped locations. Showing offline fallbacks instead.</p>
+                      <button onClick={fetchRoutes} className="mt-2 text-xs font-bold text-cebu-blue hover:underline">Retry Connection</button>
+                    </div>
+                  ) : routes.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
+                      <span className="material-symbols-outlined text-outline text-3xl">sentiment_dissatisfied</span>
+                      <p className="text-xs text-on-surface-variant font-bold mt-2">No routes found.</p>
+                      <p className="text-[10px] text-outline mt-1">Please try modifying your search inputs.</p>
+                    </div>
+                  ) : (
+                    routes.map((route, idx) => (
+                      <RouteCard
+                        key={idx}
+                        route={route}
+                        passengerType={passengerType}
+                        isSelected={selectedRouteIdx === idx}
+                        onClick={() => setSelectedRouteIdx(idx)}
+                        onStartNavigation={() => setIsNavDrawerOpen(true)}
+                      />
+                    ))
+                  )}
                 </div>
               </section>
           </div>
@@ -1424,7 +1424,7 @@ export default function DemoPage() {
                 </section>
 
                 {/* Safety Mode Toggle Card */}
-                <section className="relative overflow-hidden bg-primary text-white border border-outline-variant rounded-3xl p-6 flex flex-col justify-between shadow-xs">
+                <section className="relative overflow-hidden bg-primary text-on-primary border border-outline-variant rounded-3xl p-6 flex flex-col justify-between shadow-xs">
                   <div className="z-10 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
@@ -1442,15 +1442,15 @@ export default function DemoPage() {
                       </button>
                     </div>
 
-                    <p className="text-xs opacity-90 leading-relaxed">
+                    <p className="text-xs opacity-90 leading-relaxed text-on-primary/95">
                       Commuting after 10 PM? Safety Mode filters routing results to prefer modernized corridors featuring on-board CCTVs and live GPS trackers.
                     </p>
 
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      <span className="bg-white/10 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                      <span className="bg-on-primary/10 text-on-primary text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-on-primary/10">
                         <span className="material-symbols-outlined text-[10px]">videocam</span> CCTV Monitored
                       </span>
-                      <span className="bg-white/10 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                      <span className="bg-on-primary/10 text-on-primary text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-on-primary/10">
                         <span className="material-symbols-outlined text-[10px]">gps_fixed</span> GPS Tracked
                       </span>
                     </div>
@@ -1461,7 +1461,7 @@ export default function DemoPage() {
                       onClick={() => setIsSafetyModeActive(!isSafetyModeActive)}
                       className={`
                         w-full py-2.5 rounded-xl text-xs font-bold transition-all active:scale-98
-                        ${isSafetyModeActive ? "bg-aircon-cyan text-white shadow-xs" : "bg-white text-primary hover:bg-zinc-100 shadow-sm"}
+                        ${isSafetyModeActive ? "bg-aircon-cyan text-white dark:text-on-primary-fixed shadow-xs" : "bg-white text-primary dark:text-on-primary-fixed-variant hover:bg-zinc-100 shadow-sm"}
                       `}
                     >
                       {isSafetyModeActive ? "Deactivate Safety Mode" : "Activate Safety Mode"}

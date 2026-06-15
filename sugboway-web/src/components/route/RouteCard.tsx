@@ -104,9 +104,8 @@ export default function RouteCard({
 
     if (onClick) {
       onClick();
-    } else {
-      setIsExpanded(!isExpanded);
     }
+    setIsExpanded((prev) => !prev);
   };
 
   return (
@@ -130,52 +129,73 @@ export default function RouteCard({
         <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-cebu-blue via-primary to-purple-500 rounded-l-2xl" />
       )}
 
-      {/* Main Row Info */}
-      <div className="flex gap-4 items-start">
-        {/* Left Badge Column */}
-        <div className="flex flex-col items-center gap-2 min-w-[4.5rem]">
-          {transitLegs.length > 0 ? (
-            <div className="flex flex-wrap justify-center gap-1">
-              {transitLegs.map((leg, idx) => (
-                <React.Fragment key={leg.routeId || idx}>
-                  {idx > 0 && (
-                    <span
-                      className="material-symbols-outlined text-xs text-outline self-center"
-                      aria-hidden="true"
-                    >
-                      chevron_right
-                    </span>
-                  )}
-                  <RouteCodeBadge
-                    code={leg.routeShortName || "JP"}
-                    route={leg.route}
-                    size={transitLegs.length > 2 ? "sm" : "md"}
-                  />
-                </React.Fragment>
-              ))}
-            </div>
-          ) : (
-            <span className="material-symbols-outlined text-3xl text-outline-variant p-2 bg-surface-container-highest rounded-full">
-              directions_walk
-            </span>
-          )}
+      {/* Main Row Info: Stacked on mobile, side-by-side on sm+ */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start">
+        {/* Mobile Top Row / Desktop Left Column */}
+        <div className="flex sm:flex-col items-center justify-between sm:justify-start gap-3 w-full sm:w-auto sm:min-w-[4.5rem] pb-3 sm:pb-0 border-b border-outline-variant/30 sm:border-b-0">
+          <div className="flex items-center gap-2">
+            {transitLegs.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {transitLegs.map((leg, idx) => (
+                  <React.Fragment key={leg.routeId || idx}>
+                    {idx > 0 && (
+                      <span
+                        className="material-symbols-outlined text-xs text-outline self-center"
+                        aria-hidden="true"
+                      >
+                        chevron_right
+                      </span>
+                    )}
+                    <RouteCodeBadge
+                      code={leg.routeShortName || "JP"}
+                      route={leg.route}
+                      size={transitLegs.length > 2 ? "sm" : "md"}
+                    />
+                  </React.Fragment>
+                ))}
+              </div>
+            ) : (
+              <span className="material-symbols-outlined text-2xl text-outline-variant p-1.5 bg-surface-container-highest rounded-full">
+                directions_walk
+              </span>
+            )}
 
-          <span className="text-sm font-bold text-cebu-blue tabular-nums">
+            {/* Mobile-only duration */}
+            <span className="sm:hidden text-base font-extrabold text-cebu-blue tabular-nums">
+              {formatDuration(route.totalTimeSeconds)}
+            </span>
+          </div>
+
+          {/* Desktop-only duration */}
+          <span className="hidden sm:inline text-sm font-bold text-cebu-blue tabular-nums mt-1">
             {formatDuration(route.totalTimeSeconds)}
           </span>
+
+          {/* Mobile-only Fare badge (aligned right) */}
+          <div className="sm:hidden shrink-0">
+            <FareBadge
+              distanceKm={route.legs.reduce(
+                (acc, leg) => acc + leg.distanceMeters / 1000,
+                0
+              )}
+              transfers={route.transfers}
+              passengerType={passengerType}
+              showToggle={false}
+            />
+          </div>
         </div>
 
-        {/* Middle Info Column */}
-        <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-start gap-2">
-            <div>
-              <h3 className="text-body-md font-bold text-on-surface truncate">
+        {/* Content Body Column */}
+        <div className="flex-1 min-w-0 w-full space-y-3">
+          <div className="flex justify-between items-start gap-4">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base sm:text-body-md font-bold text-on-surface break-words leading-snug">
                 {transitLegs.length > 0 ? routeLongName : "Walking Route"}
               </h3>
 
               {transitLegs.length > 0 && (
                 <div className="flex items-center flex-wrap gap-2 mt-1.5">
-                  <span className="text-sm text-on-surface-variant flex items-center gap-1.5">
+                  <span className="text-xs sm:text-sm text-on-surface-variant flex items-center gap-1.5">
                     <span
                       className="material-symbols-outlined text-[16px]"
                       aria-hidden="true"
@@ -188,7 +208,7 @@ export default function RouteCard({
                   </span>
 
                   {isAircon && (
-                    <span className="bg-aircon-cyan/10 text-aircon-cyan text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border border-aircon-cyan/20">
+                    <span className="bg-aircon-cyan/10 text-aircon-cyan text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border border-aircon-cyan/20">
                       Aircon
                     </span>
                   )}
@@ -196,8 +216,8 @@ export default function RouteCard({
               )}
 
               {/* Transfers indicator */}
-              <div className="flex items-center gap-1.5 mt-1.5 text-sm text-on-surface-variant">
-                <span className="material-symbols-outlined text-[16px]">
+              <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1.5 text-xs sm:text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[16px] shrink-0">
                   {route.transfers > 0 ? "alt_route" : "trending_flat"}
                 </span>
                 <span>
@@ -209,7 +229,7 @@ export default function RouteCard({
                 </span>
                 {totalWalkingDistance > 0 && (
                   <>
-                    <span className="text-outline-variant">•</span>
+                    <span className="text-outline-variant hidden xs:inline">•</span>
                     <span className="flex items-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">
                         directions_walk
@@ -221,21 +241,23 @@ export default function RouteCard({
               </div>
             </div>
 
-            {/* Right Fare Column */}
-            <FareBadge
-              distanceKm={route.legs.reduce(
-                (acc, leg) => acc + leg.distanceMeters / 1000,
-                0
-              )}
-              transfers={route.transfers}
-              passengerType={passengerType}
-              showToggle={false}
-            />
+            {/* Desktop-only Fare badge */}
+            <div className="hidden sm:block shrink-0">
+              <FareBadge
+                distanceKm={route.legs.reduce(
+                  (acc, leg) => acc + leg.distanceMeters / 1000,
+                  0
+                )}
+                transfers={route.transfers}
+                passengerType={passengerType}
+                showToggle={false}
+              />
+            </div>
           </div>
 
           {/* Crowding Indicator Bar */}
           {transitLegs.length > 0 && (
-            <div className="mt-3 pt-2 border-t border-outline-variant/30">
+            <div className="pt-2 border-t border-outline-variant/30">
               <CrowdingIndicator
                 score={route.crowdingWorstLeg}
                 showLabel={true}
@@ -396,21 +418,21 @@ export default function RouteCard({
                                 </span>
                               )}
 
-                              {/* Cebuano Cue Badge */}
+                              {/* Cebuano Cue & Cultural Guide Callouts (Polished Cards) */}
                               {(inst.cebuanoPhrase || inst.culturalCue) && (
-                                <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
+                                <div className="mt-2.5 space-y-1.5">
                                   {inst.cebuanoPhrase && (
-                                    <span className="bg-primary/5 text-primary text-xs px-2.5 py-1 rounded-full font-bold border border-primary/10 italic">
-                                      "{inst.cebuanoPhrase}"
-                                    </span>
+                                    <div className="text-xs text-primary dark:text-primary-fixed font-bold italic bg-primary/5 dark:bg-primary-container/20 border border-primary/10 dark:border-primary/20 rounded-lg px-3 py-1.5 inline-block">
+                                      Cebuano Phrase: "{inst.cebuanoPhrase}"
+                                    </div>
                                   )}
                                   {inst.culturalCue && (
-                                    <span className="bg-surface-container-highest text-on-surface-variant text-xs px-2.5 py-1 rounded-full flex items-center gap-0.5 border border-outline-variant/20">
-                                      <span className="material-symbols-outlined text-[14px] text-cebu-blue">
+                                    <div className="text-xs text-on-surface-variant bg-surface-container-high/65 border border-outline-variant/25 rounded-lg px-3 py-2 flex items-start gap-1.5 leading-relaxed">
+                                      <span className="material-symbols-outlined text-[16px] text-cebu-blue shrink-0 mt-0.5" aria-hidden="true">
                                         info
                                       </span>
-                                      {inst.culturalCue}
-                                    </span>
+                                      <span>{inst.culturalCue}</span>
+                                    </div>
                                   )}
                                 </div>
                               )}
