@@ -29,8 +29,8 @@ export default function ProximityAlert({
     : 100;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-6 md:w-96 z-40 animate-slide-up shadow-2xl">
-      <div className="bg-surface-container-high/90 backdrop-blur-xl border border-safe-green/40 shadow-2xl rounded-3xl p-5 flex flex-col gap-4 relative overflow-hidden">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:w-96 z-40 animate-slide-up shadow-2xl">
+      <div className="bg-surface-container-high/90 backdrop-blur-xl border border-safe-green/40 shadow-2xl rounded-3xl p-5 flex flex-col gap-4 relative overflow-hidden theme-transition">
         {/* Pulsing decorative background glow */}
         <div className="absolute top-0 right-0 w-24 h-24 bg-safe-green/10 rounded-full blur-2xl -mr-8 -mt-8 animate-pulse" />
 

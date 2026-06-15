@@ -94,7 +94,7 @@ export default function FareBadge({
       <div className="flex items-baseline gap-1.5">
         {/* Struck-through original price (when discounted) */}
         {hasDiscount && (
-          <span className="text-xs line-through text-outline fare-transition">
+          <span className="text-xs line-through text-outline fare-transition font-medium">
             {formatPHP(regularFare.totalFare)}
           </span>
         )}
@@ -102,7 +102,7 @@ export default function FareBadge({
         {/* Active fare */}
         <span
           className={`
-            text-xl font-semibold tabular-nums fare-transition
+            text-2xl font-extrabold tabular-nums fare-transition
             ${hasDiscount ? "text-cebu-blue" : "text-safe-green"}
           `}
         >
@@ -111,7 +111,7 @@ export default function FareBadge({
       </div>
 
       {/* Discount Label */}
-      <span className="text-xs text-on-surface-variant italic">
+      <span className={`text-xs italic transition-colors ${hasDiscount ? "text-cebu-blue font-semibold" : "text-on-surface-variant"}`}>
         {DISCOUNT_LABELS[passengerType]}
       </span>
 

@@ -1,18 +1,17 @@
 @import "tailwindcss";
 
 /* =========================================================================
-   SugboWay Design System
+   SugboWay Design System v2.0
    =========================================================================
-   Ported from the static HTML prototypes.
-   Color palette: Material Design 3 with Cebu transit brand tokens.
-   Typography: Inter (consistent with all 4 existing prototypes).
+   Material Design 3 color system with light/dark adaptive tokens.
+   Typography: Plus Jakarta Sans (headings) + Inter (body).
    ========================================================================= */
 
 /* ---------------------------------------------------------------------------
-   Tailwind v4 Theme: Design Tokens
+   Tailwind v4 Theme: Design Tokens (Light — Default)
    --------------------------------------------------------------------------- */
 @theme inline {
-  /* --- Brand Colors (from prototype palette) --- */
+  /* --- Brand Colors --- */
   --color-cebu-blue: #0056b3;
   --color-safe-green: #2e7d32;
   --color-alert-amber: #ffbf00;
@@ -85,7 +84,7 @@
   --color-crowding-high: #f97316;
   --color-crowding-full: #ba1a1a;
 
-  /* --- Spacing (from prototype config) --- */
+  /* --- Spacing --- */
   --spacing-touch-target-min: 48px;
   --spacing-base: 8px;
   --spacing-container-margin: 16px;
@@ -93,9 +92,10 @@
 
   /* --- Font Families --- */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-plus-jakarta-sans), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
-  /* --- Font Sizes (from prototype type scale) --- */
+  /* --- Font Sizes --- */
   --font-size-label-sm: 12px;
   --font-size-route-code: 14px;
   --font-size-body-md: 16px;
@@ -103,6 +103,75 @@
   --font-size-headline-sm: 20px;
   --font-size-headline-md: 24px;
   --font-size-display-lg: 32px;
+}
+
+/* ---------------------------------------------------------------------------
+   Dark Theme Overrides
+   --------------------------------------------------------------------------- */
+html.dark {
+  --color-cebu-blue: #6eaaff;
+  --color-safe-green: #66bb6a;
+  --color-alert-amber: #ffd54f;
+  --color-aircon-cyan: #4dd0e1;
+
+  --color-primary: #acc7ff;
+  --color-primary-container: #1a4b8c;
+  --color-primary-fixed: #d7e2ff;
+  --color-primary-fixed-dim: #acc7ff;
+  --color-on-primary: #002f6b;
+  --color-on-primary-container: #d7e2ff;
+  --color-on-primary-fixed: #001a40;
+  --color-on-primary-fixed-variant: #004491;
+  --color-inverse-primary: #0056b3;
+
+  --color-secondary: #88d982;
+  --color-secondary-container: #1a5c22;
+  --color-secondary-fixed: #a3f69c;
+  --color-secondary-fixed-dim: #88d982;
+  --color-on-secondary: #003910;
+  --color-on-secondary-container: #a0f399;
+  --color-on-secondary-fixed: #002204;
+  --color-on-secondary-fixed-variant: #005312;
+
+  --color-tertiary: #ffb694;
+  --color-tertiary-container: #6e2900;
+  --color-tertiary-fixed: #ffdbcc;
+  --color-tertiary-fixed-dim: #ffb694;
+  --color-on-tertiary: #502000;
+  --color-on-tertiary-container: #ffdbcc;
+  --color-on-tertiary-fixed: #351000;
+  --color-on-tertiary-fixed-variant: #7b2f00;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  --color-surface: #111318;
+  --color-surface-dim: #111318;
+  --color-surface-bright: #37393e;
+  --color-surface-variant: #424752;
+  --color-surface-tint: #acc7ff;
+  --color-surface-container: #1d1f25;
+  --color-surface-container-low: #191c21;
+  --color-surface-container-high: #282a2f;
+  --color-surface-container-highest: #33353a;
+  --color-surface-container-lowest: #0c0e13;
+  --color-on-surface: #e2e2eb;
+  --color-on-surface-variant: #c2c6d4;
+  --color-inverse-surface: #e2e2eb;
+  --color-inverse-on-surface: #2e3037;
+
+  --color-outline: #8c9199;
+  --color-outline-variant: #424752;
+
+  --color-background: #111318;
+  --color-on-background: #e2e2eb;
+
+  --color-crowding-low: #66bb6a;
+  --color-crowding-mid: #ffd54f;
+  --color-crowding-high: #fb923c;
+  --color-crowding-full: #ffb4ab;
 }
 
 /* ---------------------------------------------------------------------------
@@ -114,6 +183,12 @@ body {
   color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.2s ease;
+}
+
+/* Heading typography uses display font */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
 }
 
 /* ---------------------------------------------------------------------------
@@ -133,6 +208,17 @@ body {
   white-space: nowrap;
   direction: ltr;
   vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------------------
+   Theme Transition Utility
+   --------------------------------------------------------------------------- */
+.theme-transition {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.2s ease,
+    box-shadow 0.3s ease;
 }
 
 /* ---------------------------------------------------------------------------
@@ -202,6 +288,22 @@ body {
   scrollbar-width: none;
 }
 
+/* Custom scrollbar for dark/light */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
 /* ---------------------------------------------------------------------------
    Step Line Connecting Styles
    --------------------------------------------------------------------------- */
@@ -239,3 +341,31 @@ body {
   }
 }
 
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Glass Effect Utility
+   --------------------------------------------------------------------------- */
+.glass {
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+/* ---------------------------------------------------------------------------
+   Safe Area Insets (for notched phones)
+   --------------------------------------------------------------------------- */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

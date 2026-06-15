@@ -13,6 +13,8 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
 import { useOfflineMap } from "@/hooks/useOfflineMap";
 import { useProximityEtiquette } from "@/hooks/useProximityEtiquette";
+import { useTheme } from "@/components/ThemeProvider";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // Register PMTiles protocol handler globally once in the browser environment
 if (typeof window !== "undefined") {
@@ -402,7 +404,8 @@ const ROUTING_API_URL = process.env.NEXT_PUBLIC_ROUTING_API_URL || "http://local
 const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000";
 
 export default function DemoPage() {
-  const { isOffline, mapStyle } = useOfflineMap();
+  const { theme, setTheme, isDark } = useTheme();
+  const { isOffline, mapStyle } = useOfflineMap(isDark);
 
   // Shared States
   const [currentTab, setCurrentTab] = useState<"map" | "rush" | "chat" | "profile">("map");
@@ -907,8 +910,11 @@ export default function DemoPage() {
     <div className="flex-1 flex flex-col md:flex-row min-h-screen bg-background">
       
       {/* Responsive Desktop Sidebar (WOW Design Element) */}
-      <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-outline-variant p-4 space-y-6">
-        <div className="flex items-center gap-3 py-2 border-b border-outline-variant/30">
+      <aside className="hidden md:flex flex-col w-72 bg-surface/80 backdrop-blur-xl border-r border-outline-variant p-4 space-y-6 relative theme-transition">
+        {/* Top gradient accent stripe */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cebu-blue via-purple-600 to-aircon-cyan" />
+
+        <div className="flex items-center gap-3 pt-3 pb-2 border-b border-outline-variant/30">
           <span className="material-symbols-outlined text-cebu-blue text-3xl font-bold">directions_transit</span>
           <div className="flex flex-col">
             <h1 className="text-md font-extrabold text-cebu-blue tracking-wider uppercase">SugboWay</h1>
@@ -930,7 +936,7 @@ export default function DemoPage() {
                 key={item.id}
                 onClick={() => setCurrentTab(item.id as any)}
                 className={`
-                  w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold
+                  w-full flex items-center gap-3 px-4 min-h-[48px] py-3 rounded-2xl text-sm font-bold
                   transition-all duration-200 select-none
                   ${
                     isActive
@@ -948,8 +954,14 @@ export default function DemoPage() {
           })}
         </nav>
 
+        {/* Theme Toggle in Sidebar */}
+        <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
+          <span className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Theme Mode</span>
+          <ThemeToggle className="w-full justify-start py-2.5" />
+        </div>
+
         {/* Brand Footer */}
-        <div className="pt-4 border-t border-outline-variant/30 text-[10px] text-outline italic">
+        <div className="pt-2 text-[10px] text-outline italic">
           <p>SugboWay Cebu Refactor v1.4</p>
           <p>© 2026 Transit Board</p>
         </div>
@@ -959,9 +971,9 @@ export default function DemoPage() {
       <div className="flex-1 flex flex-col min-h-screen">
         
         {/* Top AppBar */}
-        <header className="sticky top-0 z-40 flex justify-between items-center px-4 h-14 bg-surface shadow-sm border-b border-outline-variant md:shadow-none">
-          <div className="flex items-center gap-3">
-            <button className="md:hidden p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue">
+        <header className="sticky top-0 z-40 flex justify-between items-center px-4 h-16 safe-top bg-surface/80 backdrop-blur-lg shadow-sm border-b border-outline-variant md:shadow-none theme-transition">
+          <div className="flex items-center gap-2">
+            <button className="md:hidden p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue min-w-[44px] min-h-[44px] flex items-center justify-center">
               <span className="material-symbols-outlined font-bold">directions_transit</span>
             </button>
             <h1 className="md:hidden text-lg font-extrabold text-cebu-blue uppercase tracking-wider">
@@ -977,11 +989,15 @@ export default function DemoPage() {
 
           <div className="flex items-center gap-2">
             {/* Quick Status Indicator */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-container-high rounded-full border border-outline-variant/30 text-xs font-semibold text-on-surface-variant">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-surface-container-high rounded-full border border-outline-variant/30 text-xs font-semibold text-on-surface-variant">
               <span className={`w-2 h-2 rounded-full ${isSafetyModeActive ? "bg-aircon-cyan animate-pulse" : "bg-safe-green"}`} />
               <span>{isSafetyModeActive ? "Safety Mode Active" : "GPS Online"}</span>
             </div>
-            <button className="p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue">
+            
+            {/* Theme Toggle */}
+            <ThemeToggle className="py-1 px-2" />
+
+            <button className="p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue min-w-[40px] min-h-[40px] flex items-center justify-center">
               <span className="material-symbols-outlined">account_circle</span>
             </button>
           </div>
@@ -1007,7 +1023,7 @@ export default function DemoPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Origin */}
-                  <div className="relative flex items-center bg-surface-container-low rounded-xl px-4 py-2 border border-outline-variant hover:border-cebu-blue transition-colors group">
+                  <div className="relative flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant hover:border-cebu-blue transition-colors group">
                     <span className="material-symbols-outlined text-outline group-focus-within:text-cebu-blue shrink-0">
                       my_location
                     </span>
@@ -1019,14 +1035,14 @@ export default function DemoPage() {
                         type="text"
                         value={origin}
                         onChange={(e) => setOrigin(e.target.value)}
-                        className="bg-transparent border-none p-0 text-sm font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
+                        className="bg-transparent border-none p-0 text-base font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
                         placeholder="Enter starting location"
                       />
                     </div>
                   </div>
 
                   {/* Destination */}
-                  <div className="relative flex items-center bg-surface-container-low rounded-xl px-4 py-2 border border-outline-variant hover:border-cebu-blue transition-colors group">
+                  <div className="relative flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant hover:border-cebu-blue transition-colors group">
                     <span className="material-symbols-outlined text-outline group-focus-within:text-cebu-blue shrink-0">
                       pin_drop
                     </span>
@@ -1038,7 +1054,7 @@ export default function DemoPage() {
                         type="text"
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
-                        className="bg-transparent border-none p-0 text-sm font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
+                        className="bg-transparent border-none p-0 text-base font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
                         placeholder="Enter destination"
                       />
                     </div>
@@ -1050,7 +1066,7 @@ export default function DemoPage() {
                   <span className="block text-[10px] font-bold text-outline uppercase tracking-wider mb-2">
                     Passenger Classification
                   </span>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2">
                     {(["regular", "student", "senior", "pwd"] as PassengerType[]).map((type) => {
                       const isSelected = passengerType === type;
                       const labels: Record<PassengerType, string> = {
@@ -1071,7 +1087,7 @@ export default function DemoPage() {
                           key={type}
                           onClick={() => setPassengerType(type)}
                           className={`
-                            flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold
+                            flex items-center justify-center md:justify-start gap-1.5 px-4 min-h-[48px] py-3 rounded-xl text-sm font-semibold
                             transition-all duration-200 select-none
                             ${
                               isSelected
@@ -1096,7 +1112,7 @@ export default function DemoPage() {
                   <button
                     onClick={fetchRoutes}
                     disabled={isRoutingLoading}
-                    className="w-full bg-cebu-blue hover:bg-primary disabled:bg-cebu-blue/50 text-white font-bold py-3 px-6 rounded-2xl shadow-sm transition-all duration-200 active:scale-98 flex items-center justify-center gap-2 select-none text-xs"
+                    className="w-full bg-cebu-blue hover:bg-primary disabled:bg-cebu-blue/50 text-white font-bold min-h-[48px] py-3 px-6 rounded-2xl shadow-sm transition-all duration-200 active:scale-98 flex items-center justify-center gap-2 select-none text-sm"
                   >
                     {isRoutingLoading ? (
                       <>
@@ -1198,7 +1214,7 @@ export default function DemoPage() {
                   </span>
                 </div>
 
-                <div className="relative h-64 rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
+                <div className="relative h-72 md:h-80 lg:h-96 rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
                   {/* Real MapContainer */}
                   <div 
                     ref={mapContainerRef} 
@@ -1279,32 +1295,30 @@ export default function DemoPage() {
 
           {/* TAB 2: RUSH HOUR TRAFFIC ANALYTICS */}
           <div className={currentTab === "rush" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
-              
-              {/* Traffic Density Needle Gauge (WOW Component) */}
               <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-6 flex flex-col items-center text-center shadow-xs">
                 <span className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest mb-4">
                   Cebu Traffic Volume Gauge
                 </span>
-
-                <div className="relative w-64 h-32 overflow-hidden mb-4">
+ 
+                <div className="relative w-full max-w-[256px] sm:max-w-[280px] h-[128px] sm:h-[140px] overflow-hidden mb-4">
                   {/* Arc ring using conic-gradient */}
                   <div 
-                    className="w-64 h-64 rounded-full"
+                    className="w-full aspect-square rounded-full"
                     style={{
-                      background: "conic-gradient(from 180deg at 50% 100%, #2e7d32 0deg, #ffbf00 90deg, #ba1a1a 180deg)",
+                      background: "conic-gradient(from 180deg at 50% 100%, var(--color-safe-green) 0deg, var(--color-alert-amber) 90deg, var(--color-error) 180deg)",
                       mask: "radial-gradient(circle at 50% 100%, transparent 60%, black 61%)",
                       WebkitMask: "radial-gradient(circle at 50% 100%, transparent 60%, black 61%)",
                     }}
                   />
                   {/* Gauge Needle Pointer */}
                   <div 
-                    className="absolute bottom-0 left-1/2 w-1.5 h-24 bg-on-surface origin-bottom rounded-full transition-transform duration-700 ease-out"
+                    className="absolute bottom-0 left-1/2 w-1.5 h-[80%] bg-on-surface origin-bottom rounded-full transition-transform duration-700 ease-out"
                     style={{
                       transform: `translateX(-50%) rotate(${gaugeRotate}deg)`
                     }}
                   />
                 </div>
-
+ 
                 <div className="flex flex-col items-center">
                   <span className={`text-2xl font-extrabold ${isSafetyModeActive ? "text-safe-green" : "text-error animate-pulse"}`}>
                     {isSafetyModeActive ? "Moderate-Flow" : "High-Density Rush"}
@@ -1314,7 +1328,7 @@ export default function DemoPage() {
                   </p>
                 </div>
               </section>
-
+ 
               {/* Crowd Meter Analytics Chart (WOW Interactive Element) */}
               <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-6 shadow-xs space-y-4">
                 <div className="flex justify-between items-center">
@@ -1327,17 +1341,17 @@ export default function DemoPage() {
                     <span>Real-Time Forecast</span>
                   </div>
                 </div>
-
-                <div className="flex items-end justify-between gap-2.5 h-44 pt-6 border-b border-outline-variant/30">
+ 
+                <div className="flex items-end justify-between gap-1.5 sm:gap-3 h-44 pt-6 border-b border-outline-variant/30">
                   {[
-                    { label: "4 AM", height: "h-1/5", volume: "20%", rush: false },
-                    { label: "7 AM", height: "h-3/4", volume: "75%", rush: true },
-                    { label: "9 AM", height: "h-2/4", volume: "50%", rush: false },
-                    { label: "12 PM", height: "h-3/5", volume: "60%", rush: true },
-                    { label: "3 PM", height: "h-2/4", volume: "45%", rush: false },
+                    { label: "4 AM", height: "h-[20%]", volume: "20%", rush: false },
+                    { label: "7 AM", height: "h-[75%]", volume: "75%", rush: true },
+                    { label: "9 AM", height: "h-[50%]", volume: "50%", rush: false },
+                    { label: "12 PM", height: "h-[60%]", volume: "60%", rush: true },
+                    { label: "3 PM", height: "h-[45%]", volume: "45%", rush: false },
                     { label: "5 PM", height: "h-full", volume: "95%", rush: true },
-                    { label: "8 PM", height: "h-4/5", volume: "80%", rush: true },
-                    { label: "11 PM", height: "h-1/4", volume: "25%", rush: false },
+                    { label: "8 PM", height: "h-[80%]", volume: "80%", rush: true },
+                    { label: "11 PM", height: "h-[25%]", volume: "25%", rush: false },
                   ].map((bar, idx) => {
                     const isSelected = selectedHourBar === idx;
                     return (
@@ -1350,7 +1364,7 @@ export default function DemoPage() {
                         <div 
                           className={`
                             w-full rounded-t-lg transition-all duration-300
-                            ${bar.rush ? "bg-alert-amber/70 hover:bg-alert-amber" : "bg-outline-variant/50 hover:bg-outline-variant"}
+                            ${bar.rush ? "bg-alert-amber/70 hover:bg-alert-amber" : "bg-surface-container-highest/60 hover:bg-surface-container-highest"}
                             ${isSelected ? "ring-2 ring-cebu-blue ring-offset-2 scale-102" : ""}
                             ${bar.height}
                           `}
@@ -1505,7 +1519,7 @@ export default function DemoPage() {
                       
                       <div 
                         className={`
-                          p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs border
+                          p-3.5 rounded-2xl text-sm leading-relaxed shadow-2xs border
                           ${
                             msg.sender === "user" 
                               ? "bg-cebu-blue text-white border-cebu-blue/20 rounded-tr-none" 
@@ -1515,13 +1529,13 @@ export default function DemoPage() {
                       >
                         <p>{msg.text}</p>
                         {msg.cebuanoText && (
-                          <p className="border-t border-outline-variant/20 pt-2 mt-2 text-[10px] text-on-surface-variant italic">
+                          <p className="border-t border-outline-variant/20 pt-2 mt-2 text-xs text-on-surface-variant italic">
                             "{msg.cebuanoText}"
                           </p>
                         )}
                       </div>
                     </div>
-
+ 
                     {/* Inline Suggested Stop Map Widget */}
                     {msg.suggestedStop && (
                       <div className="ml-9 max-w-[80%] border border-outline-variant rounded-xl overflow-hidden shadow-2xs bg-surface-container-low mt-2">
@@ -1540,13 +1554,13 @@ export default function DemoPage() {
                         </div>
                       </div>
                     )}
-
+ 
                     <span className={`text-[9px] text-outline px-1 ${msg.sender === "user" ? "mr-1" : "ml-9"}`}>
                       {msg.timestamp}
                     </span>
                   </div>
                 ))}
-
+ 
                 {isAiLoading && (
                   <div className="flex gap-2 max-w-[85%] items-start animate-[fadeIn_0.2s_ease-out]">
                     <div className="w-7 h-7 bg-secondary-container rounded-full flex items-center justify-center shrink-0 border border-outline-variant/20 mt-0.5">
@@ -1564,7 +1578,7 @@ export default function DemoPage() {
                 
                 <div ref={chatEndRef} />
               </div>
-
+ 
               {/* Interactive bottom quick action prompt chips */}
               <div className="px-4 py-2 border-t border-outline-variant/20 bg-surface-container-low/50">
                 <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -1583,24 +1597,24 @@ export default function DemoPage() {
                   ))}
                 </div>
               </div>
-
+ 
               {/* Chat Input Field Container */}
               <form 
                 onSubmit={handleSendMessage}
-                className="p-3 border-t border-outline-variant/40 bg-surface flex items-center gap-2"
+                className="p-3 border-t border-outline-variant/40 bg-surface flex items-center gap-2 theme-transition"
               >
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Ask SugboWay Guide..."
-                  className="flex-1 bg-surface-container-low rounded-full px-4 py-2 border border-outline-variant focus:outline-none focus:ring-1 focus:ring-cebu-blue text-xs"
+                  className="flex-1 bg-surface-container-low rounded-full px-4 py-3 border border-outline-variant focus:outline-none focus:ring-1 focus:ring-cebu-blue text-sm text-on-surface"
                 />
                 <button 
                   type="submit"
-                  className="w-8 h-8 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center transition-transform active:scale-90"
+                  className="w-10 h-10 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shrink-0 transition-transform active:scale-90 shadow-sm"
                 >
-                  <span className="material-symbols-outlined text-sm">send</span>
+                  <span className="material-symbols-outlined text-lg">send</span>
                 </button>
               </form>
           </div>
@@ -1681,14 +1695,14 @@ export default function DemoPage() {
                   Cebu Emergency Dispatch Hub
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { name: "Cebu City Disaster Center (CCDRRMO)", phone: "(032) 262-1424", icon: "phone" },
                     { name: "Cebu City Traffic Commission (CCTO)", phone: "(032) 253-1226", icon: "directions_car" },
                     { name: "LTFRB Region 7 Hotlines", phone: "(032) 231-6221", icon: "description" },
                     { name: "Red Cross Cebu Chapter", phone: "(032) 253-9793", icon: "emergency_home" }
                   ].map((hotline, i) => (
-                    <div key={i} className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 flex justify-between items-center">
+                    <div key={i} className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors duration-200">
                       <div>
                         <h4 className="text-xs font-bold text-on-surface">{hotline.name}</h4>
                         <span className="text-[10px] text-on-surface-variant font-medium mt-0.5 block">{hotline.phone}</span>
@@ -1736,7 +1750,7 @@ export default function DemoPage() {
         </footer>
 
         {/* BOTTOM NAVIGATION BAR (Tab selector on Mobile) */}
-        <nav className="md:hidden fixed bottom-0 left-0 w-full z-45 flex justify-around items-center px-4 pb-4 pt-2 bg-surface shadow-[0_-4px_10px_rgba(0,0,0,0.06)] border-t border-outline-variant/20">
+        <nav className="md:hidden fixed bottom-0 left-0 w-full z-45 flex justify-around items-center px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] pt-3 bg-surface/90 backdrop-blur-lg shadow-[0_-4px_12px_rgba(0,0,0,0.08)] border-t border-outline-variant/20 theme-transition min-h-[72px]">
           {[
             { id: "map", label: "Map", icon: "map" },
             { id: "rush", label: "Rush Hour", icon: "analytics" },
@@ -1749,18 +1763,23 @@ export default function DemoPage() {
                 key={item.id}
                 onClick={() => setCurrentTab(item.id as any)}
                 className={`
-                  flex flex-col items-center justify-center px-4 py-1.5 rounded-xl transition-all duration-200 select-none
-                  ${
-                    isActive
-                      ? "bg-secondary-container text-on-secondary-container font-bold"
-                      : "text-on-surface-variant hover:bg-surface-container-high"
-                  }
+                  flex flex-col items-center justify-center transition-all duration-300 select-none min-w-[64px] min-h-[48px]
+                  ${isActive ? "text-primary font-extrabold scale-105" : "text-on-surface-variant hover:text-on-surface"}
                 `}
               >
-                <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
-                  {item.icon}
-                </span>
-                <span className="text-[10px] font-medium mt-0.5">{item.label}</span>
+                {/* Icon wrapper for the pill background */}
+                <div className="relative flex items-center justify-center px-5 py-1 rounded-full transition-all duration-300">
+                  <div 
+                    className={`
+                      absolute inset-0 rounded-full -z-10 transition-all duration-300
+                      ${isActive ? "bg-primary/15 scale-100 opacity-100" : "bg-transparent scale-50 opacity-0"}
+                    `} 
+                  />
+                  <span className="material-symbols-outlined text-xl transition-transform duration-300" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
+                    {item.icon}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold mt-1 tracking-wide">{item.label}</span>
               </button>
             );
           })}

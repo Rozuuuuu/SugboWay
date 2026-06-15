@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 
-export function useOfflineMap() {
+const CARTO_LIGHT = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const CARTO_DARK = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+
+export function useOfflineMap(isDark: boolean = false) {
   const [isOffline, setIsOffline] = useState<boolean>(false);
 
   useEffect(() => {
@@ -10,7 +13,7 @@ export function useOfflineMap() {
     setIsOffline(!navigator.onLine);
 
     const handleOnline = () => {
-      console.log("[SugboWay] App is online. Switching to OpenFreeMap.");
+      console.log("[SugboWay] App is online. Switching to CARTO basemap.");
       setIsOffline(false);
     };
 
@@ -30,7 +33,9 @@ export function useOfflineMap() {
 
   const mapStyle = isOffline
     ? "/offline-style.json"
-    : "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+    : isDark
+      ? CARTO_DARK
+      : CARTO_LIGHT;
 
   return { isOffline, mapStyle };
 }

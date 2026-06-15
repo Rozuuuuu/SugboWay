@@ -114,7 +114,7 @@ export default function RouteCard({
       onClick={handleCardClick}
       className={`
         relative overflow-hidden
-        bg-surface-container-low border rounded-2xl p-4
+        bg-surface-container-low border rounded-2xl p-4 sm:p-5
         transition-all duration-300 ease-out select-none cursor-pointer
         ${
           isSelected
@@ -127,13 +127,13 @@ export default function RouteCard({
     >
       {/* Decorative vertical selection accent */}
       {isSelected && (
-        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-cebu-blue rounded-l-2xl" />
+        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-cebu-blue via-primary to-purple-500 rounded-l-2xl" />
       )}
 
       {/* Main Row Info */}
       <div className="flex gap-4 items-start">
         {/* Left Badge Column */}
-        <div className="flex flex-col items-center gap-1.5 min-w-[4.5rem]">
+        <div className="flex flex-col items-center gap-2 min-w-[4.5rem]">
           {transitLegs.length > 0 ? (
             <div className="flex flex-wrap justify-center gap-1">
               {transitLegs.map((leg, idx) => (
@@ -174,10 +174,10 @@ export default function RouteCard({
               </h3>
 
               {transitLegs.length > 0 && (
-                <div className="flex items-center flex-wrap gap-2 mt-1">
-                  <span className="text-xs text-on-surface-variant flex items-center gap-1">
+                <div className="flex items-center flex-wrap gap-2 mt-1.5">
+                  <span className="text-sm text-on-surface-variant flex items-center gap-1.5">
                     <span
-                      className="material-symbols-outlined text-[14px]"
+                      className="material-symbols-outlined text-[16px]"
                       aria-hidden="true"
                     >
                       {primaryTransitLeg.route?.isModernized
@@ -196,8 +196,8 @@ export default function RouteCard({
               )}
 
               {/* Transfers indicator */}
-              <div className="flex items-center gap-1.5 mt-1 text-xs text-on-surface-variant">
-                <span className="material-symbols-outlined text-[14px]">
+              <div className="flex items-center gap-1.5 mt-1.5 text-sm text-on-surface-variant">
+                <span className="material-symbols-outlined text-[16px]">
                   {route.transfers > 0 ? "alt_route" : "trending_flat"}
                 </span>
                 <span>
@@ -210,8 +210,8 @@ export default function RouteCard({
                 {totalWalkingDistance > 0 && (
                   <>
                     <span className="text-outline-variant">•</span>
-                    <span className="flex items-center gap-0.5">
-                      <span className="material-symbols-outlined text-[12px]">
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[14px]">
                         directions_walk
                       </span>
                       {formatDistance(totalWalkingDistance)} walk
@@ -247,18 +247,18 @@ export default function RouteCard({
       </div>
 
       {/* Expand/Collapse Toggle Button (Micro-Interaction) */}
-      <div className="mt-2 flex justify-center border-t border-outline-variant/30 pt-1">
+      <div className="mt-3 flex justify-center border-t border-outline-variant/30 pt-1.5">
         <button
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-cebu-blue transition-colors px-2 py-1 rounded-md"
+          className="min-h-[48px] px-4 py-2 flex items-center justify-center gap-1.5 text-sm font-bold text-on-surface-variant hover:text-cebu-blue transition-colors rounded-xl select-none"
           aria-expanded={isExpanded}
         >
           <span>{isExpanded ? "Hide Details" : "View Step-by-Step"}</span>
           <span
-            className={`material-symbols-outlined text-[16px] transition-transform duration-300 ${
+            className={`material-symbols-outlined text-[18px] transition-transform duration-300 ${
               isExpanded ? "rotate-180" : ""
             }`}
           >
@@ -321,7 +321,7 @@ export default function RouteCard({
                   {/* Leg Header Info */}
                   <div className="flex justify-between items-start">
                     <div>
-                      <h5 className="text-sm font-bold text-on-surface">
+                      <h5 className="text-base font-bold text-on-surface">
                         {isTransit ? (
                           <span className="flex items-center gap-1.5">
                             Board <RouteCodeBadge code={leg.routeShortName || "JP"} size="sm" />
@@ -330,7 +330,7 @@ export default function RouteCard({
                           "Walk"
                         )}
                       </h5>
-                      <p className="text-xs text-on-surface-variant mt-0.5">
+                      <p className="text-sm text-on-surface-variant mt-0.5">
                         From{" "}
                         <span className="font-semibold">{leg.fromStop.stopName}</span> to{" "}
                         <span className="font-semibold">{leg.toStop.stopName}</span>
@@ -338,10 +338,10 @@ export default function RouteCard({
                     </div>
 
                     <div className="text-right flex flex-col items-end">
-                      <span className="text-xs font-semibold text-on-surface tabular-nums">
+                      <span className="text-sm font-semibold text-on-surface tabular-nums">
                         {formatDuration(leg.durationSeconds)}
                       </span>
-                      <span className="text-[10px] text-on-surface-variant tabular-nums">
+                      <span className="text-xs text-on-surface-variant tabular-nums">
                         {formatDistance(leg.distanceMeters)}
                       </span>
                     </div>
@@ -373,7 +373,7 @@ export default function RouteCard({
                         return (
                           <li
                             key={inst.step}
-                            className="flex gap-2 items-start text-xs text-on-surface-variant"
+                            className="flex gap-2 items-start text-sm text-on-surface-variant"
                           >
                             <span
                               className="material-symbols-outlined text-sm text-cebu-blue mt-0.5 shrink-0"
@@ -388,8 +388,8 @@ export default function RouteCard({
 
                               {/* Landmark Hint */}
                               {inst.landmark && (
-                                <span className="block text-[10px] text-on-surface-variant font-medium mt-0.5 flex items-center gap-0.5">
-                                  <span className="material-symbols-outlined text-[12px] text-amber-500">
+                                <span className="block text-xs text-on-surface-variant font-medium mt-0.5 flex items-center gap-0.5">
+                                  <span className="material-symbols-outlined text-[14px] text-amber-500">
                                     pin_drop
                                   </span>
                                   Landmark: {inst.landmark}
@@ -398,15 +398,15 @@ export default function RouteCard({
 
                               {/* Cebuano Cue Badge */}
                               {(inst.cebuanoPhrase || inst.culturalCue) && (
-                                <div className="mt-1 flex flex-wrap gap-1.5 items-center">
+                                <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
                                   {inst.cebuanoPhrase && (
-                                    <span className="bg-primary/5 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold border border-primary/10 italic">
+                                    <span className="bg-primary/5 text-primary text-xs px-2.5 py-1 rounded-full font-bold border border-primary/10 italic">
                                       "{inst.cebuanoPhrase}"
                                     </span>
                                   )}
                                   {inst.culturalCue && (
-                                    <span className="bg-surface-container-highest text-on-surface-variant text-[10px] px-2 py-0.5 rounded-full flex items-center gap-0.5 border border-outline-variant/20">
-                                      <span className="material-symbols-outlined text-[12px] text-cebu-blue">
+                                    <span className="bg-surface-container-highest text-on-surface-variant text-xs px-2.5 py-1 rounded-full flex items-center gap-0.5 border border-outline-variant/20">
+                                      <span className="material-symbols-outlined text-[14px] text-cebu-blue">
                                         info
                                       </span>
                                       {inst.culturalCue}
@@ -432,7 +432,7 @@ export default function RouteCard({
                   e.stopPropagation();
                   onStartNavigation();
                 }}
-                className="bg-safe-green hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all duration-200 active:scale-98 flex items-center justify-center gap-1.5 shadow-sm text-xs select-none"
+                className="bg-safe-green hover:bg-emerald-700 text-white font-bold min-h-[48px] py-3 px-6 rounded-xl transition-all duration-200 active:scale-98 flex items-center justify-center gap-1.5 shadow-sm text-sm select-none"
               >
                 <span className="material-symbols-outlined text-sm">navigation</span>
                 <span>Start Live Commute</span>

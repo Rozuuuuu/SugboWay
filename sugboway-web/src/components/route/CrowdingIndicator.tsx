@@ -62,16 +62,16 @@ export default function CrowdingIndicator({
   const iconName = getCrowdingIcon(data.level);
 
   // Bar height varies by mode
-  const barHeight = compact ? "h-1.5" : "h-2.5";
+  const barHeight = compact ? "h-2" : "h-3.5";
 
   // Dynamic fill color based on crowding level
   const fillColorMap: Record<string, string> = {
-    comfortable: "bg-safe-green",
-    moderate: "bg-alert-amber",
+    comfortable: "bg-crowding-low",
+    moderate: "bg-crowding-mid",
     crowded: "bg-crowding-high",
-    packed: "bg-error",
+    packed: "bg-crowding-full",
   };
-  const fillColor = fillColorMap[data.level] || "bg-safe-green";
+  const fillColor = fillColorMap[data.level] || "bg-crowding-low";
 
   // Glow effect for high/packed levels
   const glowMap: Record<string, string> = {
@@ -96,12 +96,12 @@ export default function CrowdingIndicator({
         <span
           className={`material-symbols-outlined text-base ${
             data.level === "packed"
-              ? "text-error"
+              ? "text-crowding-full"
               : data.level === "crowded"
               ? "text-crowding-high"
               : data.level === "moderate"
-              ? "text-alert-amber"
-              : "text-safe-green"
+              ? "text-crowding-mid"
+              : "text-crowding-low"
           }`}
           aria-hidden="true"
         >
@@ -120,12 +120,12 @@ export default function CrowdingIndicator({
             <span
               className={`text-xs font-bold ${
                 data.level === "packed"
-                  ? "text-error"
+                  ? "text-crowding-full"
                   : data.level === "crowded"
                   ? "text-crowding-high"
                   : data.level === "moderate"
-                  ? "text-alert-amber"
-                  : "text-safe-green"
+                  ? "text-crowding-mid"
+                  : "text-crowding-low"
               }`}
             >
               {data.label}
