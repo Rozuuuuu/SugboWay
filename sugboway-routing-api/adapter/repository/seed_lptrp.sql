@@ -83,3 +83,12 @@ UPDATE trips SET shape_id = 'shape_12l' WHERE route_id = 'route_12l' AND shape_i
 UPDATE trips SET shape_id = 'shape_62b' WHERE route_id = 'route_62b' AND shape_id IS NULL;
 UPDATE trips SET shape_id = 'shape_01b' WHERE route_id = 'route_01b' AND shape_id IS NULL;
 UPDATE trips SET shape_id = 'shape_03b' WHERE route_id = 'route_03b' AND shape_id IS NULL;
+
+-- 10. Phase 7: Add has_conductor column for cultural intelligence
+ALTER TABLE routes ADD COLUMN IF NOT EXISTS has_conductor BOOLEAN DEFAULT TRUE;
+
+-- Traditional jeepneys (17B, 04L, 12L, 62B) typically have conductors
+-- Modern e-jeeps (13C) and buses (MyBus) use tap-to-pay, no conductor
+UPDATE routes SET has_conductor = FALSE WHERE is_modernized = TRUE;
+UPDATE routes SET has_conductor = FALSE WHERE route_id = 'route_mybus_1';
+

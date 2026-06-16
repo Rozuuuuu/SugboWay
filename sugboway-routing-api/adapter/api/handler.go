@@ -183,6 +183,13 @@ func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
 	hour := depTime.Hour()
 	isPeak := (hour >= 7 && hour < 9) || (hour >= 17 && hour < 20)
 
+	// Allow frontend to override with Cebu-time detection
+	if isPeakOverride := c.Query("is_peak"); isPeakOverride != "" {
+		if parsed, err := strconv.ParseBool(isPeakOverride); err == nil {
+			isPeak = parsed
+		}
+	}
+
 	var alpha, beta float64
 	if isPeak {
 		alpha = 0.15
@@ -190,6 +197,13 @@ func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
 	} else {
 		alpha = 0.10
 		beta = 3.0
+	}
+
+	// Accept optional weather beta adjustment
+	if weatherBetaStr := c.Query("weather_beta"); weatherBetaStr != "" {
+		if wb, err := strconv.ParseFloat(weatherBetaStr, 64); err == nil && wb >= 0 {
+			beta = wb
+		}
 	}
 
 	capacity := float64(roadCapacity)
@@ -285,4 +299,39 @@ func (h *RoutingHandler) GetRouteStops(c *fiber.Ctx) error {
 		"stops":    stops,
 	})
 }
+
+// GetConductorInfo returns conductor and vehicle type metadata for cultural intelligence.
+// GET /api/v1/route/conductor?route_id=route_13c
+func (h *RoutingHandler) GetConductorInfo(c *fiber.Ctx) error {
+	routeID := c.Query("route_id")
+	if routeID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Missing 'route_id' query parameter",
+		})
+	}
+
+	routeID = strings.ToLower(routeID)
+	if !strings.HasPrefix(routeID, "route_") {
+		if routeID == "mybus_srp" || routeID == "mybus" {
+			routeID = "route_mybus_1"
+		} else {
+			routeID = "route_" + routeID
+		}
+	}
+
+	hasConductor, isModernized, hasAircon, err := h.Repo.FetchRouteConductorInfo(routeID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": fmt.Sprintf("Conductor info not found: %v", err),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"route_id":       routeID,
+		"has_conductor":  hasConductor,
+		"is_modernized":  isModernized,
+		"has_aircon":     hasAircon,
+	})
+}
+
 

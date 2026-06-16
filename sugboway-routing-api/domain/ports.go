@@ -37,6 +37,9 @@ type SpatialRepositoryPort interface {
 
 	// FetchRouteStops returns the ordered list of stops served by a specific route
 	FetchRouteStops(routeID string) ([]GTFSStop, error)
+
+	// FetchRouteConductorInfo returns whether a route has a conductor and is modernized
+	FetchRouteConductorInfo(routeID string) (hasConductor bool, isModernized bool, hasAircon bool, err error)
 }
 
 // RoutingServicePort specifies the core transit query functions exposed to our API layers.

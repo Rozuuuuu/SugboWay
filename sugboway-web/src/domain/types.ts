@@ -78,6 +78,9 @@ export interface GTFSRoute {
 
   /** Whether the vehicle has air conditioning */
   hasAircon: boolean;
+
+  /** Whether the route has a conductor */
+  hasConductor?: boolean;
 }
 
 /** Alias to match phase 5 domain blueprint */

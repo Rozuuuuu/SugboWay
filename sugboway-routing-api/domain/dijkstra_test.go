@@ -34,6 +34,10 @@ func (m *MockSpatialRepository) FetchRouteStops(routeID string) ([]GTFSStop, err
 	return m.Stops, nil
 }
 
+func (m *MockSpatialRepository) FetchRouteConductorInfo(routeID string) (bool, bool, bool, error) {
+	return true, false, false, nil
+}
+
 func TestDijkstraSearch(t *testing.T) {
 	// 1. Arrange Mock Nodes and Edges representing Cebu lines
 	mockStops := []GTFSStop{

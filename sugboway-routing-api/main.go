@@ -68,6 +68,7 @@ func main() {
 	apiGroup.Get("/congestion", routingHandler.GetCongestion)
 	apiGroup.Get("/route/shape", routingHandler.GetRouteShape)
 	apiGroup.Get("/route/stops", routingHandler.GetRouteStops)
+	apiGroup.Get("/route/conductor", routingHandler.GetConductorInfo)
 
 	// Direct check endpoint
 	app.Get("/health", func(c *fiber.Ctx) error {

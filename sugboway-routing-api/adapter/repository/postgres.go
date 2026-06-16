@@ -331,3 +331,16 @@ func (r *PostgresSpatialRepository) FetchRouteStops(routeID string) ([]domain.GT
 	return stops, nil
 }
 
+// FetchRouteConductorInfo queries the routes table to fetch has_conductor, is_modernized, and has_aircon flags.
+func (r *PostgresSpatialRepository) FetchRouteConductorInfo(routeID string) (bool, bool, bool, error) {
+	ctx := context.Background()
+	query := `SELECT COALESCE(has_conductor, TRUE), COALESCE(is_modernized, FALSE), COALESCE(has_aircon, FALSE) FROM routes WHERE route_id = $1`
+	var hasConductor, isModernized, hasAircon bool
+	err := r.Pool.QueryRow(ctx, query, routeID).Scan(&hasConductor, &isModernized, &hasAircon)
+	if err != nil {
+		return true, false, false, fmt.Errorf("conductor info not found for %s: %w", routeID, err)
+	}
+	return hasConductor, isModernized, hasAircon, nil
+}
+
+

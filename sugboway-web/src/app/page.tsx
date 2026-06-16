@@ -15,6 +15,9 @@ import { useOfflineMap } from "@/hooks/useOfflineMap";
 import { useProximityEtiquette } from "@/hooks/useProximityEtiquette";
 import { useTheme } from "@/components/ThemeProvider";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useCebuTime } from "@/hooks/useCebuTime";
+import { useCebuWeather } from "@/hooks/useCebuWeather";
+import PeakWarning from "@/components/route/PeakWarning";
 
 // Register PMTiles protocol handler globally once in the browser environment
 if (typeof window !== "undefined") {
@@ -65,6 +68,7 @@ const MOCK_ROUTES: RouteResult[] = [
           agencyId: "LTFRB-R7",
           isModernized: true,
           hasAircon: true,
+          hasConductor: false,
         },
         fromStop: {
           stopId: "talamban_term",
@@ -135,6 +139,7 @@ const MOCK_ROUTES: RouteResult[] = [
           agencyId: "LTFRB-R7",
           isModernized: false,
           hasAircon: false,
+          hasConductor: true,
         },
         fromStop: {
           stopId: "apas_gym",
@@ -238,6 +243,7 @@ const MOCK_ROUTES: RouteResult[] = [
           agencyId: "LTFRB-R7",
           isModernized: false,
           hasAircon: false,
+          hasConductor: true,
         },
         fromStop: {
           stopId: "it_park_terminal",
@@ -308,6 +314,7 @@ const MOCK_ROUTES: RouteResult[] = [
           agencyId: "Metro-Express",
           isModernized: true,
           hasAircon: true,
+          hasConductor: false,
         },
         fromStop: {
           stopId: "sm_seaside",
@@ -406,6 +413,10 @@ const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000"
 export default function DemoPage() {
   const { theme, setTheme, isDark } = useTheme();
   const { isOffline, mapStyle } = useOfflineMap(isDark);
+  
+  // Dynamic Cebu environmental awareness hooks
+  const { isPeak, peakLabel, cebuHour } = useCebuTime();
+  const { condition: weatherCondition, betaAdjustment, description: weatherDesc, temperature: weatherTemp } = useCebuWeather();
 
   // Shared States
   const [currentTab, setCurrentTab] = useState<"map" | "rush" | "chat" | "profile">("map");
@@ -497,7 +508,9 @@ export default function DemoPage() {
           const enrichedLegs = await Promise.all(route.legs.map(async (leg: RouteLeg) => {
             if (leg.type === "transit" && leg.routeId) {
               try {
-                const congRes = await fetch(`${ROUTING_API_URL}/api/v1/congestion?route_id=${leg.routeId}`);
+                const congRes = await fetch(
+                  `${ROUTING_API_URL}/api/v1/congestion?route_id=${leg.routeId}&is_peak=${isPeak}&weather_beta=${4.0 + betaAdjustment}`
+                );
                 if (congRes.ok) {
                   const congData = await congRes.json();
                   const flowRatio = congData.flow_ratio ?? 0.25;
@@ -1130,31 +1143,16 @@ export default function DemoPage() {
               </section>
 
               {/* Rush Hour Dashboard (Traffic Forecast) */}
-              {isTrafficBannerOpen && (
-                <div className="bg-surface-container-low border-l-4 border-alert-amber rounded-2xl p-4 shadow-xs flex gap-3 items-start justify-between">
-                  <div className="flex gap-3 items-start">
-                    <span className="material-symbols-outlined text-alert-amber text-2xl font-bold mt-0.5 animate-pulse">
-                      warning
-                    </span>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-sm text-on-surface">Cebu Rush Hour Active</h3>
-                        <span className="text-[10px] font-extrabold px-2 py-0.5 bg-alert-amber/20 text-on-tertiary-fixed border border-alert-amber/30 rounded-full">
-                          Congested (85%)
-                        </span>
-                      </div>
-                      <p className="text-xs text-on-surface-variant mt-1 max-w-2xl leading-relaxed">
-                        Severe bottlenecks detected along **Fuente Circle** and **Colon St**. Commuters taking traditional routes expect up to 25 mins delay. Consider E-Jeepney corridors or late-night Safety Mode options.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsTrafficBannerOpen(false)}
-                    className="p-1 hover:bg-surface-container-high rounded-full text-on-surface-variant"
-                  >
-                    <span className="material-symbols-outlined text-base">close</span>
-                  </button>
-                </div>
+              {isTrafficBannerOpen && isPeak && (
+                <PeakWarning
+                  peakLabel={peakLabel}
+                  cebuHour={cebuHour}
+                  weatherCondition={weatherCondition}
+                  weatherDescription={weatherDesc}
+                  temperature={weatherTemp}
+                  betaAdjustment={betaAdjustment}
+                  onDismiss={() => setIsTrafficBannerOpen(false)}
+                />
               )}
 
               {/* Dynamic Map Representation */}

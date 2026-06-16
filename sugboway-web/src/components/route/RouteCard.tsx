@@ -195,7 +195,7 @@ export default function RouteCard({
 
               {transitLegs.length > 0 && (
                 <div className="flex items-center flex-wrap gap-2 mt-1.5">
-                  <span className="text-xs sm:text-sm text-on-surface-variant flex items-center gap-1.5">
+                  <span className="text-xs sm:text-sm text-on-surface-variant flex items-center gap-1.5 mr-1">
                     <span
                       className="material-symbols-outlined text-[16px]"
                       aria-hidden="true"
@@ -207,9 +207,20 @@ export default function RouteCard({
                     {vehicleTypeLabel}
                   </span>
 
-                  {isAircon && (
-                    <span className="bg-aircon-cyan/10 text-aircon-cyan text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border border-aircon-cyan/20">
-                      Aircon
+                  {primaryTransitLeg.route?.routeType === "mybus" ? (
+                    <span className="bg-blue-500/10 text-blue-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-blue-500/20 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-blue-500" />
+                      Beep card • Scheduled stops • AC
+                    </span>
+                  ) : primaryTransitLeg.route?.isModernized ? (
+                    <span className="bg-green-500/10 text-green-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-green-500/20 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-green-500" />
+                      Tap-to-pay • No conductor • AC
+                    </span>
+                  ) : (
+                    <span className="bg-amber-500/10 text-amber-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-amber-500/20 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-amber-500" />
+                      Cash fare • Has conductor • No AC
                     </span>
                   )}
                 </div>

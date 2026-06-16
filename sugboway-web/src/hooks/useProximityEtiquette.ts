@@ -8,7 +8,13 @@ interface ProximityState {
   isMuted: boolean;
 }
 
-export function useProximityEtiquette(activeLeg: RouteLeg | null) {
+export interface VehicleInfo {
+  hasConductor: boolean;
+  isModernized: boolean;
+  hasAircon: boolean;
+}
+
+export function useProximityEtiquette(activeLeg: RouteLeg | null, vehicleInfo?: VehicleInfo) {
   const [state, setState] = useState<ProximityState>({
     isApproaching: false,
     distanceToStop: null,
@@ -82,8 +88,14 @@ export function useProximityEtiquette(activeLeg: RouteLeg | null) {
 
     // 3. Web Notification (if permission is granted)
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      const fareMsg = vehicleInfo?.isModernized
+        ? "Tap your Beep/e-PRO card at the reader before alighting."
+        : vehicleInfo?.hasConductor
+        ? "The conductor will collect your fare. Prepare exact change (₱13 base)."
+        : "Pass your fare forward to the driver through other passengers.";
+
       new Notification("SugboWay: Lugar Lang Alert!", {
-        body: `Approaching ${stopName}. Say "Lugar lang sa unahan" and prepare your fare!`,
+        body: `Approaching ${stopName}. Say "Lugar lang sa unahan"! ${fareMsg}`,
         icon: "/favicon.ico",
       });
     }
