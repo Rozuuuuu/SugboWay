@@ -352,30 +352,30 @@ export default function RouteCard({
                   </span>
 
                   {/* Leg Header Info */}
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4">
+                    <div className="min-w-0 flex-1">
                       <h5 className="text-base font-bold text-on-surface">
                         {isTransit ? (
-                          <span className="flex items-center gap-1.5">
+                          <span className="flex items-center gap-1.5 flex-wrap">
                             Board <RouteCodeBadge code={leg.routeShortName || "JP"} size="sm" />
                           </span>
                         ) : (
                           "Walk"
                         )}
                       </h5>
-                      <p className="text-sm text-on-surface-variant mt-0.5">
+                      <p className="text-sm text-on-surface-variant mt-0.5 break-words">
                         From{" "}
                         <span className="font-semibold">{leg.fromStop.stopName}</span> to{" "}
                         <span className="font-semibold">{leg.toStop.stopName}</span>
                       </p>
                     </div>
 
-                    <div className="text-right flex flex-col items-end">
-                      <span className="text-sm font-semibold text-on-surface tabular-nums">
+                    <div className="text-left sm:text-right flex flex-row sm:flex-col items-baseline sm:items-end gap-1.5 sm:gap-0 shrink-0 mt-0.5 sm:mt-0">
+                      <span className="text-sm font-extrabold sm:font-semibold text-on-surface tabular-nums">
                         {formatDuration(leg.durationSeconds)}
                       </span>
                       <span className="text-xs text-on-surface-variant tabular-nums">
-                        {formatDistance(leg.distanceMeters)}
+                        ({formatDistance(leg.distanceMeters)})
                       </span>
                     </div>
                   </div>
@@ -433,7 +433,7 @@ export default function RouteCard({
                               {(inst.cebuanoPhrase || inst.culturalCue) && (
                                 <div className="mt-2.5 space-y-1.5">
                                   {inst.cebuanoPhrase && (
-                                    <div className="text-xs text-primary dark:text-primary-fixed font-bold italic bg-primary/5 dark:bg-primary-container/20 border border-primary/10 dark:border-primary/20 rounded-lg px-3 py-1.5 inline-block">
+                                    <div className="text-xs text-primary dark:text-primary-fixed font-bold italic bg-primary/5 dark:bg-primary-container/20 border border-primary/10 dark:border-primary/20 rounded-lg px-3 py-1.5 inline-block max-w-full break-words">
                                       Cebuano Phrase: "{inst.cebuanoPhrase}"
                                     </div>
                                   )}

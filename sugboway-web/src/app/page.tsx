@@ -415,8 +415,14 @@ export default function DemoPage() {
   const { isOffline, mapStyle } = useOfflineMap(isDark);
   
   // Dynamic Cebu environmental awareness hooks
-  const { isPeak, peakLabel, cebuHour } = useCebuTime();
+  const { isPeak, peakLabel, cebuHour, cebuMinute } = useCebuTime();
   const { condition: weatherCondition, betaAdjustment, description: weatherDesc, temperature: weatherTemp } = useCebuWeather();
+
+  // Format Cebu Local Time (12-hour AM/PM with accurate minutes)
+  const formattedHour = cebuHour % 12 === 0 ? 12 : cebuHour % 12;
+  const ampm = cebuHour >= 12 ? "PM" : "AM";
+  const formattedMinute = cebuMinute.toString().padStart(2, "0");
+  const formattedTime = `${formattedHour}:${formattedMinute} ${ampm}`;
 
   // Shared States
   const [currentTab, setCurrentTab] = useState<"map" | "rush" | "chat" | "profile">("map");
@@ -432,6 +438,14 @@ export default function DemoPage() {
       setIsSafetyModeActive(true);
     }
   }, []);
+
+  // Weather Alert Status & Auto-trigger on change
+  const [isWeatherAlertOpen, setIsWeatherAlertOpen] = useState(true);
+  useEffect(() => {
+    if (weatherCondition && weatherCondition !== "unknown") {
+      setIsWeatherAlertOpen(true);
+    }
+  }, [weatherCondition]);
 
   // Tab 1: Map & Routing States
   const [routes, setRoutes] = useState<RouteResult[]>(MOCK_ROUTES);
@@ -1004,7 +1018,7 @@ export default function DemoPage() {
             {/* Cebu Time & Weather Status Indicator */}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/30 text-[11px] sm:text-xs font-semibold text-on-surface-variant">
               <span className="material-symbols-outlined text-[14px] text-cebu-blue flex items-center">schedule</span>
-              <span>{cebuHour.toString().padStart(2, '0')}:00</span>
+              <span>{formattedTime}</span>
               <span className="text-outline-variant/50">|</span>
               <span className="material-symbols-outlined text-[14px] text-cebu-blue flex items-center">
                 {weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
@@ -1028,8 +1042,66 @@ export default function DemoPage() {
         </header>
 
         {/* Tab Specific Content Area */}
-        <div className="flex-1 p-4 md:py-6 max-w-4xl w-full mx-auto pb-24 md:pb-6 space-y-6">
+        <div className="flex-1 p-4 md:py-6 max-w-4xl w-full mx-auto pb-32 md:pb-6 space-y-6">
           
+          {/* Weather Alert/Notification Banner */}
+          {isWeatherAlertOpen && weatherCondition !== "unknown" && (
+            <div 
+              className={`
+                relative overflow-hidden rounded-2xl border p-4 shadow-sm flex items-start justify-between gap-4 transition-all duration-300 animate-[fadeIn_0.3s_ease-out]
+                ${
+                  weatherCondition === "rain" || weatherCondition === "heavy_rain"
+                    ? "bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/30 text-amber-900 dark:text-amber-200"
+                    : "bg-blue-500/10 dark:bg-blue-500/15 border-blue-500/30 text-blue-900 dark:text-blue-200"
+                }
+              `}
+            >
+              {/* Decorative side pulse */}
+              <div 
+                className={`
+                  absolute top-0 left-0 bottom-0 w-1
+                  ${
+                    weatherCondition === "rain" || weatherCondition === "heavy_rain"
+                      ? "bg-amber-500"
+                      : "bg-blue-500"
+                  }
+                `} 
+              />
+              
+              <div className="flex gap-3 items-start flex-1 min-w-0">
+                <span className={`material-symbols-outlined text-2xl shrink-0 mt-0.5 ${weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "text-amber-600 dark:text-amber-400 animate-pulse" : "text-blue-600 dark:text-blue-400"}`}>
+                  {weatherCondition === "heavy_rain" ? "thunderstorm" : weatherCondition === "rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs font-bold uppercase tracking-wider font-mono flex items-center gap-1.5">
+                    <span>Cebu Weather Info</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+                    <span className="normal-case font-sans font-bold">
+                      {weatherTemp !== null ? `${weatherTemp}°C` : "N/A"}
+                    </span>
+                  </h4>
+                  <p className="text-xs font-bold mt-1 break-words leading-relaxed text-on-surface">
+                    {weatherDesc}
+                  </p>
+                  <p className="text-[11px] text-on-surface-variant mt-0.5 leading-relaxed">
+                    {weatherCondition === "rain" || weatherCondition === "heavy_rain"
+                      ? `Travel warning: Rainy conditions detected in Cebu. BPR congestion adjustment active (+${betaAdjustment.toFixed(1)} travel multiplier). Expect slower commutes.`
+                      : "Travel conditions: Cebu transit running normally. Enjoy your commute!"}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsWeatherAlertOpen(false)}
+                className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-colors flex items-center justify-center shrink-0"
+                title="Dismiss Weather Notification"
+                aria-label="Dismiss Weather Notification"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+          )}
+
           {/* TAB 1: MAP FINDER */}
           <div className={currentTab === "map" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
@@ -1759,7 +1831,7 @@ export default function DemoPage() {
         </footer>
 
         {/* BOTTOM NAVIGATION BAR (Tab selector on Mobile) */}
-        <nav className="md:hidden fixed bottom-0 left-0 w-full z-45 flex justify-around items-center px-4 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] pt-3 bg-surface/90 backdrop-blur-lg shadow-[0_-4px_12px_rgba(0,0,0,0.08)] border-t border-outline-variant/20 theme-transition min-h-[72px]">
+        <nav className="md:hidden fixed bottom-6 left-4 right-4 z-45 flex justify-around items-center px-4 py-2.5 bg-surface/85 backdrop-blur-md shadow-lg rounded-full border border-outline-variant/30 theme-transition max-w-md mx-auto">
           {[
             { id: "map", label: "Map", icon: "map" },
             { id: "rush", label: "Rush Hour", icon: "analytics" },

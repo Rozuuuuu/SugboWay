@@ -36,10 +36,10 @@ export function useCebuTime() {
   }
 
   useEffect(() => {
-    // Re-check every 15 minutes (battery-optimized debounce)
+    // Re-check every second to keep the clock accurate in real-time
     intervalRef.current = setInterval(() => {
       setState(computeCebuTime());
-    }, CACHE_TTL_MS);
+    }, 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
