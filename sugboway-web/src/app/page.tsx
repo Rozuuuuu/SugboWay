@@ -942,7 +942,7 @@ export default function DemoPage() {
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cebu-blue via-purple-600 to-aircon-cyan" />
 
         <div className="flex items-center gap-3 pt-3 pb-2 border-b border-outline-variant/30">
-          <span className="material-symbols-outlined text-cebu-blue text-3xl font-bold">directions_transit</span>
+          <img src="/Logo.png" alt="SugboWay Logo" className="w-10 h-10 object-contain rounded-xl shadow-xs" />
           <div className="flex flex-col">
             <h1 className="text-md font-extrabold text-cebu-blue tracking-wider uppercase">SugboWay</h1>
             <span className="text-[10px] text-outline uppercase tracking-widest font-semibold">Cebu Guide</span>
@@ -1000,9 +1000,7 @@ export default function DemoPage() {
         {/* Top AppBar */}
         <header className="sticky top-0 z-40 flex justify-between items-center px-4 h-16 safe-top bg-surface/80 backdrop-blur-lg shadow-sm border-b border-outline-variant md:shadow-none theme-transition">
           <div className="flex items-center gap-2">
-            <button className="md:hidden p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue min-w-[44px] min-h-[44px] flex items-center justify-center">
-              <span className="material-symbols-outlined font-bold">directions_transit</span>
-            </button>
+            <img src="/Logo.png" alt="SugboWay Logo" className="md:hidden w-8 h-8 object-contain rounded-lg shadow-xs ml-1" />
             <h1 className="md:hidden text-lg font-extrabold text-cebu-blue uppercase tracking-wider">
               SugboWay
             </h1>
