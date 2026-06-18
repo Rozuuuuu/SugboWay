@@ -109,13 +109,12 @@ export default function NavigationDrawer({
       setShowProximityAlert(false);
     }
   };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center bg-black/65 backdrop-blur-sm select-none">
+    <div className="fixed inset-0 z-40 flex items-end justify-center md:items-center bg-black/65 backdrop-blur-xs select-none">
       <div 
         className="
-          w-full max-w-lg bg-surface border-t md:border border-outline-variant rounded-t-3xl md:rounded-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:pb-6 shadow-2xl
-          animate-[slideUp_0.3s_ease-out] space-y-6 md:m-4 max-h-[90vh] overflow-y-auto theme-transition
+          w-full max-w-lg bg-surface border border-outline-variant rounded-3xl p-6 mb-28 md:mb-6 mx-4 shadow-2xl
+          animate-[slideUp_0.3s_ease-out] space-y-6 max-h-[70vh] md:max-h-[85vh] overflow-y-auto theme-transition
         "
       >
         {/* Top Header */}

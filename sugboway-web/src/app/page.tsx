@@ -1006,7 +1006,7 @@ export default function DemoPage() {
             <h1 className="md:hidden text-lg font-extrabold text-cebu-blue uppercase tracking-wider">
               SugboWay
             </h1>
-            <span className="bg-primary/10 text-primary text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase border border-primary/20 tracking-wider">
+            <span className="hidden sm:inline-block bg-primary/10 text-primary text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase border border-primary/20 tracking-wider">
               {currentTab === "map" && "Map & Routes"}
               {currentTab === "rush" && "Rush Hour Tracker"}
               {currentTab === "chat" && "AI Transit Assistant"}
@@ -1016,14 +1016,14 @@ export default function DemoPage() {
 
           <div className="flex items-center gap-2">
             {/* Cebu Time & Weather Status Indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/30 text-[11px] sm:text-xs font-semibold text-on-surface-variant">
-              <span className="material-symbols-outlined text-[14px] text-cebu-blue flex items-center">schedule</span>
-              <span>{formattedTime}</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-high rounded-full border border-outline-variant/30 text-[10px] sm:text-xs font-semibold text-on-surface-variant">
+              <span className="material-symbols-outlined text-[13px] text-cebu-blue flex items-center">schedule</span>
+              <span className="tabular-nums">{formattedTime}</span>
               <span className="text-outline-variant/50">|</span>
-              <span className="material-symbols-outlined text-[14px] text-cebu-blue flex items-center">
+              <span className="material-symbols-outlined text-[13px] text-cebu-blue flex items-center">
                 {weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
               </span>
-              <span>{weatherTemp !== null ? `${weatherTemp}°C` : "Weather N/A"}</span>
+              <span>{weatherTemp !== null ? `${Math.round(weatherTemp)}°C` : "N/A"}</span>
             </div>
 
             {/* Quick Status Indicator */}
@@ -1035,7 +1035,7 @@ export default function DemoPage() {
             {/* Theme Toggle */}
             <ThemeToggle className="py-1 px-2" />
 
-            <button className="p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue min-w-[40px] min-h-[40px] flex items-center justify-center">
+            <button className="hidden sm:flex p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue min-w-[40px] min-h-[40px] items-center justify-center">
               <span className="material-symbols-outlined">account_circle</span>
             </button>
           </div>
@@ -1107,7 +1107,7 @@ export default function DemoPage() {
               
               {/* Navigation & Search Area */}
               <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-xs space-y-4">
-                <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 pb-2 border-b border-outline-variant/30">
                   <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
                     <span className="material-symbols-outlined text-cebu-blue">route</span>
                     Transit Route Finder
@@ -1240,7 +1240,7 @@ export default function DemoPage() {
 
               {/* Dynamic Map Representation */}
               <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-5 space-y-4">
-                <div className="flex justify-between items-center pb-2 border-b border-outline-variant/30">
+                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 pb-2 border-b border-outline-variant/30">
                   <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
                     <span className="material-symbols-outlined text-cebu-blue">map</span>
                     SugboWay Map Canvas (Interactive Preview)
@@ -1330,7 +1330,7 @@ export default function DemoPage() {
 
               {/* Suggested Routes Listing */}
               <section className="space-y-3">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5">
                   <h2 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">
                     Suggested Routes ({routes.length})
                   </h2>
@@ -1412,7 +1412,7 @@ export default function DemoPage() {
  
               {/* Crowd Meter Analytics Chart (WOW Interactive Element) */}
               <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-6 shadow-xs space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5">
                   <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
                     <span className="material-symbols-outlined text-cebu-blue">bar_chart</span>
                     Peak Commuting Hours (Cebu Calibrated)
@@ -1831,7 +1831,7 @@ export default function DemoPage() {
         </footer>
 
         {/* BOTTOM NAVIGATION BAR (Tab selector on Mobile) */}
-        <nav className="md:hidden fixed bottom-6 left-4 right-4 z-45 flex justify-around items-center px-4 py-2.5 bg-surface/85 backdrop-blur-md shadow-lg rounded-full border border-outline-variant/30 theme-transition max-w-md mx-auto">
+        <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 flex justify-around items-center px-4 py-2.5 bg-surface/85 backdrop-blur-md shadow-lg rounded-full border border-outline-variant/30 theme-transition max-w-md mx-auto">
           {[
             { id: "map", label: "Map", icon: "map" },
             { id: "rush", label: "Rush Hour", icon: "analytics" },
