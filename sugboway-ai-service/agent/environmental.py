@@ -66,10 +66,18 @@ def get_cebu_weather_status() -> str:
     status_str = "Weather details currently unavailable"
     fetched = False
     
-    # Detect configured API keys in environment
+    # Detect configured API keys in environment and filter out placeholder strings
     weatherapi_key = os.getenv("WEATHER_API_KEY")
+    if weatherapi_key and weatherapi_key.strip() in ("", "undefined", "null"):
+        weatherapi_key = None
+        
     maptiler_key = os.getenv("MAPTILER_KEY") or os.getenv("NEXT_PUBLIC_MAPTILER_KEY")
+    if maptiler_key and maptiler_key.strip() in ("", "undefined", "null"):
+        maptiler_key = None
+        
     openweathermap_key = os.getenv("OPENWEATHER_KEY") or os.getenv("OPENWEATHERMAP_KEY")
+    if openweathermap_key and openweathermap_key.strip() in ("", "undefined", "null"):
+        openweathermap_key = None
     
     # Cebu coordinates
     lat, lon = 10.3157, 123.8854

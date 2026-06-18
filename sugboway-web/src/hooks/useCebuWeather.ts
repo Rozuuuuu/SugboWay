@@ -29,7 +29,7 @@ export function useCebuWeather() {
 
   const fetchWeather = async () => {
     const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
-    if (!apiKey) {
+    if (!apiKey || apiKey === "undefined" || apiKey === "null" || apiKey.trim() === "") {
       setState(prev => ({
         ...prev,
         description: "Weather API key not configured",
