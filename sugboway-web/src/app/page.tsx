@@ -1001,8 +1001,19 @@ export default function DemoPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Cebu Time & Weather Status Indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/30 text-[11px] sm:text-xs font-semibold text-on-surface-variant">
+              <span className="material-symbols-outlined text-[14px] text-cebu-blue flex items-center">schedule</span>
+              <span>{cebuHour.toString().padStart(2, '0')}:00</span>
+              <span className="text-outline-variant/50">|</span>
+              <span className="material-symbols-outlined text-[14px] text-cebu-blue flex items-center">
+                {weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
+              </span>
+              <span>{weatherTemp !== null ? `${weatherTemp}°C` : "Weather N/A"}</span>
+            </div>
+
             {/* Quick Status Indicator */}
-            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-surface-container-high rounded-full border border-outline-variant/30 text-xs font-semibold text-on-surface-variant">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/30 text-xs font-semibold text-on-surface-variant">
               <span className={`w-2 h-2 rounded-full ${isSafetyModeActive ? "bg-aircon-cyan animate-pulse" : "bg-safe-green"}`} />
               <span>{isSafetyModeActive ? "Safety Mode Active" : "GPS Online"}</span>
             </div>
