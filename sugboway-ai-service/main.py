@@ -87,8 +87,9 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request):
         )
         
     try:
+        from fastapi.concurrency import run_in_threadpool
         from agent.orchestrator import process_message
-        reply = process_message(request.message)
+        reply = await run_in_threadpool(process_message, request.message)
         response = JSONResponse(content={"reply": reply, "remaining": remaining})
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         response.headers["X-RateLimit-Reset"] = "3600"

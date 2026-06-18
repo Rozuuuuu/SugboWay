@@ -50,8 +50,8 @@ def get_db_connection():
     global _db_pool
     if _db_pool is None:
         db_url = os.getenv("DATABASE_URL")
-        # Simple psycopg2 connection pool (min=1, max=5)
-        _db_pool = psycopg2.pool.SimpleConnectionPool(1, 5, db_url)
+        # Simple psycopg2 connection pool (min=2, max=15)
+        _db_pool = psycopg2.pool.SimpleConnectionPool(2, 15, db_url)
     return _db_pool.getconn()
 
 def release_db_connection(conn):
@@ -60,7 +60,118 @@ def release_db_connection(conn):
         _db_pool.putconn(conn)
 
 # =====================================================================
-# 2. Agent Tools
+# 2. Optimized Spot Resolution & Stop Mappings
+# =====================================================================
+
+COMMON_STOPS_MAP = {
+    "talamban": ("stop_talamban", "Talamban Gym", 10.3662, 123.9169),
+    "talamban gym": ("stop_talamban", "Talamban Gym", 10.3662, 123.9169),
+    "uc banilad": ("stop_uc_banilad", "UC Banilad", 10.3429, 123.9118),
+    "banilad": ("stop_uc_banilad", "UC Banilad", 10.3429, 123.9118),
+    "it park": ("stop_it_park", "Cebu IT Park (Terminal)", 10.3292, 123.9067),
+    "cebu it park": ("stop_it_park", "Cebu IT Park (Terminal)", 10.3292, 123.9067),
+    "ayala": ("stop_ayala", "Ayala Center Cebu PUV Terminal", 10.3182, 123.9048),
+    "ayala center": ("stop_ayala", "Ayala Center Cebu PUV Terminal", 10.3182, 123.9048),
+    "ayala center cebu": ("stop_ayala", "Ayala Center Cebu PUV Terminal", 10.3182, 123.9048),
+    "colon": ("stop_colon", "Colon Obelisk", 10.2974, 123.8997),
+    "colon obelisk": ("stop_colon", "Colon Obelisk", 10.2974, 123.8997),
+    "seaside": ("stop_seaside", "SM Seaside City Cebu", 10.2818, 123.8805),
+    "sm seaside": ("stop_seaside", "SM Seaside City Cebu", 10.2818, 123.8805),
+    "sm seaside city cebu": ("stop_seaside", "SM Seaside City Cebu", 10.2818, 123.8805),
+    "lahug": ("stop_lahug", "Lahug (JY Square)", 10.3308, 123.8973),
+    "jy square": ("stop_lahug", "Lahug (JY Square)", 10.3308, 123.8973),
+    "sm city": ("stop_sm_city", "SM City Cebu PUV Terminal", 10.3117, 123.9183),
+    "sm city cebu": ("stop_sm_city", "SM City Cebu PUV Terminal", 10.3117, 123.9183),
+    "labangon": ("stop_labangon", "Labangon Barangay Hall", 10.2995, 123.8821),
+    "pitos": ("stop_pitos", "Pit-os Barangay Hall", 10.3950, 123.9260),
+    "pit-os": ("stop_pitos", "Pit-os Barangay Hall", 10.3950, 123.9260),
+    "carbon": ("stop_carbon", "Carbon Market", 10.2902, 123.9016),
+    "carbon market": ("stop_carbon", "Carbon Market", 10.2902, 123.9016),
+}
+
+def find_stop_by_name(stop_name: str, conn=None) -> tuple[str, str, float, float] | None:
+    """
+    Finds a stop using a highly optimized three-tier strategy:
+    1. Direct match on COMMON_STOPS_MAP (0ms, 0 credits).
+    2. Case-insensitive database partial match (1ms, 0 credits).
+    3. Fallback to vector/semantic search (only if the first two fail).
+    """
+    clean_name = stop_name.lower().strip()
+    
+    # Tier 1: Common map check
+    if clean_name in COMMON_STOPS_MAP:
+        return COMMON_STOPS_MAP[clean_name]
+        
+    # Check if a partial substring matches
+    for k, v in COMMON_STOPS_MAP.items():
+        if k in clean_name or clean_name in k:
+            return v
+            
+    # Tier 2: DB ILIKE text search
+    allocated_conn = False
+    if conn is None:
+        try:
+            conn = get_db_connection()
+            allocated_conn = True
+        except Exception:
+            pass
+            
+    if conn:
+        try:
+            with conn.cursor() as cur:
+                # First try direct match
+                cur.execute(
+                    "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops WHERE stop_name ILIKE %s LIMIT 1",
+                    (stop_name,)
+                )
+                res = cur.fetchone()
+                if res:
+                    return res
+                    
+                # Try substring search
+                cur.execute(
+                    "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops WHERE stop_name ILIKE %s OR stop_desc ILIKE %s LIMIT 1",
+                    (f"%{stop_name}%", f"%{stop_name}%")
+                )
+                res = cur.fetchone()
+                if res:
+                    return res
+        except Exception:
+            pass
+        finally:
+            if allocated_conn and conn:
+                release_db_connection(conn)
+                
+    # Tier 3: Vector/semantic search fallback (only gets here for unknown/newly added locations)
+    try:
+        query_vector = get_cached_embedding(stop_name)
+        vs_conn = conn
+        allocated_vs_conn = False
+        if vs_conn is None:
+            vs_conn = get_db_connection()
+            allocated_vs_conn = True
+            
+        try:
+            vs = VectorStore(conn=vs_conn)
+            results = vs.search_similar_locations(query_vector, limit=1)
+            if results:
+                stop_id, name, desc = results[0]
+                # Fetch coords for this stop
+                with vs_conn.cursor() as cur:
+                    cur.execute("SELECT stop_lat, stop_lon FROM stops WHERE stop_id = %s", (stop_id,))
+                    coords = cur.fetchone()
+                    if coords:
+                        return (stop_id, name, coords[0], coords[1])
+        finally:
+            if allocated_vs_conn and vs_conn:
+                release_db_connection(vs_conn)
+    except Exception as e:
+        print(f"Error in semantic fallback: {e}")
+        
+    return None
+
+# =====================================================================
+# 3. Agent Tools
 # =====================================================================
 
 @tool
@@ -71,39 +182,16 @@ def get_route_options(origin: str, destination: str, prefs: str = "time") -> str
     """
     conn = None
     try:
-        # Embed origin and destination with caching to save API quota
-        orig_vector = get_cached_embedding(origin)
-        dest_vector = get_cached_embedding(destination)
-        
-        # Query DB using pooled connection
         conn = get_db_connection()
-        cur = conn.cursor()
         
-        # Get nearest stop to origin
-        cur.execute("""
-            SELECT stop_name, stop_lat, stop_lon 
-            FROM stops 
-            ORDER BY embedding <-> %s::vector 
-            LIMIT 1
-        """, (orig_vector,))
-        orig_stop = cur.fetchone()
+        orig_res = find_stop_by_name(origin, conn=conn)
+        dest_res = find_stop_by_name(destination, conn=conn)
         
-        # Get nearest stop to destination
-        cur.execute("""
-            SELECT stop_name, stop_lat, stop_lon 
-            FROM stops 
-            ORDER BY embedding <-> %s::vector 
-            LIMIT 1
-        """, (dest_vector,))
-        dest_stop = cur.fetchone()
-        
-        cur.close()
-        
-        if not orig_stop or not dest_stop:
+        if not orig_res or not dest_res:
             return "No verified routes found."
             
-        orig_name, orig_lat, orig_lon = orig_stop
-        dest_name, dest_lat, dest_lon = dest_stop
+        orig_id, orig_name, orig_lat, orig_lon = orig_res
+        dest_id, dest_name, dest_lat, dest_lon = dest_res
         
         # Query local Go Routing API on port 8080
         url = f"{ROUTING_API_BASE_URL}/route/search"
@@ -116,7 +204,7 @@ def get_route_options(origin: str, destination: str, prefs: str = "time") -> str
             "accessible": "false"
         }
         
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=5)
         if response.status_code == 200:
             return response.text
         else:
@@ -155,6 +243,8 @@ def check_congestion(route_id: str, departure_time: str = None) -> str:
     Use this to give an estimate of how crowded a route might be and the BPR travel time multiplier.
     If departure_time is None, it uses the current time. 
     """
+    global redis_client
+    
     if departure_time is None:
         dt = datetime.now()
     else:
@@ -178,7 +268,8 @@ def check_congestion(route_id: str, departure_time: str = None) -> str:
                 res = json.loads(cached_data)
                 return f"[Cached] CrowdingLevel: {res['crowding']}. BPR Time Multiplier: {res['multiplier']:.2f}x standard travel time. (Peak: {res['is_peak']})"
         except Exception as e:
-            pass # Fall back to PostgreSQL if Redis fails
+            # Circuit breaker: disable Redis on failure
+            redis_client = None
 
     # Query DB for passenger volume, road type, and road capacity using connection pool
     conn = None
@@ -229,7 +320,7 @@ def check_congestion(route_id: str, departure_time: str = None) -> str:
             }
             redis_client.setex(cache_key, 300, json.dumps(res_dict))
         except Exception as e:
-            pass
+            redis_client = None
             
     return f"CrowdingLevel: {crowding}. BPR Time Multiplier: {time_multiplier:.2f}x standard travel time. (Peak: {is_peak})"
 
@@ -238,15 +329,28 @@ from db.vectorstore import VectorStore
 @tool
 def verify_stop(stop_name: str) -> str:
     """
-    Queries the database of verified transit stops in Cebu using semantic vector search (768-dim Gemini embeddings).
-    Returns the nearest verified stop matches (including name and description).
+    Queries the database of verified transit stops in Cebu.
+    Returns matching verified stops.
     Always use this tool to verify locations mentioned by the user and to look up correct stop names.
     """
+    conn = None
     try:
-        # Query with caching to save API quota
-        query_vector = get_cached_embedding(stop_name)
+        conn = get_db_connection()
         
-        vs = VectorStore()
+        # 1. Try fast-path stop match
+        matched = find_stop_by_name(stop_name, conn=conn)
+        if matched:
+            stop_id, name, lat, lon = matched
+            # Get description
+            with conn.cursor() as cur:
+                cur.execute("SELECT stop_desc FROM stops WHERE stop_id = %s", (stop_id,))
+                desc_row = cur.fetchone()
+                desc = desc_row[0] if desc_row else ""
+            return f"Nearest matching verified stops:\n- ID: '{stop_id}', Name: '{name}', Description: '{desc if desc else 'N/A'}'"
+            
+        # 2. Fallback to vector search if fast-path fails
+        query_vector = get_cached_embedding(stop_name)
+        vs = VectorStore(conn=conn)
         results = vs.search_similar_locations(query_vector, limit=3)
         if not results:
             return "No matching verified stops found in our GTFS database."
@@ -257,4 +361,7 @@ def verify_stop(stop_name: str) -> str:
             
         return "Nearest matching verified stops:\n" + "\n".join(stops_str)
     except Exception as e:
-        return f"Error verifying stop semantically: {str(e)}"
+        return f"Error verifying stop: {str(e)}"
+    finally:
+        if conn:
+            release_db_connection(conn)

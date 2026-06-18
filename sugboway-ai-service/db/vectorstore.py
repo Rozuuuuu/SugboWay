@@ -3,42 +3,52 @@ from pgvector.psycopg2 import register_vector
 import os
 
 class VectorStore:
-    def __init__(self):
+    def __init__(self, conn=None):
         """
         Connect to PostgreSQL and register pgvector extension.
-        Ensure DATABASE_URL is set in environment variables.
+        Accepts an optional active connection `conn` (e.g. from a connection pool).
         """
-        db_url = os.getenv("DATABASE_URL", "postgresql://sugboway_user:icblLufDCbcAuk0KWbQdaoxyI8uU2zmF@dpg-d89tckegvqtc73cakufg-a.oregon-postgres.render.com/sugboway")
-        try:
-            self.conn = psycopg2.connect(db_url)
-            register_vector(self.conn)
-            self._init_db()
-        except Exception as e:
-            print(f"Error connecting to pgvector DB: {e}")
-
-    def _init_db(self):
-        """
-        Initializes the vector column in the stops table if not already present.
-        (Assuming Phase 2 created the `stops` table)
-        """
-        with self.conn.cursor() as cur:
-            # Add embedding column to stops if it doesn't exist.
-            # Using 768 dimensions as standard for Gemini embeddings.
-            cur.execute("""
-                ALTER TABLE stops ADD COLUMN IF NOT EXISTS embedding vector(768);
-            """)
-            self.conn.commit()
+        self.conn = conn
+        self.own_connection = False
+        
+        if self.conn is None:
+            db_url = os.getenv("DATABASE_URL", "postgresql://sugboway_user:icblLufDCbcAuk0KWbQdaoxyI8uU2zmF@dpg-d89tckegvqtc73cakufg-a.oregon-postgres.render.com/sugboway")
+            try:
+                self.conn = psycopg2.connect(db_url)
+                self.own_connection = True
+                register_vector(self.conn)
+            except Exception as e:
+                print(f"Error connecting to pgvector DB: {e}")
+        else:
+            try:
+                # Register vector type on injected connection if not already registered
+                register_vector(self.conn)
+            except Exception:
+                pass
 
     def search_similar_locations(self, query_embedding: list, limit: int = 3):
         """
         Performs an exact nearest neighbor search over the `stops` table using L2 distance.
         """
-        with self.conn.cursor() as cur:
-            cur.execute("""
-                SELECT stop_id, stop_name, stop_desc 
-                FROM stops 
-                ORDER BY embedding <-> %s 
-                LIMIT %s
-            """, (query_embedding, limit))
-            results = cur.fetchall()
-            return results
+        if self.conn is None:
+            return []
+            
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("""
+                    SELECT stop_id, stop_name, stop_desc 
+                    FROM stops 
+                    WHERE embedding IS NOT NULL
+                    ORDER BY embedding <-> %s 
+                    LIMIT %s
+                """, (query_embedding, limit))
+                results = cur.fetchall()
+                return results
+        finally:
+            # If we opened our own connection, close it when we are done
+            if self.own_connection and self.conn:
+                try:
+                    self.conn.close()
+                except Exception:
+                    pass
+                self.conn = None
