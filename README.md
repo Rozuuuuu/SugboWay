@@ -140,13 +140,31 @@ NEXT_PUBLIC_AI_API_URL=http://localhost:8000
 NEXT_PUBLIC_WEATHER_API_KEY=...   # optional; live Cebu weather banner
 ```
 
-### Run the database schema
+### Database migrations
+
+The routing API **auto-applies migrations on startup** — on every Render deploy
+or local `go run`. It embeds `schema.sql` + everything in
+`adapter/repository/migrations/` into the binary and applies each pending file
+exactly once (tracked in a `schema_migrations` table, guarded by a Postgres
+advisory lock so concurrent instances are safe). Set `RUN_MIGRATIONS=false` to
+opt out.
+
+So a normal deploy needs **no manual SQL** — pushing the routing API is enough
+to bring the DB up to date (e.g. the road-following route geometry in
+`0003_weebly_real_shapes.sql` and `0004_weebly_routes_trips.sql`).
+
+To apply a single file manually anyway (e.g. against a fresh DB before first
+boot), use either:
 
 ```bash
-psql "$DATABASE_URL" -f sugboway-routing-api/adapter/repository/schema.sql
-psql "$DATABASE_URL" -f sugboway-routing-api/adapter/repository/seed_lptrp.sql
-psql "$DATABASE_URL" -f sugboway-routing-api/adapter/repository/migrations/0002_lptrp_corridors.sql
+python apply_migration.py sugboway-routing-api/adapter/repository/migrations/0003_weebly_real_shapes.sql --db "<EXTERNAL_DATABASE_URL>"
+# or
+psql "$DATABASE_URL" -f sugboway-routing-api/adapter/repository/migrations/0003_weebly_real_shapes.sql
 ```
+
+> Base GTFS seed data + stop embeddings still come from `seed_runner.py`
+> (it also calls the Gemini embeddings API), which is intentionally kept out of
+> the auto-migrator.
 
 ### Run the services
 

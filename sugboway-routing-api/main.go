@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/signal"
@@ -39,6 +40,15 @@ func main() {
 	defer repo.Close()
 
 	log.Println("[SugboWay Routing API] Database pool connection successfully established.")
+
+	// 2b. Auto-apply pending DB migrations on boot (runs on every Render deploy).
+	// Set RUN_MIGRATIONS=false to skip (e.g. if migrations are managed elsewhere).
+	if os.Getenv("RUN_MIGRATIONS") != "false" {
+		log.Println("[SugboWay Routing API] Running database migrations...")
+		if err := repository.RunMigrations(context.Background(), repo.Pool); err != nil {
+			log.Fatalf("Fatal: database migration failed: %v", err)
+		}
+	}
 
 	// 3. Inject Repository into Dijkstra Graph Core Engine
 	routingService := domain.NewDijkstraRoutingEngine(repo)
