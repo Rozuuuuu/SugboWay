@@ -8,7 +8,7 @@ import NavigationDrawer from "@/components/route/NavigationDrawer";
 import ProximityAlert from "@/components/route/ProximityAlert";
 import { calculateFare, formatPHP } from "@/domain";
 import maplibregl from "maplibre-gl";
-import type { Map } from "maplibre-gl";
+import type { Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Protocol } from "pmtiles";
 import { useOfflineMap } from "@/hooks/useOfflineMap";
@@ -410,6 +410,49 @@ function resolveLocation(query: string, defaultCoords: { lat: number; lon: numbe
 const ROUTING_API_URL = process.env.NEXT_PUBLIC_ROUTING_API_URL || "http://localhost:8080";
 const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000";
 
+// --- Persistent route-track layer (dynamic geometry without re-rendering the base map) ---
+const ROUTE_TRACK_SOURCE = "route-track";
+const ROUTE_TRACK_LAYER = "route-track-line";
+const ROUTE_STOPS_SOURCE = "route-stops";
+const ROUTE_STOPS_LAYER = "route-stops-dots";
+
+const EMPTY_FEATURE_COLLECTION = { type: "FeatureCollection", features: [] as any[] };
+
+// Idempotently attach the persistent track + stop-dot layers to a map.
+// Safe to call repeatedly and after a style swap (online/offline toggle wipes layers).
+function ensureRouteTrackLayers(map: Map) {
+  if (!map.getSource(ROUTE_TRACK_SOURCE)) {
+    map.addSource(ROUTE_TRACK_SOURCE, { type: "geojson", data: EMPTY_FEATURE_COLLECTION as any });
+  }
+  if (!map.getLayer(ROUTE_TRACK_LAYER)) {
+    map.addLayer({
+      id: ROUTE_TRACK_LAYER,
+      type: "line",
+      source: ROUTE_TRACK_SOURCE,
+      layout: { "line-join": "round", "line-cap": "round" },
+      paint: { "line-color": "#0056B3", "line-width": 4, "line-opacity": 0.9 },
+    });
+  }
+  // Intermediate stop dots sit in their own source ABOVE the line.
+  if (!map.getSource(ROUTE_STOPS_SOURCE)) {
+    map.addSource(ROUTE_STOPS_SOURCE, { type: "geojson", data: EMPTY_FEATURE_COLLECTION as any });
+  }
+  if (!map.getLayer(ROUTE_STOPS_LAYER)) {
+    map.addLayer({
+      id: ROUTE_STOPS_LAYER,
+      type: "circle",
+      source: ROUTE_STOPS_SOURCE,
+      paint: {
+        "circle-radius": 4,
+        "circle-color": "#0056B3",
+        "circle-opacity": 0.65,
+        "circle-stroke-width": 1.5,
+        "circle-stroke-color": "#ffffff",
+      },
+    });
+  }
+}
+
 export default function DemoPage() {
   const { theme, setTheme, isDark } = useTheme();
   const { isOffline, mapStyle } = useOfflineMap(isDark);
@@ -496,6 +539,11 @@ export default function DemoPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+  // Start/end crowding markers we own (so we clear only ours, never all markers)
+  const routeMarkersRef = useRef<Marker[]>([]);
+  // Latest track + stop data, so a style swap can restore them onto fresh layers
+  const trackDataRef = useRef<any>(EMPTY_FEATURE_COLLECTION);
+  const stopsDataRef = useRef<any>(EMPTY_FEATURE_COLLECTION);
 
   // Fetch optimal routes from Go Fiber Routing Engine
   const fetchRoutes = async () => {
@@ -587,9 +635,35 @@ export default function DemoPage() {
       zoom: 13,
     });
 
+    // Restore the persistent track + stop layers and their current data.
+    // Runs on first load AND after every style swap (offline/online wipes layers).
+    const restoreRouteLayers = () => {
+      ensureRouteTrackLayers(map);
+      (map.getSource(ROUTE_TRACK_SOURCE) as any)?.setData(trackDataRef.current);
+      (map.getSource(ROUTE_STOPS_SOURCE) as any)?.setData(stopsDataRef.current);
+    };
+
     map.once("load", () => {
       map.resize();
+      restoreRouteLayers();
+
+      // Lightweight popup for the intermediate stop dots (parity with old markers)
+      map.on("click", ROUTE_STOPS_LAYER, (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        const name = (f.properties as any)?.name ?? "Stop";
+        const [lon, lat] = (f.geometry as any).coordinates;
+        new maplibregl.Popup({ offset: 8 })
+          .setLngLat([lon, lat])
+          .setHTML(`<b>${name}</b>`)
+          .addTo(map);
+      });
+      map.on("mouseenter", ROUTE_STOPS_LAYER, () => { map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", ROUTE_STOPS_LAYER, () => { map.getCanvas().style.cursor = ""; });
     });
+
+    // setStyle() (offline/online toggle) drops custom layers — re-add on every style load
+    map.on("style.load", restoreRouteLayers);
 
     // Handle initial zero-size container hydration delay
     setTimeout(() => {
@@ -632,19 +706,21 @@ export default function DemoPage() {
     if (!map) return;
 
     const drawOnMap = async () => {
-      // Clean up previous route layer
-      if (map.getLayer("route-line")) {
-        map.removeLayer("route-line");
-      }
-      if (map.getSource("route-source")) {
-        map.removeSource("route-source");
-      }
+      // Persistent layers must exist before we push data into them.
+      ensureRouteTrackLayers(map);
 
-      // Clean up previous markers
-      const markers = document.querySelectorAll(".maplibregl-marker");
-      markers.forEach((m) => m.remove());
+      // Clear only the start/end markers WE created (never wipe all DOM markers).
+      routeMarkersRef.current.forEach((m) => m.remove());
+      routeMarkersRef.current = [];
 
-      if (selectedRouteIdx === null) return;
+      if (selectedRouteIdx === null) {
+        // Empty the track + dots without touching the base map.
+        trackDataRef.current = EMPTY_FEATURE_COLLECTION;
+        stopsDataRef.current = EMPTY_FEATURE_COLLECTION;
+        (map.getSource(ROUTE_TRACK_SOURCE) as any)?.setData(EMPTY_FEATURE_COLLECTION);
+        (map.getSource(ROUTE_STOPS_SOURCE) as any)?.setData(EMPTY_FEATURE_COLLECTION);
+        return;
+      }
       const selectedRoute = routes[selectedRouteIdx];
       if (!selectedRoute) return;
 
@@ -701,74 +777,59 @@ export default function DemoPage() {
         ];
       }
 
-      const geoJson = { type: "FeatureCollection", features: shapeFeatures };
+      const trackGeoJson = { type: "FeatureCollection", features: shapeFeatures };
 
-      // Draw route polyline
-      map.addSource("route-source", {
-        type: "geojson",
-        data: geoJson as any,
+      // Build the intermediate stop dots as a GeoJSON layer (stays above the line).
+      const stopFeatures: any[] = [];
+      stopResults.forEach((result) => {
+        if (result.status === "fulfilled" && result.value?.stops) {
+          (result.value.stops || []).forEach((stop: any) => {
+            stopFeatures.push({
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [stop.location.lon, stop.location.lat] },
+              properties: { name: stop.stopName },
+            });
+          });
+        }
       });
+      const stopsGeoJson = { type: "FeatureCollection", features: stopFeatures };
 
-      map.addLayer({
-        id: "route-line",
-        type: "line",
-        source: "route-source",
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#0056B3", // Cebu Blue
-          "line-width": 6,
-          "line-opacity": 0.85,
-        },
-      });
+      // Update the TRACK, not the map: only the in-memory data arrays change,
+      // so MapLibre keeps the base tiles/style and just redraws the geometry.
+      trackDataRef.current = trackGeoJson;
+      stopsDataRef.current = stopsGeoJson;
+      (map.getSource(ROUTE_TRACK_SOURCE) as any)?.setData(trackGeoJson);
+      (map.getSource(ROUTE_STOPS_SOURCE) as any)?.setData(stopsGeoJson);
 
-      // Add Start/End stop markers color-coded based on crowding score
+      // Start/End markers stay interactive DOM markers (crowding color + popup).
       selectedRoute.legs.forEach((leg) => {
-        // Boarding stop
         const elFrom = document.createElement("div");
         const crowdScore = leg.fromStop.crowdingScore ?? 0.22;
         const colorClass = crowdScore > 0.8 ? "bg-error" : crowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
         elFrom.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${colorClass}`;
-        new maplibregl.Marker(elFrom)
+        const fromMarker = new maplibregl.Marker(elFrom)
           .setLngLat([leg.fromStop.location.lon, leg.fromStop.location.lat])
           .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.fromStop.stopName}</b></h6><p>Crowding: ${Math.round(crowdScore * 100)}%</p>`))
           .addTo(map);
+        routeMarkersRef.current.push(fromMarker);
 
-        // Alighting stop
         const elTo = document.createElement("div");
         const toCrowdScore = leg.toStop.crowdingScore ?? 0.22;
         const toColorClass = toCrowdScore > 0.8 ? "bg-error" : toCrowdScore > 0.5 ? "bg-alert-amber" : "bg-safe-green";
         elTo.className = `w-4 h-4 rounded-full border-2 border-white shadow-md ${toColorClass}`;
-        new maplibregl.Marker(elTo)
+        const toMarker = new maplibregl.Marker(elTo)
           .setLngLat([leg.toStop.location.lon, leg.toStop.location.lat])
           .setPopup(new maplibregl.Popup({ offset: 10 }).setHTML(`<h6><b>${leg.toStop.stopName}</b></h6><p>Crowding: ${Math.round(toCrowdScore * 100)}%</p>`))
           .addTo(map);
+        routeMarkersRef.current.push(toMarker);
       });
 
-      // Render intermediate stop markers from fetched per-route stops
-      stopResults.forEach((result) => {
-        if (result.status === "fulfilled" && result.value?.stops) {
-          const routeStops = result.value.stops || [];
-          routeStops.forEach((stop: any) => {
-            const el = document.createElement("div");
-            el.className = "w-3 h-3 rounded-full bg-cebu-blue/60 border border-white shadow-sm";
-            new maplibregl.Marker(el)
-              .setLngLat([stop.location.lon, stop.location.lat])
-              .setPopup(new maplibregl.Popup({ offset: 8 }).setHTML(`<b>${stop.stopName}</b>`))
-              .addTo(map);
-          });
-        }
-      });
-
-      // Snaps bounds of the map to the geometry line
+      // Move the camera to the route's bounding box — no tile reload.
       try {
         const coords: [number, number][] = [];
-        geoJson.features.forEach((feat) => {
+        trackGeoJson.features.forEach((feat) => {
           if (feat.geometry.type === "LineString") {
-            const c = feat.geometry.coordinates as [number, number][];
-            coords.push(...c);
+            coords.push(...(feat.geometry.coordinates as [number, number][]));
           }
         });
         if (coords.length > 0) {
