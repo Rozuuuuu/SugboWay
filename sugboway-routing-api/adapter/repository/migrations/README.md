@@ -37,6 +37,22 @@ LPTRP corridors, using real source geometry only.
    psql "$DATABASE_URL" -f adapter/repository/migrations/0002_lptrp_corridors.sql
    ```
 
+## Live source: cebujeepneys.weebly.com (already wired)
+
+`0003_weebly_real_shapes.sql` is generated from the community jeepney map at
+cebujeepneys.weebly.com, whose per-route Google "My Maps" contain hand-traced,
+road-following polylines. Regenerate or extend it with:
+
+```bash
+python scrape_weebly_routes.py 13c 04l 17b 12l 62b 01b 03b 10m \
+  --out adapter/repository/migrations/0003_weebly_real_shapes.sql
+```
+
+The scraper saves each route's `.kmz` under `data/routes/` and replaces the
+coarse seed geometry via `ON CONFLICT (shape_id) DO UPDATE SET geom`. This data
+is **CC BY-NC 3.0** — see `data/routes/SOURCES.md` for attribution and the
+NonCommercial caveat.
+
 ## Optional: road-grid snapping
 
 For higher-fidelity tracking, snap each vertex to the nearest OSM node with
