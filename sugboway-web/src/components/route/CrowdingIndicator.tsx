@@ -114,8 +114,8 @@ export default function CrowdingIndicator({
         {/* Label Row */}
         {showLabel && !compact && (
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-on-surface-variant uppercase tracking-wider">
-              Crowd Meter
+            <span className="text-xs font-medium text-on-surface-variant">
+              How full
             </span>
             <span
               className={`text-xs font-bold ${

@@ -828,8 +828,8 @@ export default function DemoPage() {
             {
               id: String(prev.length + 1),
               sender: "ai",
-              text: `⚠️ **Rate Limit Exceeded:** You have reached the maximum allowance of **5 free AI queries per hour**. Please upgrade to **SugboWay Premium** to unlock unlimited transit planning!`,
-              cebuanoText: "⚠️ Nakaabot na ka sa limit nga 5 ka AI chat matag oras. Palihug pag-upgrade sa Premium!",
+              text: `You've used your 5 free questions for this hour. Go Premium for unlimited route planning, or check back in a bit.`,
+              cebuanoText: "Nahurot na imong 5 ka libreng pangutana karong orasa. Pwede ka mag-Premium para walay limit.",
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             }
           ]);
@@ -936,25 +936,22 @@ export default function DemoPage() {
   return (
     <div className="flex-1 flex flex-col md:flex-row min-h-screen bg-background">
       
-      {/* Responsive Desktop Sidebar (WOW Design Element) */}
-      <aside className="hidden md:flex flex-col w-72 bg-surface/80 backdrop-blur-xl border-r border-outline-variant p-4 space-y-6 relative theme-transition">
-        {/* Top gradient accent stripe */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cebu-blue via-purple-600 to-aircon-cyan" />
-
-        <div className="flex items-center gap-3 pt-3 pb-2 border-b border-outline-variant/30">
-          <img src="/Logo.png" alt="SugboWay Logo" className="w-10 h-10 object-contain rounded-xl shadow-xs" />
-          <div className="flex flex-col">
-            <h1 className="text-md font-extrabold text-cebu-blue tracking-wider uppercase">SugboWay</h1>
-            <span className="text-[10px] text-outline uppercase tracking-widest font-semibold">Cebu Guide</span>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-outline-variant p-4 gap-6 theme-transition">
+        <div className="flex items-center gap-3 px-1 py-2">
+          <img src="/Logo.png" alt="SugboWay" className="w-9 h-9 object-contain rounded-lg" />
+          <div className="flex flex-col leading-tight">
+            <h1 className="text-base font-bold text-on-surface">SugboWay</h1>
+            <span className="text-xs text-on-surface-variant">Cebu transit</span>
           </div>
         </div>
 
         {/* Sidebar Nav Buttons */}
         <nav className="flex-1 space-y-1">
           {[
-            { id: "map", label: "Map Finder", icon: "map" },
-            { id: "rush", label: "Rush Hour", icon: "analytics" },
-            { id: "chat", label: "AI Guide", icon: "smart_toy" },
+            { id: "map", label: "Routes", icon: "map" },
+            { id: "rush", label: "Traffic", icon: "analytics" },
+            { id: "chat", label: "Ask", icon: "forum" },
             { id: "profile", label: "Profile", icon: "person" },
           ].map((item) => {
             const isActive = currentTab === item.id;
@@ -963,16 +960,19 @@ export default function DemoPage() {
                 key={item.id}
                 onClick={() => setCurrentTab(item.id as any)}
                 className={`
-                  w-full flex items-center gap-3 px-4 min-h-[48px] py-3 rounded-2xl text-sm font-bold
-                  transition-all duration-200 select-none
+                  w-full flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm font-semibold
+                  transition-colors duration-150 select-none
                   ${
                     isActive
-                      ? "bg-secondary-container text-on-secondary-container shadow-xs scale-102"
-                      : "text-on-surface-variant hover:bg-surface-container-low"
+                      ? "bg-cebu-blue/10 text-cebu-blue"
+                      : "text-on-surface-variant hover:bg-surface-container"
                   }
                 `}
               >
-                <span className="material-symbols-outlined text-xl">
+                <span
+                  className="material-symbols-outlined text-xl"
+                  style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                >
                   {item.icon}
                 </span>
                 {item.label}
@@ -982,60 +982,50 @@ export default function DemoPage() {
         </nav>
 
         {/* Theme Toggle in Sidebar */}
-        <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
-          <span className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Theme Mode</span>
-          <ThemeToggle className="w-full justify-start py-2.5" />
+        <div className="pt-2 border-t border-outline-variant/40">
+          <ThemeToggle className="w-full justify-start" />
         </div>
 
         {/* Brand Footer */}
-        <div className="pt-2 text-[10px] text-outline italic">
-          <p>SugboWay Cebu Refactor v1.4</p>
-          <p>© 2026 Transit Board</p>
-        </div>
+        <p className="text-xs text-outline">© 2026 SugboWay</p>
       </aside>
 
       {/* Main Container */}
       <div className="flex-1 flex flex-col min-h-screen">
         
         {/* Top AppBar */}
-        <header className="sticky top-0 z-40 flex justify-between items-center px-4 h-16 safe-top bg-surface/80 backdrop-blur-lg shadow-sm border-b border-outline-variant md:shadow-none theme-transition">
-          <div className="flex items-center gap-2">
-            <img src="/Logo.png" alt="SugboWay Logo" className="md:hidden w-8 h-8 object-contain rounded-lg shadow-xs ml-1" />
-            <h1 className="md:hidden text-lg font-extrabold text-cebu-blue uppercase tracking-wider">
-              SugboWay
+        <header className="sticky top-0 z-40 flex justify-between items-center px-4 h-16 safe-top bg-surface/90 backdrop-blur border-b border-outline-variant theme-transition">
+          <div className="flex items-center gap-2.5">
+            <img src="/Logo.png" alt="SugboWay" className="md:hidden w-8 h-8 object-contain rounded-lg" />
+            <h1 className="text-lg font-bold text-on-surface md:text-base md:text-on-surface-variant md:font-semibold">
+              <span className="md:hidden">SugboWay</span>
+              <span className="hidden md:inline">
+                {currentTab === "map" && "Routes"}
+                {currentTab === "rush" && "Traffic"}
+                {currentTab === "chat" && "Ask SugboWay"}
+                {currentTab === "profile" && "Profile"}
+              </span>
             </h1>
-            <span className="hidden sm:inline-block bg-primary/10 text-primary text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase border border-primary/20 tracking-wider">
-              {currentTab === "map" && "Map & Routes"}
-              {currentTab === "rush" && "Rush Hour Tracker"}
-              {currentTab === "chat" && "AI Transit Assistant"}
-              {currentTab === "profile" && "User Settings"}
-            </span>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Cebu Time & Weather Status Indicator */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-surface-container-high rounded-full border border-outline-variant/30 text-[10px] sm:text-xs font-semibold text-on-surface-variant">
-              <span className="material-symbols-outlined text-[13px] text-cebu-blue flex items-center">schedule</span>
+            {/* Cebu Time & Weather */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-on-surface-variant">
               <span className="tabular-nums">{formattedTime}</span>
-              <span className="text-outline-variant/50">|</span>
-              <span className="material-symbols-outlined text-[13px] text-cebu-blue flex items-center">
+              <span className="w-px h-3 bg-outline-variant" />
+              <span className="material-symbols-outlined text-[15px] text-clay">
                 {weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
               </span>
-              <span>{weatherTemp !== null ? `${Math.round(weatherTemp)}°C` : "N/A"}</span>
+              <span className="tabular-nums">{weatherTemp !== null ? `${Math.round(weatherTemp)}°` : "—"}</span>
             </div>
 
-            {/* Quick Status Indicator */}
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/30 text-xs font-semibold text-on-surface-variant">
-              <span className={`w-2 h-2 rounded-full ${isSafetyModeActive ? "bg-aircon-cyan animate-pulse" : "bg-safe-green"}`} />
-              <span>{isSafetyModeActive ? "Safety Mode Active" : "GPS Online"}</span>
+            {/* Live status dot */}
+            <div className="hidden md:flex items-center gap-1.5 text-xs font-medium text-on-surface-variant">
+              <span className={`w-1.5 h-1.5 rounded-full ${isSafetyModeActive ? "bg-aircon-cyan" : "bg-safe-green"}`} />
+              <span>{isSafetyModeActive ? "Safety mode" : "Live"}</span>
             </div>
-            
-            {/* Theme Toggle */}
-            <ThemeToggle className="py-1 px-2" />
 
-            <button className="hidden sm:flex p-2 hover:bg-surface-container transition-colors rounded-full text-cebu-blue min-w-[40px] min-h-[40px] items-center justify-center">
-              <span className="material-symbols-outlined">account_circle</span>
-            </button>
+            <ThemeToggle className="md:hidden" />
           </div>
         </header>
 
@@ -1071,20 +1061,16 @@ export default function DemoPage() {
                   {weatherCondition === "heavy_rain" ? "thunderstorm" : weatherCondition === "rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-bold uppercase tracking-wider font-mono flex items-center gap-1.5">
-                    <span>Cebu Weather Info</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                    <span className="normal-case font-sans font-bold">
-                      {weatherTemp !== null ? `${weatherTemp}°C` : "N/A"}
+                  <h4 className="text-sm font-bold flex items-center gap-2">
+                    <span>{weatherDesc}</span>
+                    <span className="text-on-surface-variant font-medium">
+                      {weatherTemp !== null ? `${weatherTemp}°C` : ""}
                     </span>
                   </h4>
-                  <p className="text-xs font-bold mt-1 break-words leading-relaxed text-on-surface">
-                    {weatherDesc}
-                  </p>
-                  <p className="text-[11px] text-on-surface-variant mt-0.5 leading-relaxed">
+                  <p className="text-xs text-on-surface-variant mt-1 leading-relaxed">
                     {weatherCondition === "rain" || weatherCondition === "heavy_rain"
-                      ? `Travel warning: Rainy conditions detected in Cebu. BPR congestion adjustment active (+${betaAdjustment.toFixed(1)} travel multiplier). Expect slower commutes.`
-                      : "Travel conditions: Cebu transit running normally. Enjoy your commute!"}
+                      ? "Rain across Cebu right now — expect slower jeepneys and heavier traffic. Allow extra time."
+                      : "Transit is running normally across the city."}
                   </p>
                 </div>
               </div>
@@ -1104,16 +1090,10 @@ export default function DemoPage() {
           <div className={currentTab === "map" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
               {/* Navigation & Search Area */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-xs space-y-4">
-                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 pb-2 border-b border-outline-variant/30">
-                  <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
-                    <span className="material-symbols-outlined text-cebu-blue">route</span>
-                    Transit Route Finder
-                  </h2>
-                  <span className="text-xs text-on-surface-variant italic">
-                    LTFRB 2023 Order Compliant
-                  </span>
-                </div>
+              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 space-y-4">
+                <h2 className="text-base font-bold text-on-surface">
+                  Where are you headed?
+                </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Origin */}
@@ -1122,15 +1102,15 @@ export default function DemoPage() {
                       my_location
                     </span>
                     <div className="flex-1 flex flex-col ml-3">
-                      <label className="text-[10px] font-bold text-outline uppercase tracking-wider">
-                        Starting Point
+                      <label className="text-xs font-medium text-on-surface-variant">
+                        From
                       </label>
                       <input
                         type="text"
                         value={origin}
                         onChange={(e) => setOrigin(e.target.value)}
                         className="bg-transparent border-none p-0 text-base font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
-                        placeholder="Enter starting location"
+                        placeholder="Where are you now?"
                       />
                     </div>
                   </div>
@@ -1141,15 +1121,15 @@ export default function DemoPage() {
                       pin_drop
                     </span>
                     <div className="flex-1 flex flex-col ml-3">
-                      <label className="text-[10px] font-bold text-outline uppercase tracking-wider">
-                        Where to?
+                      <label className="text-xs font-medium text-on-surface-variant">
+                        To
                       </label>
                       <input
                         type="text"
                         value={destination}
                         onChange={(e) => setDestination(e.target.value)}
                         className="bg-transparent border-none p-0 text-base font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
-                        placeholder="Enter destination"
+                        placeholder="Where to?"
                       />
                     </div>
                   </div>
@@ -1157,8 +1137,8 @@ export default function DemoPage() {
 
                 {/* Passenger Type Selectors */}
                 <div className="pt-2">
-                  <span className="block text-[10px] font-bold text-outline uppercase tracking-wider mb-2">
-                    Passenger Classification
+                  <span className="block text-xs font-semibold text-on-surface-variant mb-2">
+                    Passenger type
                   </span>
                   <div className="grid grid-cols-2 md:flex md:flex-wrap gap-2">
                     {(["regular", "student", "senior", "pwd"] as PassengerType[]).map((type) => {
@@ -1211,12 +1191,12 @@ export default function DemoPage() {
                     {isRoutingLoading ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Searching Optimal Cebu Routes...</span>
+                        <span>Finding routes…</span>
                       </>
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-sm">search</span>
-                        <span>Search Cebu Routes</span>
+                        <span>Find routes</span>
                       </>
                     )}
                   </button>
@@ -1237,18 +1217,8 @@ export default function DemoPage() {
               )}
 
               {/* Dynamic Map Representation */}
-              <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-5 space-y-4">
-                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 pb-2 border-b border-outline-variant/30">
-                  <h2 className="text-sm font-bold text-on-surface flex items-center gap-2">
-                    <span className="material-symbols-outlined text-cebu-blue">map</span>
-                    SugboWay Map Canvas (Interactive Preview)
-                  </h2>
-                  <span className="text-xs text-on-surface-variant italic">
-                    MapLibre GL + OpenStreetMap
-                  </span>
-                </div>
-
-                <div className="relative h-72 md:h-80 lg:h-96 rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
+              <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-3 space-y-3">
+                <div className="relative h-80 md:h-96 lg:h-[28rem] rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
                   {/* Real MapContainer */}
                   <div 
                     ref={mapContainerRef} 
@@ -1258,69 +1228,68 @@ export default function DemoPage() {
 
                   {/* Offline Mode Banner */}
                   {isOffline && (
-                    <div className="absolute top-4 left-4 z-20 bg-surface-container-highest/90 backdrop-blur-md border border-amber-500/30 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg animate-fade-in text-amber-500">
-                      <span className="material-symbols-outlined text-sm animate-pulse">cloud_off</span>
-                      <span className="text-xs font-bold font-mono">Offline Map Mode</span>
+                    <div className="absolute top-4 left-4 z-20 bg-surface-container-lowest/90 backdrop-blur border border-outline-variant px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md text-on-surface-variant">
+                      <span className="material-symbols-outlined text-sm text-clay">cloud_off</span>
+                      <span className="text-xs font-semibold">Offline map</span>
                     </div>
                   )}
 
-                  {/* Pulsing ChatFAB Floating Voice/AI Button in Map Corner (WOW Element) */}
+                  {/* Floating voice + ask buttons */}
                   <div className="absolute top-4 right-4 z-20 flex flex-col gap-2">
-                    <button 
+                    <button
                       onClick={() => {
                         setIsRecording(true);
                         setTimeout(() => {
                           setIsRecording(false);
                           setCurrentTab("chat");
                           handleQuickQuestion("pila plete padong colon?");
-                        }, 3000); // 3 seconds mock Whisper recording
+                        }, 3000); // 3 seconds mock voice capture
                       }}
                       className={`
-                        w-12 h-12 rounded-full bg-error hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition-all duration-300 relative select-none
-                        ${isRecording ? "scale-110 bg-red-800" : "hover:scale-105 active:scale-95"}
+                        w-12 h-12 rounded-full bg-clay hover:brightness-95 text-white flex items-center justify-center shadow-md transition-all duration-200 relative select-none
+                        ${isRecording ? "scale-110" : "active:scale-95"}
                       `}
-                      title="Speak to Whisper AI Guide"
+                      title="Ask by voice"
                     >
                       {isRecording ? (
-                        <span className="material-symbols-outlined text-xl animate-spin">graphic_eq</span>
+                        <span className="material-symbols-outlined text-xl animate-pulse">graphic_eq</span>
                       ) : (
                         <span className="material-symbols-outlined text-xl">mic</span>
                       )}
-                      {/* Pulse waves */}
                       {isRecording && (
-                        <span className="absolute inset-0 w-full h-full rounded-full border-4 border-error/50 animate-ping" />
+                        <span className="absolute inset-0 w-full h-full rounded-full border-4 border-clay/40 animate-ping" />
                       )}
                     </button>
-                    
-                    <button 
+
+                    <button
                       onClick={() => setCurrentTab("chat")}
-                      className="w-12 h-12 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 select-none"
-                      title="Open AI Commuter Guide"
+                      className="w-12 h-12 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shadow-md active:scale-95 select-none"
+                      title="Ask SugboWay"
                     >
-                      <span className="material-symbols-outlined text-xl">smart_toy</span>
+                      <span className="material-symbols-outlined text-xl">forum</span>
                     </button>
                   </div>
 
-                  {/* Glassmorphism Over-Map Control */}
-                  <div className="absolute bottom-4 left-4 right-4 bg-surface-container-lowest/80 backdrop-blur-md border border-outline-variant rounded-xl p-3 flex justify-between items-center z-10 shadow-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-cebu-blue">directions_bus</span>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-on-surface">
-                          {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `Selected Option: Route ${routes[selectedRouteIdx].legs[0]?.routeShortName || "Walk"}` : "Select a Route above"}
+                  {/* Over-Map Control */}
+                  <div className="absolute bottom-3 left-3 right-3 bg-surface-container-lowest/85 backdrop-blur border border-outline-variant rounded-xl p-3 flex justify-between items-center z-10 shadow-sm">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="material-symbols-outlined text-cebu-blue shrink-0">directions_bus</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-semibold text-on-surface truncate">
+                          {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `Route ${routes[selectedRouteIdx].legs[0]?.routeShortName || "Walk"}` : "Pick a route below"}
                         </span>
-                        <span className="text-[10px] text-on-surface-variant">
-                          {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `${formatDuration(routes[selectedRouteIdx].totalTimeSeconds)} total duration` : "Click on a card to preview"}
+                        <span className="text-xs text-on-surface-variant truncate">
+                          {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `${formatDuration(routes[selectedRouteIdx].totalTimeSeconds)} total` : "Tap a card to preview it here"}
                         </span>
                       </div>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => setCurrentTab("chat")}
-                      className="bg-cebu-blue hover:bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1 active:scale-95 shadow-sm"
+                      className="bg-cebu-blue hover:bg-primary text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
                     >
-                      <span className="material-symbols-outlined text-xs">navigation</span>
-                      Ask AI Guide
+                      <span className="material-symbols-outlined text-sm">forum</span>
+                      Ask
                     </button>
                   </div>
                 </div>
@@ -1328,12 +1297,12 @@ export default function DemoPage() {
 
               {/* Suggested Routes Listing */}
               <section className="space-y-3">
-                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5">
-                  <h2 className="text-sm font-bold text-on-surface-variant uppercase tracking-wider">
-                    Suggested Routes ({routes.length})
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-base font-bold text-on-surface">
+                    {routes.length} {routes.length === 1 ? "way" : "ways"} to get there
                   </h2>
-                  <span className="text-xs text-on-surface-variant">
-                    Filters: {passengerType.toUpperCase()}
+                  <span className="text-xs text-on-surface-variant capitalize">
+                    {passengerType} fare
                   </span>
                 </div>
 
@@ -1341,14 +1310,14 @@ export default function DemoPage() {
                   {isRoutingLoading ? (
                     <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
                       <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
-                      <p className="text-xs text-on-surface-variant font-semibold">Loading real-time Dijkstra routes...</p>
+                      <p className="text-sm text-on-surface-variant font-medium">Finding the best ways across Cebu…</p>
                     </div>
                   ) : routingError ? (
                     <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
                       <span className="material-symbols-outlined text-error text-3xl">error</span>
-                      <p className="text-xs text-error font-bold">{routingError}</p>
-                      <p className="text-[10px] text-on-surface-variant">Fuzzy snapped locations. Showing offline fallbacks instead.</p>
-                      <button onClick={fetchRoutes} className="mt-2 text-xs font-bold text-cebu-blue hover:underline">Retry Connection</button>
+                      <p className="text-sm text-error font-semibold">{routingError}</p>
+                      <p className="text-xs text-on-surface-variant">Showing saved routes for now.</p>
+                      <button onClick={fetchRoutes} className="mt-2 text-sm font-semibold text-cebu-blue hover:underline">Try again</button>
                     </div>
                   ) : routes.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
@@ -1374,9 +1343,9 @@ export default function DemoPage() {
 
           {/* TAB 2: RUSH HOUR TRAFFIC ANALYTICS */}
           <div className={currentTab === "rush" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
-              <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-6 flex flex-col items-center text-center shadow-xs">
-                <span className="text-[10px] font-extrabold text-on-surface-variant uppercase tracking-widest mb-4">
-                  Cebu Traffic Volume Gauge
+              <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 flex flex-col items-center text-center">
+                <span className="text-sm font-semibold text-on-surface-variant mb-4">
+                  Traffic right now
                 </span>
  
                 <div className="relative w-full max-w-[256px] sm:max-w-[280px] h-[128px] sm:h-[140px] overflow-hidden mb-4">
@@ -1399,25 +1368,24 @@ export default function DemoPage() {
                 </div>
  
                 <div className="flex flex-col items-center">
-                  <span className={`text-2xl font-extrabold ${isSafetyModeActive ? "text-safe-green" : "text-error animate-pulse"}`}>
-                    {isSafetyModeActive ? "Moderate-Flow" : "High-Density Rush"}
+                  <span className={`text-2xl font-bold ${isSafetyModeActive ? "text-safe-green" : "text-clay"}`}>
+                    {isSafetyModeActive ? "Flowing well" : "Heavy traffic"}
                   </span>
-                  <p className="text-xs text-on-surface-variant max-w-sm mt-1 italic leading-relaxed">
-                    "Daghang taw karon. Extreme travel delays along Ramos St and Capitol Site due to Sinulog traffic rehearsals."
+                  <p className="text-sm text-on-surface-variant max-w-sm mt-1.5 leading-relaxed">
+                    Daghang tao karon — expect delays along Ramos St and Capitol Site from the Sinulog rehearsals.
                   </p>
                 </div>
               </section>
  
-              {/* Crowd Meter Analytics Chart (WOW Interactive Element) */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-6 shadow-xs space-y-4">
-                <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5">
-                  <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
-                    <span className="material-symbols-outlined text-cebu-blue">bar_chart</span>
-                    Peak Commuting Hours (Cebu Calibrated)
+              {/* Peak hours chart */}
+              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-base font-bold text-on-surface">
+                    Busiest hours
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-                    <span className="w-2.5 h-2.5 rounded-full bg-alert-amber animate-pulse" />
-                    <span>Real-Time Forecast</span>
+                  <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                    <span className="w-1.5 h-1.5 rounded-full bg-clay" />
+                    <span>Today</span>
                   </div>
                 </div>
  
@@ -1461,16 +1429,13 @@ export default function DemoPage() {
                 </div>
 
                 {/* Dynamic detail depending on clicked bar */}
-                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/20 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-cebu-blue text-sm">info</span>
-                    <span className="text-xs font-semibold text-on-surface">
-                      {selectedHourBar !== null 
-                        ? `Selected Period: ${selectedHourBar === 5 ? "5 PM (Peak Rush Hour - 95% capacity)" : "Active congestion tracking active"}`
-                        : "Click a bar above to view detailed statistics"}
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-bold text-outline">BPR Math Engine</span>
+                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/40 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-cebu-blue text-base">info</span>
+                  <span className="text-sm text-on-surface">
+                    {selectedHourBar !== null
+                      ? selectedHourBar === 5 ? "5 PM is the worst — jeepneys run packed (about 95% full)." : "Tap any bar to see how busy that hour gets."
+                      : "Tap any bar to see how busy that hour gets."}
+                  </span>
                 </div>
               </section>
 
@@ -1478,10 +1443,10 @@ export default function DemoPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Best Times Card */}
-                <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-5 space-y-3">
-                  <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5">
+                <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-5 space-y-3">
+                  <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
                     <span className="material-symbols-outlined text-safe-green">schedule</span>
-                    Best Travel Times
+                    Best times to travel
                   </h3>
                   <div className="space-y-3">
                     {[
@@ -1503,14 +1468,14 @@ export default function DemoPage() {
                 </section>
 
                 {/* Safety Mode Toggle Card */}
-                <section className="relative overflow-hidden bg-primary text-on-primary border border-outline-variant rounded-3xl p-6 flex flex-col justify-between shadow-xs">
+                <section className="relative overflow-hidden bg-primary text-on-primary border border-outline-variant rounded-2xl p-6 flex flex-col justify-between">
                   <div className="z-10 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-2">
                         <span className="material-symbols-outlined text-alert-amber text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
                           shield_with_heart
                         </span>
-                        <h3 className="text-sm font-bold">Late-Night Safety Mode</h3>
+                        <h3 className="text-base font-bold">Late-night safety mode</h3>
                       </span>
                       {/* Interactive Switch */}
                       <button 
@@ -1521,8 +1486,8 @@ export default function DemoPage() {
                       </button>
                     </div>
 
-                    <p className="text-xs opacity-90 leading-relaxed text-on-primary/95">
-                      Commuting after 10 PM? Safety Mode filters routing results to prefer modernized corridors featuring on-board CCTVs and live GPS trackers.
+                    <p className="text-sm leading-relaxed text-on-primary/90">
+                      Heading home after 10 PM? We'll favor well-lit, modern routes with CCTV and GPS-tracked vehicles.
                     </p>
 
                     <div className="flex flex-wrap gap-1.5 pt-1">
@@ -1546,41 +1511,37 @@ export default function DemoPage() {
                       {isSafetyModeActive ? "Deactivate Safety Mode" : "Activate Safety Mode"}
                     </button>
                   </div>
-
-                  {/* Decorative background glow */}
-                  <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-primary-container opacity-20 rounded-full blur-3xl" />
                 </section>
               </div>
 
               {/* capitol site alert card */}
-              <section className="bg-surface-container-low border border-outline-variant rounded-3xl overflow-hidden shadow-xs">
-                <div className="p-4 bg-error-container/10 border-b border-outline-variant/30 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-error text-lg animate-pulse">warning</span>
-                  <span className="text-xs font-bold text-on-error-container">Construction Alert: Capitol Site</span>
+              <section className="bg-surface-container-low border border-outline-variant rounded-2xl overflow-hidden">
+                <div className="p-4 bg-clay/10 border-b border-outline-variant/40 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-clay text-lg">construction</span>
+                  <span className="text-sm font-bold text-on-surface">Roadwork at Capitol Site</span>
                 </div>
-                <div className="p-4 space-y-2">
-                  <h4 className="text-xs font-bold text-on-surface">Jeepney Route Deviation Notice</h4>
-                  <p className="text-xs text-on-surface-variant leading-relaxed">
-                    Road closures for drain rehabilitation near Capitol Site may cause 15-20 min delays for standard traditional lines **04L** and **17B**. Routes are snapped to secondary detours.
+                <div className="p-4">
+                  <p className="text-sm text-on-surface-variant leading-relaxed">
+                    Drainage repairs near Capitol Site are adding 15–20 min to the <span className="font-semibold text-on-surface">04L</span> and <span className="font-semibold text-on-surface">17B</span> jeepney lines. Routes here are detoured around it.
                   </p>
                 </div>
               </section>
           </div>
 
           {/* TAB 3: CONVERSATIONAL AI TRANSIT GUIDE */}
-          <div className={currentTab === "chat" ? "flex flex-col bg-surface-container-lowest border border-outline-variant rounded-3xl h-[560px] overflow-hidden shadow-xs animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
-              
+          <div className={currentTab === "chat" ? "flex flex-col bg-surface-container-lowest border border-outline-variant rounded-2xl h-[560px] overflow-hidden animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
+
               {/* Chat Thread Container */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                
+
                 {/* Initial Welcome prompt */}
-                <div className="flex flex-col items-center text-center py-6 border-b border-outline-variant/20 opacity-70">
-                  <div className="w-12 h-12 bg-surface-container-high rounded-full flex items-center justify-center mb-2">
-                    <span className="material-symbols-outlined text-cebu-blue text-2xl">smart_toy</span>
+                <div className="flex flex-col items-center text-center py-6 border-b border-outline-variant/30">
+                  <div className="w-12 h-12 bg-cebu-blue/10 rounded-full flex items-center justify-center mb-2">
+                    <span className="material-symbols-outlined text-cebu-blue text-2xl">forum</span>
                   </div>
-                  <h3 className="text-sm font-bold text-on-surface">SugboWay Contextual Guide</h3>
-                  <p className="text-[10px] text-on-surface-variant italic mt-0.5">
-                    Multilingual anti-hallucination transit bot
+                  <h3 className="text-base font-bold text-on-surface">Ask SugboWay</h3>
+                  <p className="text-sm text-on-surface-variant mt-0.5">
+                    Fares, routes, and traffic — in English or Bisaya
                   </p>
                 </div>
 
@@ -1591,8 +1552,8 @@ export default function DemoPage() {
                   >
                     <div className="flex gap-2 max-w-[85%] items-start">
                       {msg.sender === "ai" && (
-                        <div className="w-7 h-7 bg-secondary-container rounded-full flex items-center justify-center shrink-0 border border-outline-variant/20 mt-0.5">
-                          <span className="material-symbols-outlined text-on-secondary-container text-sm">smart_toy</span>
+                        <div className="w-7 h-7 bg-cebu-blue/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="material-symbols-outlined text-cebu-blue text-sm">forum</span>
                         </div>
                       )}
                       
@@ -1620,7 +1581,7 @@ export default function DemoPage() {
                       <div className="ml-9 max-w-[80%] border border-outline-variant rounded-xl overflow-hidden shadow-2xs bg-surface-container-low mt-2">
                         <div className="p-3 flex justify-between items-center gap-4">
                           <div>
-                            <span className="text-[9px] font-bold text-outline uppercase tracking-wider block">Suggested Location</span>
+                            <span className="text-xs font-medium text-on-surface-variant block">Suggested stop</span>
                             <h4 className="text-xs font-bold text-on-surface">{msg.suggestedStop.name}</h4>
                             <span className="text-[10px] text-on-surface-variant">{msg.suggestedStop.walkTime}</span>
                           </div>
@@ -1642,8 +1603,8 @@ export default function DemoPage() {
  
                 {isAiLoading && (
                   <div className="flex gap-2 max-w-[85%] items-start animate-[fadeIn_0.2s_ease-out]">
-                    <div className="w-7 h-7 bg-secondary-container rounded-full flex items-center justify-center shrink-0 border border-outline-variant/20 mt-0.5">
-                      <span className="material-symbols-outlined text-on-secondary-container text-sm animate-pulse">smart_toy</span>
+                    <div className="w-7 h-7 bg-cebu-blue/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-cebu-blue text-sm">forum</span>
                     </div>
                     <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-low text-on-surface border border-outline-variant/40 shadow-2xs">
                       <div className="flex space-x-1.5 items-center py-1">
@@ -1686,7 +1647,7 @@ export default function DemoPage() {
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Ask SugboWay Guide..."
+                  placeholder="Ask anything about getting around…"
                   className="flex-1 bg-surface-container-low rounded-full px-4 py-3 border border-outline-variant focus:outline-none focus:ring-1 focus:ring-cebu-blue text-sm text-on-surface"
                 />
                 <button 
@@ -1702,49 +1663,41 @@ export default function DemoPage() {
           <div className={currentTab === "profile" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
               {/* Profile Card */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 shadow-xs flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center text-cebu-blue">
+              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-cebu-blue/10 flex items-center justify-center text-cebu-blue shrink-0">
                   <span className="material-symbols-outlined text-3xl">account_circle</span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-on-surface">Sugbo Commuter</h3>
-                  <p className="text-xs text-on-surface-variant mt-0.5">Active transit tier: **{passengerType.toUpperCase()}**</p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="bg-safe-green/10 text-safe-green border border-safe-green/20 text-[9px] font-extrabold px-2 py-0.5 rounded-full">
-                      LTFRB Verified
-                    </span>
-                  </div>
+                  <h3 className="text-base font-bold text-on-surface">Sugbo Commuter</h3>
+                  <p className="text-sm text-on-surface-variant mt-0.5 capitalize">{passengerType} fare</p>
                 </div>
               </section>
 
               {/* SugboWay Premium Subscription Card */}
-              <section className="bg-gradient-to-tr from-cebu-blue/20 via-surface-container-lowest to-purple-500/20 border border-cebu-blue/40 rounded-3xl p-5 space-y-4 shadow-md relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 animate-pulse" />
-                <div className="flex justify-between items-start">
+              <section className="bg-surface-container-lowest border border-clay/40 rounded-2xl p-5 space-y-4">
+                <div className="flex justify-between items-start gap-3">
                   <div>
-                    <h3 className="text-sm font-extrabold text-on-surface flex items-center gap-2">
-                      <span className="material-symbols-outlined text-amber-500 animate-spin">stars</span>
-                      SugboWay Premium Plan
+                    <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-clay">star</span>
+                      SugboWay Premium
                     </h3>
-                    <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
-                      Say goodbye to limits. Get unlimited AI route queries, RAG multi-hop scheduling, offline map caching, and priority BPR crowding forecasts!
+                    <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
+                      Unlimited questions, offline maps you can save, and earlier heads-up on crowded routes.
                     </p>
                   </div>
-                  <span className="bg-amber-500/10 text-amber-500 border border-amber-500/30 text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
-                    {isPremiumUser ? "Pro Active" : "Free Tier"}
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${isPremiumUser ? "bg-safe-green/10 text-safe-green" : "bg-surface-container-high text-on-surface-variant"}`}>
+                    {isPremiumUser ? "Active" : "Free"}
                   </span>
                 </div>
 
-                <div className="bg-surface-container-high/60 border border-outline-variant/30 rounded-2xl p-4 flex justify-between items-center text-xs">
+                <div className="bg-surface-container border border-outline-variant/40 rounded-xl p-4 flex justify-between items-center">
                   <div className="flex flex-col">
-                    <span className="text-on-surface-variant text-[10px] uppercase font-mono tracking-wider">
-                      AI Chat Quota
-                    </span>
-                    <span className="text-sm font-bold text-on-surface mt-1">
-                      {isPremiumUser ? "∞ Unlimited Queries" : `${remainingQuota} / 5 remaining`}
+                    <span className="text-xs text-on-surface-variant">Questions left this hour</span>
+                    <span className="text-base font-bold text-on-surface mt-0.5">
+                      {isPremiumUser ? "Unlimited" : `${remainingQuota} of 5`}
                     </span>
                   </div>
-                  
+
                   {!isPremiumUser && (
                     <button
                       onClick={() => {
@@ -1752,70 +1705,73 @@ export default function DemoPage() {
                         setRemainingQuota(9999);
                         setIsRateLimited(false);
                       }}
-                      className="bg-gradient-to-r from-cebu-blue to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition-all duration-300 shadow-md hover:scale-[1.03] active:scale-95 flex items-center gap-1.5"
+                      className="bg-clay hover:brightness-95 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all active:scale-95"
                     >
-                      <span className="material-symbols-outlined text-sm">bolt</span>
-                      Upgrade to Premium
+                      Upgrade
                     </button>
                   )}
                 </div>
 
                 {!isPremiumUser && (
-                  <p className="text-[10px] text-on-surface-variant italic text-center">
-                    Billed locally at ₱49/month — help keep Cebu's local mapping servers running!
+                  <p className="text-xs text-on-surface-variant text-center">
+                    ₱49/month — keeps Cebu's community maps running.
                   </p>
                 )}
               </section>
 
-              {/* Sinulog Emergency Center */}
-              <section className="bg-surface-container-low border border-outline-variant rounded-3xl p-5 space-y-4">
-                <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
+              {/* Emergency hotlines */}
+              <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-5 space-y-4">
+                <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-error">emergency</span>
-                  Cebu Emergency Dispatch Hub
+                  Emergency hotlines
                 </h3>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { name: "Cebu City Disaster Center (CCDRRMO)", phone: "(032) 262-1424", icon: "phone" },
-                    { name: "Cebu City Traffic Commission (CCTO)", phone: "(032) 253-1226", icon: "directions_car" },
-                    { name: "LTFRB Region 7 Hotlines", phone: "(032) 231-6221", icon: "description" },
-                    { name: "Red Cross Cebu Chapter", phone: "(032) 253-9793", icon: "emergency_home" }
+                    { name: "City Disaster Office (CCDRRMO)", phone: "(032) 262-1424" },
+                    { name: "Traffic Command (CCTO)", phone: "(032) 253-1226" },
+                    { name: "LTFRB Region 7", phone: "(032) 231-6221" },
+                    { name: "Red Cross Cebu", phone: "(032) 253-9793" }
                   ].map((hotline, i) => (
-                    <div key={i} className="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors duration-200">
-                      <div>
-                        <h4 className="text-xs font-bold text-on-surface">{hotline.name}</h4>
-                        <span className="text-[10px] text-on-surface-variant font-medium mt-0.5 block">{hotline.phone}</span>
+                    <a
+                      key={i}
+                      href={`tel:${hotline.phone.replace(/[^0-9]/g, "")}`}
+                      className="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-4 flex justify-between items-center gap-3 hover:border-cebu-blue transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <h4 className="text-sm font-semibold text-on-surface truncate">{hotline.name}</h4>
+                        <span className="text-sm text-on-surface-variant tabular-nums mt-0.5 block">{hotline.phone}</span>
                       </div>
-                      <span className="material-symbols-outlined text-cebu-blue text-sm">call</span>
-                    </div>
+                      <span className="material-symbols-outlined text-cebu-blue shrink-0">call</span>
+                    </a>
                   ))}
                 </div>
               </section>
 
-              {/* Saved home stations list */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-3xl p-5 space-y-3">
-                <h3 className="text-sm font-bold text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-amber-500">star</span>
-                  Saved Favorite Transit Stations
+              {/* Saved stations list */}
+              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 space-y-3">
+                <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-clay">bookmark</span>
+                  Saved stops
                 </h3>
                 <div className="space-y-2">
                   {[
-                    { name: "Cebu IT Park Transit Terminal", lines: ["04L", "17B", "MyBus"] },
-                    { name: "Ayala PUJ Center Terminal", lines: ["13C", "17B", "12L"] }
+                    { name: "Cebu IT Park Terminal", lines: ["04L", "17B", "MyBus"] },
+                    { name: "Ayala Center Terminal", lines: ["13C", "17B", "12L"] }
                   ].map((station, i) => (
-                    <div key={i} className="p-3 bg-surface-container-low border border-outline-variant/30 rounded-xl flex justify-between items-center">
-                      <div>
-                        <p className="text-xs font-bold text-on-surface">{station.name}</p>
-                        <div className="flex gap-1.5 mt-1">
+                    <button key={i} className="w-full text-left p-3 bg-surface-container-low border border-outline-variant/40 rounded-xl flex justify-between items-center gap-3 hover:border-cebu-blue transition-colors">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-on-surface truncate">{station.name}</p>
+                        <div className="flex gap-1.5 mt-1.5">
                           {station.lines.map((ln) => (
-                            <span key={ln} className="bg-cebu-blue/10 text-cebu-blue text-[9px] font-bold px-1.5 py-0.2 rounded">
+                            <span key={ln} className="bg-cebu-blue/10 text-cebu-blue text-xs font-semibold px-1.5 py-0.5 rounded tabular-nums">
                               {ln}
                             </span>
                           ))}
                         </div>
                       </div>
-                      <span className="material-symbols-outlined text-outline text-sm">chevron_right</span>
-                    </div>
+                      <span className="material-symbols-outlined text-outline shrink-0">chevron_right</span>
+                    </button>
                   ))}
                 </div>
               </section>
@@ -1824,16 +1780,16 @@ export default function DemoPage() {
         </div>
 
         {/* Footer */}
-        <footer className="hidden md:block py-4 border-t border-outline-variant/30 text-center text-[10px] text-on-surface-variant bg-surface-container-lowest">
-          <p>© 2026 SugboWay Cebu Refactor • Compliant with LTFRB distance rules</p>
+        <footer className="hidden md:block py-4 border-t border-outline-variant/30 text-center text-xs text-on-surface-variant">
+          <p>© 2026 SugboWay · Made in Cebu · Fares follow LTFRB rates</p>
         </footer>
 
         {/* BOTTOM NAVIGATION BAR (Tab selector on Mobile) */}
         <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 flex justify-around items-center px-4 py-2.5 bg-surface/85 backdrop-blur-md shadow-lg rounded-full border border-outline-variant/30 theme-transition max-w-md mx-auto">
           {[
-            { id: "map", label: "Map", icon: "map" },
-            { id: "rush", label: "Rush Hour", icon: "analytics" },
-            { id: "chat", label: "Chat", icon: "smart_toy" },
+            { id: "map", label: "Routes", icon: "map" },
+            { id: "rush", label: "Traffic", icon: "analytics" },
+            { id: "chat", label: "Ask", icon: "forum" },
             { id: "profile", label: "Profile", icon: "person" },
           ].map((item) => {
             const isActive = currentTab === item.id;
@@ -1883,47 +1839,44 @@ export default function DemoPage() {
 
         {/* Premium Upgrade Modal when Rate Limited */}
         {isRateLimited && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-surface-container-high border border-outline-variant/30 shadow-2xl rounded-3xl p-6 max-w-sm w-full space-y-4 animate-[scaleUp_0.3s_ease-out] text-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 animate-pulse" />
-              
-              <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-full flex items-center justify-center mx-auto text-amber-500 animate-bounce">
-                <span className="material-symbols-outlined text-3xl">stars</span>
+          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
+            <div className="bg-surface-container-high border border-outline-variant shadow-2xl rounded-2xl p-6 max-w-sm w-full space-y-4 animate-[scaleUp_0.3s_ease-out] text-center">
+              <div className="w-14 h-14 bg-clay/10 rounded-full flex items-center justify-center mx-auto text-clay">
+                <span className="material-symbols-outlined text-3xl">star</span>
               </div>
-              
-              <div className="space-y-1">
-                <h3 className="text-lg font-extrabold text-on-surface">SugboWay Limit Reached</h3>
-                <p className="text-xs text-on-surface-variant leading-relaxed">
-                  You have exceeded the free tier allowance of **5 AI queries per hour**. Upgrade to **SugboWay Premium** to unlock unlimited mapping, offline capabilities, and RAG multi-hop routing!
+
+              <div className="space-y-1.5">
+                <h3 className="text-lg font-bold text-on-surface">That's your 5 free questions</h3>
+                <p className="text-sm text-on-surface-variant leading-relaxed">
+                  You've used your free questions for this hour. Go Premium for unlimited questions and offline maps.
                 </p>
               </div>
 
-              <div className="bg-surface-container-highest/60 border border-outline-variant/30 rounded-2xl py-2 px-3 text-xs font-mono text-on-surface-variant flex justify-between items-center">
-                <span>Free Reset:</span>
-                <span className="font-bold text-cebu-blue">
-                  {rateLimitResetSeconds > 60 
-                    ? `~${Math.ceil(rateLimitResetSeconds / 60)} mins` 
+              <div className="bg-surface-container-highest border border-outline-variant/40 rounded-xl py-2.5 px-3.5 text-sm text-on-surface-variant flex justify-between items-center">
+                <span>Free again in</span>
+                <span className="font-semibold text-on-surface tabular-nums">
+                  {rateLimitResetSeconds > 60
+                    ? `~${Math.ceil(rateLimitResetSeconds / 60)} min`
                     : `~${rateLimitResetSeconds}s`}
                 </span>
               </div>
 
-              <div className="flex flex-col gap-2 pt-2">
+              <div className="flex flex-col gap-2 pt-1">
                 <button
                   onClick={() => {
                     setIsPremiumUser(true);
                     setRemainingQuota(9999);
                     setIsRateLimited(false);
                   }}
-                  className="w-full bg-gradient-to-r from-cebu-blue to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold text-xs py-3 rounded-2xl transition-all duration-300 shadow-md hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-1.5"
+                  className="w-full bg-clay hover:brightness-95 text-white font-semibold text-sm py-3 rounded-xl transition-all active:scale-95"
                 >
-                  <span className="material-symbols-outlined text-sm">bolt</span>
-                  Upgrade to Premium (₱49)
+                  Go Premium · ₱49/mo
                 </button>
                 <button
                   onClick={() => setIsRateLimited(false)}
-                  className="w-full bg-surface-container-highest hover:bg-on-surface/5 border border-outline-variant/30 text-on-surface text-xs py-2.5 rounded-2xl transition-all font-medium"
+                  className="w-full bg-surface-container-highest hover:bg-on-surface/5 text-on-surface text-sm py-2.5 rounded-xl transition-all font-medium"
                 >
-                  Maybe Later
+                  Maybe later
                 </button>
               </div>
             </div>
