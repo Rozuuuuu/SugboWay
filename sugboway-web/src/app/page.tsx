@@ -5,6 +5,7 @@ import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
 import PlaceDropdown from "@/components/route/PlaceDropdown";
+import type { Place } from "@/data/places";
 import NavigationDrawer from "@/components/route/NavigationDrawer";
 import ProximityAlert from "@/components/route/ProximityAlert";
 import { calculateFare, formatPHP } from "@/domain";
@@ -545,6 +546,14 @@ export default function DemoPage() {
   // Latest track + stop data, so a style swap can restore them onto fresh layers
   const trackDataRef = useRef<any>(EMPTY_FEATURE_COLLECTION);
   const stopsDataRef = useRef<any>(EMPTY_FEATURE_COLLECTION);
+
+  // Smoothly move the camera to a picked hub (e.g. "TC" -> USC Talamban).
+  const flyToPlace = (place: Place) => {
+    setCurrentTab("map");
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({ center: [place.lon, place.lat], zoom: 15, duration: 900 });
+  };
 
   // Fetch optimal routes from Go Fiber Routing Engine
   const fetchRoutes = async () => {
@@ -1163,6 +1172,7 @@ export default function DemoPage() {
                     icon="my_location"
                     value={origin}
                     onChange={setOrigin}
+                    onSelectPlace={flyToPlace}
                     placeholder="Where are you now?"
                   />
                   <PlaceDropdown
@@ -1170,6 +1180,7 @@ export default function DemoPage() {
                     icon="pin_drop"
                     value={destination}
                     onChange={setDestination}
+                    onSelectPlace={flyToPlace}
                     placeholder="Where to?"
                   />
                 </div>

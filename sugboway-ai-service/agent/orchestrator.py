@@ -12,6 +12,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from .prompt import get_chat_prompt
 from .tools import get_route_options, calculate_fare, check_congestion, verify_stop, redis_client
 from .environmental import get_cebu_time_status, get_cebu_weather_status
+from .places import detect_out_of_scope, resolve_aliases, FENCE_REPLY
 
 # =====================================================================
 # 1. Thread-Safe Local Response Cache (Fallback if Redis is offline)
@@ -119,10 +120,21 @@ def process_message(message: str) -> str:
     """
     global redis_client
     
+    # 0. Contextual fence: bail out of obviously non-Cebu queries BEFORE the LLM.
+    # This is the cheapest possible path — it never spends model tokens.
+    out_of_scope = detect_out_of_scope(message)
+    if out_of_scope:
+        print(f"[Contextual Fence] Out-of-scope location '{out_of_scope}' — skipping LLM.")
+        return FENCE_REPLY.format(place=out_of_scope)
+
+    # Ground local shorthand to canonical hub names ("TC" -> "USC Talamban")
+    # so the agent's tools resolve the right stops.
+    message = resolve_aliases(message)
+
     # 1. Gather dynamic real-time status contexts
     time_status = get_cebu_time_status()
     weather_status = get_cebu_weather_status()
-    
+
     # 2. Cache check
     normalized = _normalize_message(message)
     time_period, weather_cat = _get_context_categories()
