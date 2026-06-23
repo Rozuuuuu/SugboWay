@@ -30,22 +30,18 @@ export default function ProximityAlert({
 
   return (
     <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:w-96 z-40 animate-slide-up shadow-2xl">
-      <div className="bg-surface-container-high/90 backdrop-blur-xl border border-safe-green/40 shadow-2xl rounded-3xl p-5 flex flex-col gap-4 relative overflow-hidden theme-transition">
-        {/* Pulsing decorative background glow */}
-        <div className="absolute top-0 right-0 w-24 h-24 bg-safe-green/10 rounded-full blur-2xl -mr-8 -mt-8 animate-pulse" />
-
+      <div className="bg-surface-container-high border border-safe-green/40 shadow-xl rounded-2xl p-5 flex flex-col gap-4 theme-transition">
         <div className="flex items-start gap-4">
-          {/* Animated icon representing jeepney coin-tapping */}
-          <div className="w-12 h-12 rounded-full bg-safe-green/10 border border-safe-green/30 flex items-center justify-center shrink-0 animate-bounce relative">
+          {/* Attention icon with a single wave cue */}
+          <div className="w-12 h-12 rounded-full bg-safe-green/10 flex items-center justify-center shrink-0 relative">
             <span className="material-symbols-outlined text-safe-green text-2xl">campaign</span>
-            {/* Wave animation */}
-            <span className="absolute inset-0 rounded-full border-2 border-safe-green/30 animate-ping opacity-75" />
+            <span className="absolute inset-0 rounded-full border-2 border-safe-green/40 animate-ping opacity-75" />
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-safe-green uppercase tracking-wider font-mono">
-                Lugar Lang Prompt
+              <span className="text-xs font-semibold text-safe-green">
+                Your stop is coming up
               </span>
               <div className="flex items-center gap-1.5">
                 <button
@@ -78,23 +74,19 @@ export default function ProximityAlert({
           </div>
         </div>
 
-        {/* Live GPS Proximity Telemetry */}
-        <div className="bg-surface-container-highest/60 border border-outline-variant/20 rounded-2xl p-3 flex justify-between items-center text-xs">
+        {/* Distance + arrival */}
+        <div className="bg-surface-container-highest border border-outline-variant/40 rounded-xl p-3 flex justify-between items-center">
           <div className="flex flex-col">
-            <span className="text-on-surface-variant text-[9px] uppercase font-mono tracking-wider">
-              Distance
-            </span>
-            <span className="text-sm font-bold text-on-surface mt-0.5 font-mono flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-safe-green animate-pulse" />
-              {distanceToStop !== null ? `${distanceToStop}m` : "Locating..."}
+            <span className="text-on-surface-variant text-xs">Distance</span>
+            <span className="text-base font-bold text-on-surface mt-0.5 tabular-nums flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-safe-green" />
+              {distanceToStop !== null ? `${distanceToStop}m` : "Locating…"}
             </span>
           </div>
-          <div className="h-6 w-px bg-outline-variant/30" />
+          <div className="h-7 w-px bg-outline-variant/40" />
           <div className="flex flex-col items-end">
-            <span className="text-on-surface-variant text-[9px] uppercase font-mono tracking-wider">
-              Est. Arrival
-            </span>
-            <span className="text-sm font-bold text-safe-green mt-0.5 font-mono">
+            <span className="text-on-surface-variant text-xs">About</span>
+            <span className="text-base font-bold text-safe-green mt-0.5 tabular-nums">
               ~{approxTimeStr}
             </span>
           </div>

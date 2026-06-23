@@ -111,18 +111,18 @@ export default function NavigationDrawer({
   };
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center md:items-center bg-black/65 backdrop-blur-xs select-none">
-      <div 
+      <div
         className="
-          w-full max-w-lg bg-surface border border-outline-variant rounded-3xl p-6 mb-28 md:mb-6 mx-4 shadow-2xl
+          w-full max-w-lg bg-surface border border-outline-variant rounded-2xl p-6 mb-28 md:mb-6 mx-4 shadow-2xl
           animate-[slideUp_0.3s_ease-out] space-y-6 max-h-[70vh] md:max-h-[85vh] overflow-y-auto theme-transition
         "
       >
         {/* Top Header */}
         <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-cebu-blue animate-pulse">navigation</span>
-            <h2 className="text-sm font-extrabold text-on-surface uppercase tracking-wider">
-              SugboWay Live Guide
+            <span className="material-symbols-outlined text-cebu-blue">navigation</span>
+            <h2 className="text-base font-bold text-on-surface">
+              Step-by-step
             </h2>
           </div>
           <button 
@@ -133,21 +133,17 @@ export default function NavigationDrawer({
           </button>
         </div>
 
-        {/* Proximity Alarm Alert Banner */}
+        {/* Proximity Alert Banner */}
         {showProximityAlert && (
-          <div className="bg-error-container/15 border-l-4 border-error rounded-xl p-4 flex gap-3 items-center animate-bounce shadow-2xs">
-            <span className="material-symbols-outlined text-error text-2xl font-bold animate-ping">notifications_active</span>
+          <div className="bg-error-container/15 border-l-4 border-error rounded-xl p-4 flex gap-3 items-center">
+            <span className="material-symbols-outlined text-error text-2xl">notifications_active</span>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-extrabold uppercase bg-error/10 text-error px-2 py-0.5 rounded-full">
-                  Proximity Alert
-                </span>
-                <span className="text-[10px] font-bold text-error">
-                  {simulatedDistanceRemaining}m remaining
-                </span>
+                <span className="text-sm font-semibold text-error">Almost there</span>
+                <span className="text-sm text-error tabular-nums">· {simulatedDistanceRemaining}m</span>
               </div>
-              <p className="text-xs text-on-surface-variant font-medium mt-1">
-                You are approaching your drop-off point! Say **"Lugar lang"** clearly to alert the driver.
+              <p className="text-sm text-on-surface-variant mt-1">
+                Your stop is close — say <span className="font-semibold text-on-surface">"Lugar lang"</span> to let the driver know.
               </p>
             </div>
           </div>
@@ -163,18 +159,18 @@ export default function NavigationDrawer({
               <p className="text-xs font-bold text-on-surface">
                 {currentLeg.route?.routeLongName || "Transit Connection"}
               </p>
-              <p className="text-[10px] text-on-surface-variant mt-0.5">
-                Step {activeStepIndex + 1} of {instructions.length} inside Leg {activeLegIndex + 1} of {legs.length}
+              <p className="text-xs text-on-surface-variant mt-0.5">
+                Step {activeStepIndex + 1} of {instructions.length} · Leg {activeLegIndex + 1} of {legs.length}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Simulated Map Progress Indicator */}
-        <div className="relative pt-1 space-y-1">
-          <div className="flex justify-between items-center text-[10px] text-outline font-bold uppercase tracking-wider">
-            <span>{currentLeg.fromStop.stopName}</span>
-            <span>{currentLeg.toStop.stopName}</span>
+        {/* Progress Indicator */}
+        <div className="relative pt-1 space-y-1.5">
+          <div className="flex justify-between items-center gap-2 text-xs text-on-surface-variant font-medium">
+            <span className="truncate">{currentLeg.fromStop.stopName}</span>
+            <span className="truncate text-right">{currentLeg.toStop.stopName}</span>
           </div>
           <div className="overflow-hidden h-1.5 text-xs flex rounded bg-outline-variant/30 relative">
             <div 
@@ -185,35 +181,30 @@ export default function NavigationDrawer({
         </div>
 
         {/* Step Guide Detail */}
-        <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/40 space-y-3">
-          <div className="flex justify-between items-start gap-4">
-            <div>
-              <span className="text-[9px] font-bold text-outline uppercase tracking-wider block">Instruction</span>
-              <h4 className="text-sm font-bold text-on-surface mt-0.5">
-                {currentInstruction?.description || "Follow default directions."}
-              </h4>
-              {currentInstruction?.landmark && (
-                <span className="text-[10px] text-safe-green font-semibold mt-1 block flex items-center gap-1">
-                  <span className="material-symbols-outlined text-xs">tour</span>
-                  Landmark: {currentInstruction.landmark}
-                </span>
-              )}
-            </div>
-          </div>
+        <div className="bg-surface-container-low rounded-xl p-5 border border-outline-variant/40">
+          <h4 className="text-base font-bold text-on-surface">
+            {currentInstruction?.description || "Follow the directions."}
+          </h4>
+          {currentInstruction?.landmark && (
+            <span className="text-sm text-safe-green font-medium mt-1.5 flex items-center gap-1">
+              <span className="material-symbols-outlined text-base">tour</span>
+              Look for {currentInstruction.landmark}
+            </span>
+          )}
         </div>
 
-        {/* Cebuano Etiquette Bridge Box (Rich Design Element) */}
-        <div className="bg-secondary-container/10 border border-outline-variant/35 rounded-2xl p-5 space-y-3">
+        {/* Cebuano etiquette tip */}
+        <div className="bg-cebu-blue/5 border border-cebu-blue/15 rounded-xl p-5 space-y-3">
           <div className="flex items-center gap-2 text-cebu-blue">
             <span className="material-symbols-outlined text-lg">{currentCue.icon}</span>
-            <h4 className="text-xs font-extrabold uppercase tracking-wider">{currentCue.title}</h4>
+            <h4 className="text-sm font-bold">{currentCue.title}</h4>
           </div>
-          <p className="text-xs text-on-surface-variant leading-relaxed">
-            "{currentCue.cue}"
+          <p className="text-sm text-on-surface-variant leading-relaxed">
+            {currentCue.cue}
           </p>
-          <div className="bg-surface-container-low/60 rounded-xl p-3 border border-outline-variant/20">
-            <span className="text-[9px] font-bold text-outline uppercase tracking-wider block">Cebuano Phrase</span>
-            <p className="text-xs font-bold text-cebu-blue italic mt-1 leading-relaxed">
+          <div className="bg-surface-container-low rounded-lg p-3 border border-outline-variant/30">
+            <span className="text-xs text-on-surface-variant block">Say it in Bisaya</span>
+            <p className="text-sm font-semibold text-cebu-blue italic mt-1 leading-relaxed">
               "{currentCue.cebuano}"
             </p>
           </div>

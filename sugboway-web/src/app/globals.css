@@ -4,9 +4,11 @@
 
 
 /* =========================================================================
-   SugboWay Design System v2.0
+   SugboWay Design System
    =========================================================================
-   Material Design 3 color system with light/dark adaptive tokens.
+   Warm sand-and-sea palette: cebu-blue as the single confident accent,
+   clay as the warm local support, neutrals tinted toward sand (light)
+   and warm charcoal (dark). Light/dark adaptive tokens.
    Typography: Plus Jakarta Sans (headings) + Inter (body).
    ========================================================================= */
 
@@ -17,8 +19,12 @@
   /* --- Brand Colors --- */
   --color-cebu-blue: #0056b3;
   --color-safe-green: #2e7d32;
-  --color-alert-amber: #ffbf00;
-  --color-aircon-cyan: #00acc1;
+  --color-alert-amber: #f59e0b;
+  --color-aircon-cyan: #00838f;
+
+  /* --- Clay: warm local support accent (replaces stray purple) --- */
+  --color-clay: #b8501e;
+  --color-clay-soft: #e7d3c4;
 
   /* --- Primary System --- */
   --color-primary: #003f87;
@@ -57,29 +63,29 @@
   --color-on-error: #ffffff;
   --color-on-error-container: #93000a;
 
-  /* --- Surface System --- */
-  --color-surface: #f9f9ff;
-  --color-surface-dim: #d9d9e2;
-  --color-surface-bright: #f9f9ff;
-  --color-surface-variant: #e1e2ea;
+  /* --- Surface System (warm sand-tinted neutrals) --- */
+  --color-surface: #faf7f1;
+  --color-surface-dim: #e4ddd0;
+  --color-surface-bright: #fdfbf6;
+  --color-surface-variant: #e6ded0;
   --color-surface-tint: #115cb9;
-  --color-surface-container: #ededf6;
-  --color-surface-container-low: #f2f3fc;
-  --color-surface-container-high: #e7e8f0;
-  --color-surface-container-highest: #e1e2ea;
-  --color-surface-container-lowest: #ffffff;
-  --color-on-surface: #10141d;
-  --color-on-surface-variant: #30353f;
-  --color-inverse-surface: #2e3037;
-  --color-inverse-on-surface: #f0f0f9;
+  --color-surface-container: #f0e9dd;
+  --color-surface-container-low: #f5efe5;
+  --color-surface-container-high: #eae2d4;
+  --color-surface-container-highest: #e4dccc;
+  --color-surface-container-lowest: #fffdf8;
+  --color-on-surface: #1c1813;
+  --color-on-surface-variant: #4b4439;
+  --color-inverse-surface: #322e27;
+  --color-inverse-on-surface: #f6f0e6;
 
   /* --- Outline --- */
-  --color-outline: #5a5f6b;
-  --color-outline-variant: #c2c6d4;
+  --color-outline: #7c7263;
+  --color-outline-variant: #d4cab9;
 
   /* --- Background --- */
-  --color-background: #f9f9ff;
-  --color-on-background: #10141d;
+  --color-background: #faf7f1;
+  --color-on-background: #1c1813;
 
   /* --- Crowding Colors (semantic) --- */
   --color-crowding-low: #2e7d32;
@@ -114,9 +120,12 @@
 @layer theme {
   html.dark, .dark {
     --color-cebu-blue: #6eaaff;
-    --color-safe-green: #66bb6a;
-    --color-alert-amber: #ffd54f;
+    --color-safe-green: #7bc97f;
+    --color-alert-amber: #fbbf24;
     --color-aircon-cyan: #4dd0e1;
+
+    --color-clay: #f0935f;
+    --color-clay-soft: #5c3522;
 
     --color-primary: #acc7ff;
     --color-primary-container: #1a4b8c;
@@ -151,26 +160,26 @@
     --color-on-error: #690005;
     --color-on-error-container: #ffdad6;
 
-    --color-surface: #111318;
-    --color-surface-dim: #111318;
-    --color-surface-bright: #37393e;
-    --color-surface-variant: #424752;
+    --color-surface: #17150f;
+    --color-surface-dim: #17150f;
+    --color-surface-bright: #3d3930;
+    --color-surface-variant: #4a4439;
     --color-surface-tint: #acc7ff;
-    --color-surface-container: #1d1f25;
-    --color-surface-container-low: #191c21;
-    --color-surface-container-high: #282a2f;
-    --color-surface-container-highest: #33353a;
-    --color-surface-container-lowest: #0c0e13;
-    --color-on-surface: #f1f4fb;
-    --color-on-surface-variant: #d5d9e5;
-    --color-inverse-surface: #e2e2eb;
-    --color-inverse-on-surface: #2e3037;
+    --color-surface-container: #211e16;
+    --color-surface-container-low: #1c1a13;
+    --color-surface-container-high: #2c2820;
+    --color-surface-container-highest: #37322a;
+    --color-surface-container-lowest: #110f0a;
+    --color-on-surface: #f3efe6;
+    --color-on-surface-variant: #d8d1c2;
+    --color-inverse-surface: #e7e1d6;
+    --color-inverse-on-surface: #322e27;
 
-    --color-outline: #9ca1b0;
-    --color-outline-variant: #424752;
+    --color-outline: #a59c8b;
+    --color-outline-variant: #4a4439;
 
-    --color-background: #111318;
-    --color-on-background: #f1f4fb;
+    --color-background: #17150f;
+    --color-on-background: #f3efe6;
 
     --color-crowding-low: #66bb6a;
     --color-crowding-mid: #ffd54f;

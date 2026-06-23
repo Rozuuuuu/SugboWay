@@ -124,9 +124,9 @@ export default function RouteCard({
         ${className}
       `}
     >
-      {/* Decorative vertical selection accent */}
+      {/* Vertical selection accent */}
       {isSelected && (
-        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-cebu-blue via-primary to-purple-500 rounded-l-2xl" />
+        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-cebu-blue rounded-l-2xl" />
       )}
 
       {/* Main Row Info: Stacked on mobile, side-by-side on sm+ */}
@@ -208,17 +208,17 @@ export default function RouteCard({
                   </span>
 
                   {primaryTransitLeg.route?.routeType === "mybus" ? (
-                    <span className="bg-blue-500/10 text-blue-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-blue-500/20 flex items-center gap-1">
+                    <span className="bg-blue-500/10 text-blue-500 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-blue-500/20 flex items-center gap-1">
                       <span className="w-1 h-1 rounded-full bg-blue-500" />
                       Beep card • Scheduled stops • AC
                     </span>
                   ) : primaryTransitLeg.route?.isModernized ? (
-                    <span className="bg-green-500/10 text-green-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-green-500/20 flex items-center gap-1">
+                    <span className="bg-green-500/10 text-green-500 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-green-500/20 flex items-center gap-1">
                       <span className="w-1 h-1 rounded-full bg-green-500" />
                       Tap-to-pay • No conductor • AC
                     </span>
                   ) : (
-                    <span className="bg-amber-500/10 text-amber-500 text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-amber-500/20 flex items-center gap-1">
+                    <span className="bg-amber-500/10 text-amber-500 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-amber-500/20 flex items-center gap-1">
                       <span className="w-1 h-1 rounded-full bg-amber-500" />
                       Cash fare • Has conductor • No AC
                     </span>
@@ -306,8 +306,8 @@ export default function RouteCard({
           className="mt-4 pt-4 border-t border-outline-variant/60 space-y-4 animate-[fadeIn_0.3s_ease-out]"
           onClick={(e) => e.stopPropagation()} // Prevent clicking details from closing it
         >
-          <h4 className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-            Navigation Steps
+          <h4 className="text-sm font-bold text-on-surface">
+            Step by step
           </h4>
 
           <div className="relative pl-6 space-y-4">
