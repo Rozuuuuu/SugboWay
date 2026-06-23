@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
+import PlaceDropdown from "@/components/route/PlaceDropdown";
 import NavigationDrawer from "@/components/route/NavigationDrawer";
 import ProximityAlert from "@/components/route/ProximityAlert";
 import { calculateFare, formatPHP } from "@/domain";
@@ -1157,43 +1158,20 @@ export default function DemoPage() {
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Origin */}
-                  <div className="relative flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant hover:border-cebu-blue transition-colors group">
-                    <span className="material-symbols-outlined text-outline group-focus-within:text-cebu-blue shrink-0">
-                      my_location
-                    </span>
-                    <div className="flex-1 flex flex-col ml-3">
-                      <label className="text-xs font-medium text-on-surface-variant">
-                        From
-                      </label>
-                      <input
-                        type="text"
-                        value={origin}
-                        onChange={(e) => setOrigin(e.target.value)}
-                        className="bg-transparent border-none p-0 text-base font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
-                        placeholder="Where are you now?"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Destination */}
-                  <div className="relative flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant hover:border-cebu-blue transition-colors group">
-                    <span className="material-symbols-outlined text-outline group-focus-within:text-cebu-blue shrink-0">
-                      pin_drop
-                    </span>
-                    <div className="flex-1 flex flex-col ml-3">
-                      <label className="text-xs font-medium text-on-surface-variant">
-                        To
-                      </label>
-                      <input
-                        type="text"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                        className="bg-transparent border-none p-0 text-base font-semibold text-on-surface focus:outline-none focus:ring-0 placeholder:text-outline-variant"
-                        placeholder="Where to?"
-                      />
-                    </div>
-                  </div>
+                  <PlaceDropdown
+                    label="From"
+                    icon="my_location"
+                    value={origin}
+                    onChange={setOrigin}
+                    placeholder="Where are you now?"
+                  />
+                  <PlaceDropdown
+                    label="To"
+                    icon="pin_drop"
+                    value={destination}
+                    onChange={setDestination}
+                    placeholder="Where to?"
+                  />
                 </div>
 
                 {/* Passenger Type Selectors */}
