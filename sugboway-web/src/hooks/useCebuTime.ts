@@ -10,8 +10,19 @@ interface CebuTimeState {
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
+// Deterministic first-render value shared by server and client. Real time is
+// computed in useEffect after mount, so SSR and hydration produce identical
+// markup (avoids React hydration error #418 from a server-vs-client clock).
+const INITIAL_TIME: CebuTimeState = {
+  cebuHour: 12,
+  cebuMinute: 0,
+  isPeak: false,
+  peakLabel: "Off-Peak",
+  lastChecked: 0,
+};
+
 export function useCebuTime() {
-  const [state, setState] = useState<CebuTimeState>(() => computeCebuTime());
+  const [state, setState] = useState<CebuTimeState>(INITIAL_TIME);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   function computeCebuTime(): CebuTimeState {
@@ -36,7 +47,8 @@ export function useCebuTime() {
   }
 
   useEffect(() => {
-    // Re-check every second to keep the clock accurate in real-time
+    // Compute the real Cebu time once mounted (client only), then keep ticking.
+    setState(computeCebuTime());
     intervalRef.current = setInterval(() => {
       setState(computeCebuTime());
     }, 1000);
