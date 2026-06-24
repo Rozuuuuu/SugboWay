@@ -113,32 +113,48 @@ SugboWay/
 - Node.js 20+ and npm
 - Go 1.22+
 - Python 3.10+
-- A PostgreSQL database with the **PostGIS** extension
+- A PostgreSQL database with the **PostGIS** extension (+ **pgvector** for the AI service)
 - A Google **Gemini API key** (for the AI service)
+
+### Database: Neon (recommended free host)
+
+PostGIS is required, which rules out many free Postgres hosts.
+[Neon](https://neon.tech) has a persistent free tier (no 30-day expiry) and
+supports both `postgis` and `vector` extensions.
+
+1. Create a Neon project and copy its **connection string** — it already
+   includes `?sslmode=require`:
+   ```
+   postgresql://USER:PASSWORD@ep-xxxx.REGION.aws.neon.tech/DBNAME?sslmode=require
+   ```
+2. Set that as `DATABASE_URL` in **both** backend services (and your local
+   `sugboway-ai-service/.env`). The extensions are created automatically by the
+   schema/seed scripts (`CREATE EXTENSION IF NOT EXISTS postgis|vector`).
+3. Deploy / start `sugboway-routing-api` — it **auto-runs migrations on boot**,
+   so the fresh DB gets all tables, the road geometry, and the 54 routes/trips
+   with no manual SQL.
+4. Seed the base GTFS stops + embeddings once (calls the Gemini API, so it's
+   kept out of the auto-migrator):
+   ```bash
+   python seed_runner.py
+   ```
+
+> Note: Neon autosuspends an idle database and wakes it on the next connection
+> (~1s cold start). Supabase and Aiven also work (PostGIS-capable); only the
+> connection string changes.
 
 ### Environment variables
 
-**sugboway-routing-api**
-```
-DATABASE_URL=postgresql://user:pass@host/db   # PostGIS-enabled
-PORT=8080                                      # optional, defaults to 8080
-```
+See each service's `.env.example`. Summary:
 
-**sugboway-ai-service**
-```
-GEMINI_API_KEY=...           # mapped to GOOGLE_API_KEY automatically
-DATABASE_URL=postgresql://...# same PostGIS DB (for stop embeddings/RAG)
-ROUTING_API_URL=http://localhost:8080
-REDIS_URL=...                # optional; falls back to in-memory cache
-OPENWEATHER_KEY=...          # optional; weather context
-```
+**sugboway-routing-api** — `DATABASE_URL` (PostGIS), `PORT` (default 8080),
+`RUN_MIGRATIONS` (default on).
 
-**sugboway-web** (`.env.local`)
-```
-NEXT_PUBLIC_ROUTING_API_URL=http://localhost:8080
-NEXT_PUBLIC_AI_API_URL=http://localhost:8000
-NEXT_PUBLIC_WEATHER_API_KEY=...   # optional; live Cebu weather banner
-```
+**sugboway-ai-service** — `DATABASE_URL` (same DB), `GEMINI_API_KEY`,
+`ROUTING_API_URL`, optional `REDIS_URL` / `OPENWEATHER_KEY`.
+
+**sugboway-web** (`.env.local`) — `NEXT_PUBLIC_ROUTING_API_URL`,
+`NEXT_PUBLIC_AI_API_URL`, optional `NEXT_PUBLIC_WEATHER_API_KEY`.
 
 ### Database migrations
 

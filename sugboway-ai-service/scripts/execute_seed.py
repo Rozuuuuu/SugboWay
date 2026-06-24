@@ -1,7 +1,9 @@
 import os
 import psycopg2
+from dotenv import load_dotenv
 
-db_url = "postgresql://sugboway_user:icblLufDCbcAuk0KWbQdaoxyI8uU2zmF@dpg-d89tckegvqtc73cakufg-a.oregon-postgres.render.com/sugboway"
+load_dotenv()
+db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/sugboway")
 
 def run_seed():
     sql_path = r"c:\Users\Lloyd\OneDrive\Desktop\SugboWay\sugboway-routing-api\adapter\repository\seed_lptrp.sql"
