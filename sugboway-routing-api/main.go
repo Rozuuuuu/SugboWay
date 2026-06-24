@@ -77,6 +77,8 @@ func main() {
 	apiGroup.Get("/stops/nearby", routingHandler.GetNearbyStops)
 	apiGroup.Get("/route/search", routingHandler.SearchRoute)
 	apiGroup.Get("/routes/serving", routingHandler.GetRoutesServing)
+	apiGroup.Get("/routes", routingHandler.GetAllRoutes)
+	apiGroup.Get("/routes/passing", routingHandler.GetRoutesPassing)
 	apiGroup.Get("/congestion", routingHandler.GetCongestion)
 	apiGroup.Get("/route/shape", routingHandler.GetRouteShape)
 	apiGroup.Get("/route/stops", routingHandler.GetRouteStops)

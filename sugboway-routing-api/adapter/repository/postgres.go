@@ -7,6 +7,7 @@ import (
 
 	"sugboway-routing-api/domain"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -317,6 +318,70 @@ func (r *PostgresSpatialRepository) FindRoutesServingOD(oLat, oLon, dLat, dLon, 
 		out = append(out, s)
 	}
 	return out, nil
+}
+
+// routeSummarySelect is the shared column list for the browse-all and
+// "routes passing a point" queries. Start/end points come from the LineString
+// geometry so the UI can build a card + map track without another round-trip.
+const routeSummarySelect = `
+	SELECT r.route_id, r.route_short_name, r.route_long_name,
+	       COALESCE(r.is_modernized, false),
+	       COALESCE(r.has_aircon, false),
+	       COALESCE(r.has_conductor, true),
+	       ST_Length(rs.geom) AS meters,
+	       ST_Y(ST_StartPoint(rs.geom::geometry)) AS start_lat,
+	       ST_X(ST_StartPoint(rs.geom::geometry)) AS start_lon,
+	       ST_Y(ST_EndPoint(rs.geom::geometry))   AS end_lat,
+	       ST_X(ST_EndPoint(rs.geom::geometry))   AS end_lon
+	FROM route_shapes rs
+	JOIN trips t  ON t.shape_id = rs.shape_id
+	JOIN routes r ON r.route_id = t.route_id
+`
+
+func (r *PostgresSpatialRepository) scanRouteSummaries(rows pgx.Rows) ([]domain.RouteSummary, error) {
+	defer rows.Close()
+	var out []domain.RouteSummary
+	for rows.Next() {
+		var s domain.RouteSummary
+		if err := rows.Scan(&s.RouteID, &s.RouteShortName, &s.RouteLongName,
+			&s.IsModernized, &s.HasAircon, &s.HasConductor, &s.DistanceMeters,
+			&s.StartLat, &s.StartLon, &s.EndLat, &s.EndLon); err != nil {
+			return nil, fmt.Errorf("failed to scan route summary: %w", err)
+		}
+		out = append(out, s)
+	}
+	return out, rows.Err()
+}
+
+// FetchAllRoutes lists every route that has geometry, ordered by code.
+func (r *PostgresSpatialRepository) FetchAllRoutes() ([]domain.RouteSummary, error) {
+	ctx := context.Background()
+	query := routeSummarySelect + `
+		GROUP BY r.route_id, r.route_short_name, r.route_long_name,
+		         r.is_modernized, r.has_aircon, r.has_conductor, rs.geom
+		ORDER BY r.route_short_name ASC;
+	`
+	rows, err := r.Pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("all-routes query failed: %w", err)
+	}
+	return r.scanRouteSummaries(rows)
+}
+
+// FindRoutesPassing returns routes whose shape passes within radius of a point.
+func (r *PostgresSpatialRepository) FindRoutesPassing(lat, lon, radius float64) ([]domain.RouteSummary, error) {
+	ctx := context.Background()
+	query := routeSummarySelect + `
+		WHERE ST_DWithin(rs.geom, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $3)
+		GROUP BY r.route_id, r.route_short_name, r.route_long_name,
+		         r.is_modernized, r.has_aircon, r.has_conductor, rs.geom
+		ORDER BY r.route_short_name ASC;
+	`
+	rows, err := r.Pool.Query(ctx, query, lon, lat, radius)
+	if err != nil {
+		return nil, fmt.Errorf("routes-passing query failed: %w", err)
+	}
+	return r.scanRouteSummaries(rows)
 }
 
 func (r *PostgresSpatialRepository) FetchRouteShape(routeID string) (string, error) {

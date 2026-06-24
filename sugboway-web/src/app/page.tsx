@@ -5,6 +5,7 @@ import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
 import PlaceDropdown from "@/components/route/PlaceDropdown";
+import AllRoutesPanel from "@/components/route/AllRoutesPanel";
 import { searchPlaces, type Place } from "@/data/places";
 import NavigationDrawer from "@/components/route/NavigationDrawer";
 import ProximityAlert from "@/components/route/ProximityAlert";
@@ -557,16 +558,27 @@ export default function DemoPage() {
   }, [weatherCondition]);
 
   // Tab 1: Map & Routing States
+  const [routesView, setRoutesView] = useState<"plan" | "all">("plan");
   const [routes, setRoutes] = useState<RouteResult[]>(MOCK_ROUTES);
   const [selectedRouteIdx, setSelectedRouteIdx] = useState<number | null>(0);
+  // The single route the map currently draws — driven by whichever sub-tab/card
+  // is open (Plan results or the All-routes browser).
+  const [activeRoute, setActiveRoute] = useState<RouteResult | null>(null);
   const [origin, setOrigin] = useState("Talamban");
   const [destination, setDestination] = useState("Colon");
   const [isTrafficBannerOpen, setIsTrafficBannerOpen] = useState(true);
   const [isRoutingLoading, setIsRoutingLoading] = useState(false);
   const [routingError, setRoutingError] = useState<string | null>(null);
 
+  // In the Plan view, the active (map-drawn) route follows the selected result.
+  useEffect(() => {
+    if (routesView === "plan") {
+      setActiveRoute(selectedRouteIdx !== null ? routes[selectedRouteIdx] ?? null : null);
+    }
+  }, [routesView, selectedRouteIdx, routes]);
+
   // Proximity tracking hook for "Lugar lang" alerts
-  const selectedRoute = selectedRouteIdx !== null && routes[selectedRouteIdx] ? routes[selectedRouteIdx] : null;
+  const selectedRoute = activeRoute;
   const activeTransitLeg = selectedRoute?.legs.find((leg) => leg.type === "transit") || null;
 
   const {
@@ -636,6 +648,16 @@ export default function DemoPage() {
     },
     [attachMapToSlot]
   );
+
+  // Switch between the Plan-a-trip and All-routes sub-tabs. Reset the open card
+  // and park the shared map so it never lingers in a now-hidden sub-tab's slot.
+  const switchRoutesView = (v: "plan" | "all") => {
+    setRoutesView(v);
+    setSelectedRouteIdx(null);
+    setActiveRoute(null);
+    currentMapSlotRef.current = null;
+    attachMapToSlot();
+  };
 
   // Smoothly move the camera to a picked hub (e.g. "TC" -> USC Talamban).
   const flyToPlace = (place: Place) => {
@@ -849,9 +871,9 @@ export default function DemoPage() {
       routeMarkersRef.current.forEach((m) => m.remove());
       routeMarkersRef.current = [];
 
-      // No valid selection -> clear the track + dots so a stale route never
+      // No active route -> clear the track + dots so a stale route never
       // lingers on the map (without touching the base tiles).
-      const selectedRoute = selectedRouteIdx !== null ? routes[selectedRouteIdx] : null;
+      const selectedRoute = activeRoute;
       if (!selectedRoute) {
         trackDataRef.current = EMPTY_FEATURE_COLLECTION;
         stopsDataRef.current = EMPTY_FEATURE_COLLECTION;
@@ -985,7 +1007,7 @@ export default function DemoPage() {
     } else {
       map.once("style.load", () => drawOnMap().catch(console.error));
     }
-  }, [selectedRouteIdx, routes]);
+  }, [activeRoute]);
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -1285,7 +1307,35 @@ export default function DemoPage() {
 
           {/* TAB 1: MAP FINDER */}
           <div className={currentTab === "map" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
-              
+
+              {/* Sub-tab toggle: Plan a trip | All routes */}
+              <div className="flex bg-surface-container rounded-xl p-1 gap-1">
+                {([["plan", "Plan a trip"], ["all", "All routes"]] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => switchRoutesView(key)}
+                    className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors ${
+                      routesView === key
+                        ? "bg-surface-container-lowest text-cebu-blue shadow-xs"
+                        : "text-on-surface-variant hover:text-on-surface"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {routesView === "all" ? (
+                <AllRoutesPanel
+                  mapSlot={setMapSlot}
+                  onActiveRouteChange={setActiveRoute}
+                  passengerType={passengerType}
+                  setPassengerType={setPassengerType}
+                  isOffline={isOffline}
+                />
+              ) : (
+              <>
+
               {/* Navigation & Search Area */}
               <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 space-y-4">
                 <h2 className="text-base font-bold text-on-surface">
@@ -1442,6 +1492,8 @@ export default function DemoPage() {
                   )}
                 </div>
               </section>
+              </>
+              )}
           </div>
 
           {/* TAB 2: RUSH HOUR TRAFFIC ANALYTICS */}
@@ -1923,11 +1975,11 @@ export default function DemoPage() {
           })}
         </nav>
 
-        <NavigationDrawer 
-          route={selectedRouteIdx !== null && routes[selectedRouteIdx] ? routes[selectedRouteIdx] : null} 
-          passengerType={passengerType} 
-          isOpen={isNavDrawerOpen} 
-          onClose={() => setIsNavDrawerOpen(false)} 
+        <NavigationDrawer
+          route={activeRoute}
+          passengerType={passengerType}
+          isOpen={isNavDrawerOpen}
+          onClose={() => setIsNavDrawerOpen(false)}
         />
 
         {isApproaching && (
