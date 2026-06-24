@@ -30,6 +30,23 @@ type ServingRoute struct {
 	DistanceMeters float64 `json:"distanceMeters"`
 }
 
+// RouteSummary describes a whole route for the "browse all routes" view. It
+// includes the shape's start/end coordinates so the UI can render a card (and
+// its map track) without an extra round-trip.
+type RouteSummary struct {
+	RouteID        string  `json:"routeId"`
+	RouteShortName string  `json:"routeShortName"`
+	RouteLongName  string  `json:"routeLongName"`
+	IsModernized   bool    `json:"isModernized"`
+	HasAircon      bool    `json:"hasAircon"`
+	HasConductor   bool    `json:"hasConductor"`
+	DistanceMeters float64 `json:"distanceMeters"`
+	StartLat       float64 `json:"startLat"`
+	StartLon       float64 `json:"startLon"`
+	EndLat         float64 `json:"endLat"`
+	EndLon         float64 `json:"endLon"`
+}
+
 // SpatialRepositoryPort defines what the Dijkstra engine needs from our PostGIS database.
 type SpatialRepositoryPort interface {
 	// FindNearbyStops locates all stops within a given radius using ST_DWithin and ST_Distance
@@ -54,6 +71,13 @@ type SpatialRepositoryPort interface {
 	// BOTH the origin and destination — direct geometric matches across all routes
 	// that have geometry, even ones not present in the Dijkstra schedule graph.
 	FindRoutesServingOD(oLat, oLon, dLat, dLon, radiusMeters float64) ([]ServingRoute, error)
+
+	// FetchAllRoutes returns every route that has geometry, for the browse-all view.
+	FetchAllRoutes() ([]RouteSummary, error)
+
+	// FindRoutesPassing returns routes whose shape passes within radiusMeters of a
+	// single point — "which routes go through here?".
+	FindRoutesPassing(lat, lon, radiusMeters float64) ([]RouteSummary, error)
 
 	// FetchRouteConductorInfo returns whether a route has a conductor and is modernized
 	FetchRouteConductorInfo(routeID string) (hasConductor bool, isModernized bool, hasAircon bool, err error)

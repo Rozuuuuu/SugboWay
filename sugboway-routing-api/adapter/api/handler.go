@@ -268,6 +268,47 @@ func (h *RoutingHandler) GetRoutesServing(c *fiber.Ctx) error {
 	})
 }
 
+// GetAllRoutes lists every route that has geometry (for the browse-all view).
+// GET /api/v1/routes
+func (h *RoutingHandler) GetAllRoutes(c *fiber.Ctx) error {
+	routes, err := h.Repo.FetchAllRoutes()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to list routes: %v", err),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"routes": routes})
+}
+
+// GetRoutesPassing returns routes whose shape passes near a single point —
+// "which jeepneys/buses go through here?".
+// GET /api/v1/routes/passing?lat=10.297&lon=123.899&radius=600
+func (h *RoutingHandler) GetRoutesPassing(c *fiber.Ctx) error {
+	lat, err1 := strconv.ParseFloat(c.Query("lat"), 64)
+	lon, err2 := strconv.ParseFloat(c.Query("lon"), 64)
+	if err1 != nil || err2 != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "lat and lon are required floats",
+		})
+	}
+
+	radius, err := strconv.ParseFloat(c.Query("radius", "600"), 64)
+	if err != nil || radius <= 0 {
+		radius = 600
+	}
+
+	routes, err := h.Repo.FindRoutesPassing(lat, lon, radius)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to find passing routes: %v", err),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"routes":             routes,
+		"searchRadiusMeters": radius,
+	})
+}
+
 // GetRouteShape returns the PostGIS GeoJSON geometry for a route's spatial path.
 // GET /api/v1/route/shape?route_id=route_13c
 func (h *RoutingHandler) GetRouteShape(c *fiber.Ctx) error {
