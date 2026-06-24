@@ -21,8 +21,9 @@ func main() {
 	// 1. Load Configurations from Env Variables
 	dbConnStr := os.Getenv("DATABASE_URL")
 	if dbConnStr == "" {
-		// Fallback to local default development address or provided render url
-		dbConnStr = "postgresql://sugboway_user:icblLufDCbcAuk0KWbQdaoxyI8uU2zmF@dpg-d89tckegvqtc73cakufg-a.oregon-postgres.render.com/sugboway"
+		// Local development default. In production (Render/Neon) set DATABASE_URL.
+		dbConnStr = "postgresql://postgres:postgres@localhost:5432/sugboway"
+		log.Println("[SugboWay Routing API] DATABASE_URL not set — using localhost default.")
 	}
 
 	port := os.Getenv("PORT")

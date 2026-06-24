@@ -12,7 +12,7 @@ class VectorStore:
         self.own_connection = False
         
         if self.conn is None:
-            db_url = os.getenv("DATABASE_URL", "postgresql://sugboway_user:icblLufDCbcAuk0KWbQdaoxyI8uU2zmF@dpg-d89tckegvqtc73cakufg-a.oregon-postgres.render.com/sugboway")
+            db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/sugboway")
             try:
                 self.conn = psycopg2.connect(db_url)
                 self.own_connection = True
