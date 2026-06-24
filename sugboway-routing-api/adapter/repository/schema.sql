@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS routes (
     route_color            TEXT,
     is_modernized          BOOLEAN DEFAULT FALSE,
     has_aircon             BOOLEAN DEFAULT FALSE,
+    has_conductor          BOOLEAN DEFAULT TRUE,
     daily_passenger_volume INTEGER DEFAULT 5000,
     road_type              TEXT DEFAULT 'national',
     road_capacity          INTEGER DEFAULT 5000
