@@ -129,11 +129,18 @@ export default function AllRoutesPanel({
     setError(null);
     try {
       const res = await fetch(`${ROUTING_API_URL}/api/v1/routes`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        // 404 means the API doesn't have this endpoint yet (needs redeploy).
+        throw new Error(
+          res.status === 404
+            ? "The routing API doesn't have the /routes endpoint yet — redeploy sugboway-routing-api."
+            : `The routing API returned an error (HTTP ${res.status}).`
+        );
+      }
       const data = await res.json();
       setAllRoutes(Array.isArray(data.routes) ? data.routes : []);
     } catch (e: any) {
-      setError("Couldn't load the route list. Check the connection and try again.");
+      setError(e?.message || "Couldn't reach the routing API. Check the connection and try again.");
       setAllRoutes([]);
     } finally {
       setLoading(false);
@@ -335,6 +342,15 @@ export default function AllRoutesPanel({
           <button onClick={fetchAll} className="mt-1 text-sm font-semibold text-cebu-blue hover:underline">
             Try again
           </button>
+        </div>
+      ) : allRoutes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
+          <span className="material-symbols-outlined text-outline text-3xl">cloud_off</span>
+          <p className="text-sm text-on-surface-variant font-semibold mt-2">No routes available yet.</p>
+          <p className="text-xs text-outline mt-1">
+            The server returned an empty list — the database may need seeding (apply the route
+            migrations / run seed_runner.py).
+          </p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
