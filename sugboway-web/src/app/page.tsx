@@ -800,6 +800,10 @@ export default function DemoPage() {
     if (!map) return;
 
     const drawOnMap = async () => {
+      // The map can become visible (display:none -> block) when a card is
+      // selected, so re-sync the canvas size before drawing/fitting bounds.
+      map.resize();
+
       // Persistent layers must exist before we push data into them.
       ensureRouteTrackLayers(map);
 
@@ -1361,111 +1365,119 @@ export default function DemoPage() {
                   </span>
                 </div>
 
-                {/* Map panel — stays in view while you scroll the route cards below */}
-                <div className="sticky top-16 z-10 bg-surface-container-low border border-outline-variant rounded-2xl p-2 shadow-sm">
-                  {/* Collapse toggle (mobile only — map is always shown on desktop) */}
-                  <button
-                    onClick={() => setIsMapCollapsed((v) => !v)}
-                    className="md:hidden w-full flex items-center justify-between px-1.5 pb-2 text-on-surface-variant select-none"
-                    aria-expanded={!isMapCollapsed}
-                  >
-                    <span className="flex items-center gap-1.5 text-sm font-semibold">
-                      <span className="material-symbols-outlined text-base text-cebu-blue">map</span>
-                      Route map
-                    </span>
-                    <span className="flex items-center gap-1 text-xs">
-                      {isMapCollapsed ? "Show" : "Hide"}
-                      <span className={`material-symbols-outlined text-lg transition-transform duration-300 ${isMapCollapsed ? "" : "rotate-180"}`}>
-                        expand_more
-                      </span>
-                    </span>
-                  </button>
-
+                {/* Route cards. The single map is repositioned (flex order) to sit
+                    directly under the selected card, so pressing a card reveals its
+                    road track inside the results content. */}
+                <div className="flex flex-col gap-4">
+                  {/* One persistent map instance — always mounted (so MapLibre is not
+                      re-created), shown under the selected card and hidden otherwise. */}
                   <div
-                    className={`relative rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center transition-[height] duration-300 ${
-                      isMapCollapsed ? "h-0 border-0" : "h-60 sm:h-64"
-                    } md:h-72`}
+                    style={{ order: (selectedRouteIdx ?? 999) * 2 + 1 }}
+                    className={`${
+                      selectedRouteIdx !== null && routes[selectedRouteIdx] ? "" : "hidden"
+                    } -mt-1 bg-surface-container-low border border-outline-variant border-t-0 rounded-b-2xl p-2 shadow-sm`}
                   >
-                    {/* Real MapContainer */}
+                    {/* Collapse toggle (mobile only — map is always shown on desktop) */}
+                    <button
+                      onClick={() => setIsMapCollapsed((v) => !v)}
+                      className="md:hidden w-full flex items-center justify-between px-1.5 pb-2 pt-1 text-on-surface-variant select-none"
+                      aria-expanded={!isMapCollapsed}
+                    >
+                      <span className="flex items-center gap-1.5 text-sm font-semibold">
+                        <span className="material-symbols-outlined text-base text-cebu-blue">map</span>
+                        Road track
+                      </span>
+                      <span className="flex items-center gap-1 text-xs">
+                        {isMapCollapsed ? "Show" : "Hide"}
+                        <span className={`material-symbols-outlined text-lg transition-transform duration-300 ${isMapCollapsed ? "" : "rotate-180"}`}>
+                          expand_more
+                        </span>
+                      </span>
+                    </button>
+
                     <div
-                      ref={mapContainerRef}
-                      className="absolute inset-0 z-0 w-full h-full"
-                      style={{ position: 'absolute', width: '100%', height: '100%' }}
-                    />
+                      className={`relative rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center transition-[height] duration-300 ${
+                        isMapCollapsed ? "h-0 border-0" : "h-56 sm:h-64"
+                      } md:h-72`}
+                    >
+                      {/* Real MapContainer */}
+                      <div
+                        ref={mapContainerRef}
+                        className="absolute inset-0 z-0 w-full h-full"
+                        style={{ position: 'absolute', width: '100%', height: '100%' }}
+                      />
 
-                    {/* Offline Mode Banner */}
-                    {isOffline && (
-                      <div className="absolute top-3 left-3 z-20 bg-surface-container-lowest/90 backdrop-blur border border-outline-variant px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md text-on-surface-variant">
-                        <span className="material-symbols-outlined text-sm text-clay">cloud_off</span>
-                        <span className="text-xs font-semibold">Offline map</span>
-                      </div>
-                    )}
-
-                    {/* Floating voice + ask buttons */}
-                    <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
-                      <button
-                        onClick={() => {
-                          setIsRecording(true);
-                          setTimeout(() => {
-                            setIsRecording(false);
-                            setCurrentTab("chat");
-                            handleQuickQuestion("pila plete padong colon?");
-                          }, 3000); // 3 seconds mock voice capture
-                        }}
-                        className={`
-                          w-11 h-11 rounded-full bg-clay hover:brightness-95 text-white flex items-center justify-center shadow-md transition-all duration-200 relative select-none
-                          ${isRecording ? "scale-110" : "active:scale-95"}
-                        `}
-                        title="Ask by voice"
-                      >
-                        {isRecording ? (
-                          <span className="material-symbols-outlined text-xl animate-pulse">graphic_eq</span>
-                        ) : (
-                          <span className="material-symbols-outlined text-xl">mic</span>
-                        )}
-                        {isRecording && (
-                          <span className="absolute inset-0 w-full h-full rounded-full border-4 border-clay/40 animate-ping" />
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => setCurrentTab("chat")}
-                        className="w-11 h-11 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shadow-md active:scale-95 select-none"
-                        title="Ask SugboWay"
-                      >
-                        <span className="material-symbols-outlined text-xl">forum</span>
-                      </button>
-                    </div>
-
-                    {/* Over-Map Control: shows which jeepney/bus is being tracked */}
-                    <div className="absolute bottom-3 left-3 right-3 bg-surface-container-lowest/85 backdrop-blur border border-outline-variant rounded-xl px-3 py-2.5 flex justify-between items-center z-10 shadow-sm">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="material-symbols-outlined text-cebu-blue shrink-0">directions_bus</span>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-semibold text-on-surface truncate">
-                            {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `Tracking ${routes[selectedRouteIdx].legs[0]?.routeShortName || "Walk"}` : "Tap a route below"}
-                          </span>
-                          <span className="text-xs text-on-surface-variant truncate">
-                            {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `${formatDuration(routes[selectedRouteIdx].totalTimeSeconds)} along the road` : "Its road path shows up here"}
-                          </span>
+                      {/* Offline Mode Banner */}
+                      {isOffline && (
+                        <div className="absolute top-3 left-3 z-20 bg-surface-container-lowest/90 backdrop-blur border border-outline-variant px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md text-on-surface-variant">
+                          <span className="material-symbols-outlined text-sm text-clay">cloud_off</span>
+                          <span className="text-xs font-semibold">Offline map</span>
                         </div>
+                      )}
+
+                      {/* Floating voice + ask buttons */}
+                      <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
+                        <button
+                          onClick={() => {
+                            setIsRecording(true);
+                            setTimeout(() => {
+                              setIsRecording(false);
+                              setCurrentTab("chat");
+                              handleQuickQuestion("pila plete padong colon?");
+                            }, 3000); // 3 seconds mock voice capture
+                          }}
+                          className={`
+                            w-11 h-11 rounded-full bg-clay hover:brightness-95 text-white flex items-center justify-center shadow-md transition-all duration-200 relative select-none
+                            ${isRecording ? "scale-110" : "active:scale-95"}
+                          `}
+                          title="Ask by voice"
+                        >
+                          {isRecording ? (
+                            <span className="material-symbols-outlined text-xl animate-pulse">graphic_eq</span>
+                          ) : (
+                            <span className="material-symbols-outlined text-xl">mic</span>
+                          )}
+                          {isRecording && (
+                            <span className="absolute inset-0 w-full h-full rounded-full border-4 border-clay/40 animate-ping" />
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => setCurrentTab("chat")}
+                          className="w-11 h-11 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shadow-md active:scale-95 select-none"
+                          title="Ask SugboWay"
+                        >
+                          <span className="material-symbols-outlined text-xl">forum</span>
+                        </button>
                       </div>
 
-                      {selectedRouteIdx !== null && routes[selectedRouteIdx] && (
-                        <button
-                          onClick={() => setIsNavDrawerOpen(true)}
-                          className="bg-cebu-blue hover:bg-primary text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
-                        >
-                          <span className="material-symbols-outlined text-sm">navigation</span>
-                          Ride
-                        </button>
-                      )}
+                      {/* Over-Map Control: shows which jeepney/bus is being tracked */}
+                      <div className="absolute bottom-3 left-3 right-3 bg-surface-container-lowest/85 backdrop-blur border border-outline-variant rounded-xl px-3 py-2.5 flex justify-between items-center z-10 shadow-sm">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="material-symbols-outlined text-cebu-blue shrink-0">directions_bus</span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-semibold text-on-surface truncate">
+                              {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `Tracking ${routes[selectedRouteIdx].legs[0]?.routeShortName || "Walk"}` : "Tap a route"}
+                            </span>
+                            <span className="text-xs text-on-surface-variant truncate">
+                              {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `${formatDuration(routes[selectedRouteIdx].totalTimeSeconds)} along the road` : "Its road path shows up here"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {selectedRouteIdx !== null && routes[selectedRouteIdx] && (
+                          <button
+                            onClick={() => setIsNavDrawerOpen(true)}
+                            className="bg-cebu-blue hover:bg-primary text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
+                          >
+                            <span className="material-symbols-outlined text-sm">navigation</span>
+                            Ride
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Route cards — each shows its jeepney/bus code; tap to track it */}
-                <div className="flex flex-col gap-4">
                   {isRoutingLoading ? (
                     <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
                       <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
@@ -1486,14 +1498,15 @@ export default function DemoPage() {
                     </div>
                   ) : (
                     routes.map((route, idx) => (
-                      <RouteCard
-                        key={idx}
-                        route={route}
-                        passengerType={passengerType}
-                        isSelected={selectedRouteIdx === idx}
-                        onClick={() => setSelectedRouteIdx(idx)}
-                        onStartNavigation={() => setIsNavDrawerOpen(true)}
-                      />
+                      <div key={idx} style={{ order: idx * 2 }}>
+                        <RouteCard
+                          route={route}
+                          passengerType={passengerType}
+                          isSelected={selectedRouteIdx === idx}
+                          onClick={() => setSelectedRouteIdx(idx)}
+                          onStartNavigation={() => setIsNavDrawerOpen(true)}
+                        />
+                      </div>
                     ))
                   )}
                 </div>
