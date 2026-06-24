@@ -277,7 +277,10 @@ func (h *RoutingHandler) GetAllRoutes(c *fiber.Ctx) error {
 			"error": fmt.Sprintf("Failed to list routes: %v", err),
 		})
 	}
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"routes": routes})
+	if routes == nil {
+		routes = []domain.RouteSummary{}
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"routes": routes, "count": len(routes)})
 }
 
 // GetRoutesPassing returns routes whose shape passes near a single point —
