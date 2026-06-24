@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
@@ -539,8 +539,6 @@ export default function DemoPage() {
   const [isSafetyModeActive, setIsSafetyModeActive] = useState(false);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  // Map is collapsible on mobile to give the route list more room.
-  const [isMapCollapsed, setIsMapCollapsed] = useState(false);
 
   // Auto-trigger Late-Night Safety Mode if local time is past 9 PM (21:00) or before 5 AM
   useEffect(() => {
@@ -605,13 +603,39 @@ export default function DemoPage() {
   
   const chatInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+  // The single map container element, created once and relocated into whichever
+  // route card is expanded. Parked in mapHostRef when no card is open.
+  const mapElRef = useRef<HTMLDivElement | null>(null);
+  const mapHostRef = useRef<HTMLDivElement>(null);
+  const currentMapSlotRef = useRef<HTMLDivElement | null>(null);
   // Start/end crowding markers we own (so we clear only ours, never all markers)
   const routeMarkersRef = useRef<Marker[]>([]);
   // Latest track + stop data, so a style swap can restore them onto fresh layers
   const trackDataRef = useRef<any>(EMPTY_FEATURE_COLLECTION);
   const stopsDataRef = useRef<any>(EMPTY_FEATURE_COLLECTION);
+
+  // Move the persistent map element into the currently-open card slot (or back
+  // to the hidden host when no card is open), then resize the canvas.
+  const attachMapToSlot = useCallback(() => {
+    const el = mapElRef.current;
+    if (!el) return;
+    const target = currentMapSlotRef.current ?? mapHostRef.current;
+    if (target && el.parentElement !== target) {
+      target.appendChild(el);
+      setTimeout(() => mapRef.current?.resize(), 60);
+    }
+  }, []);
+
+  // Stable ref callback handed to each card's map slot. Stable identity matters
+  // so React doesn't detach/reattach (and churn the map) on every render.
+  const setMapSlot = useCallback(
+    (node: HTMLDivElement | null) => {
+      currentMapSlotRef.current = node;
+      attachMapToSlot();
+    },
+    [attachMapToSlot]
+  );
 
   // Smoothly move the camera to a picked hub (e.g. "TC" -> USC Talamban).
   const flyToPlace = (place: Place) => {
@@ -718,10 +742,20 @@ export default function DemoPage() {
 
   // Initialize MapLibre GL Map snapped to Cebu City
   useEffect(() => {
-    if (typeof window === "undefined" || !mapContainerRef.current) return;
+    if (typeof window === "undefined") return;
+
+    // Create the single, persistent map container element. It gets moved between
+    // card slots, so it must NOT be a React-managed node.
+    const el = document.createElement("div");
+    el.style.position = "absolute";
+    el.style.inset = "0";
+    el.style.width = "100%";
+    el.style.height = "100%";
+    mapElRef.current = el;
+    mapHostRef.current?.appendChild(el); // park in the hidden host until a card opens
 
     const map = new maplibregl.Map({
-      container: mapContainerRef.current,
+      container: el,
       style: mapStyle,
       center: [123.89, 10.31], // Metro Cebu coordinates
       zoom: 13,
@@ -757,18 +791,23 @@ export default function DemoPage() {
     // setStyle() (offline/online toggle) drops custom layers — re-add on every style load
     map.on("style.load", restoreRouteLayers);
 
+    mapRef.current = map;
+    // If a card slot is already mounted (selected card), move the map into it.
+    attachMapToSlot();
+
     // Handle initial zero-size container hydration delay
     setTimeout(() => {
       map.resize();
-    }, 100);
+    }, 120);
     setTimeout(() => {
       map.resize();
     }, 500);
 
-    mapRef.current = map;
-
     return () => {
       map.remove();
+      el.remove();
+      mapElRef.current = null;
+      mapRef.current = null;
     };
   }, []);
 
@@ -786,13 +825,12 @@ export default function DemoPage() {
   // Call map.resize() when switching back to the map tab, or when the map is
   // re-expanded on mobile, to prevent a grey/blank canvas after a size change.
   useEffect(() => {
-    if (currentTab === "map" && !isMapCollapsed && mapRef.current) {
-      // Wait for the height transition to finish before resizing.
+    if (currentTab === "map" && mapRef.current) {
       setTimeout(() => {
         mapRef.current?.resize();
-      }, 320);
+      }, 60);
     }
-  }, [currentTab, isMapCollapsed]);
+  }, [currentTab]);
 
   // Update Route Polyline and Markers on Selected Route index change
   useEffect(() => {
@@ -1354,7 +1392,7 @@ export default function DemoPage() {
                 />
               )}
 
-              {/* Results with an integrated route map: tap a card -> its track draws above */}
+              {/* Results: each card expands to reveal its own road-track map */}
               <section className="space-y-3">
                 <div className="flex items-baseline justify-between gap-2">
                   <h2 className="text-base font-bold text-on-surface">
@@ -1365,119 +1403,10 @@ export default function DemoPage() {
                   </span>
                 </div>
 
-                {/* Route cards. The single map is repositioned (flex order) to sit
-                    directly under the selected card, so pressing a card reveals its
-                    road track inside the results content. */}
+                {/* Hidden host: parks the single map element when no card is open. */}
+                <div ref={mapHostRef} className="hidden" aria-hidden="true" />
+
                 <div className="flex flex-col gap-4">
-                  {/* One persistent map instance — always mounted (so MapLibre is not
-                      re-created), shown under the selected card and hidden otherwise. */}
-                  <div
-                    style={{ order: (selectedRouteIdx ?? 999) * 2 + 1 }}
-                    className={`${
-                      selectedRouteIdx !== null && routes[selectedRouteIdx] ? "" : "hidden"
-                    } -mt-1 bg-surface-container-low border border-outline-variant border-t-0 rounded-b-2xl p-2 shadow-sm`}
-                  >
-                    {/* Collapse toggle (mobile only — map is always shown on desktop) */}
-                    <button
-                      onClick={() => setIsMapCollapsed((v) => !v)}
-                      className="md:hidden w-full flex items-center justify-between px-1.5 pb-2 pt-1 text-on-surface-variant select-none"
-                      aria-expanded={!isMapCollapsed}
-                    >
-                      <span className="flex items-center gap-1.5 text-sm font-semibold">
-                        <span className="material-symbols-outlined text-base text-cebu-blue">map</span>
-                        Road track
-                      </span>
-                      <span className="flex items-center gap-1 text-xs">
-                        {isMapCollapsed ? "Show" : "Hide"}
-                        <span className={`material-symbols-outlined text-lg transition-transform duration-300 ${isMapCollapsed ? "" : "rotate-180"}`}>
-                          expand_more
-                        </span>
-                      </span>
-                    </button>
-
-                    <div
-                      className={`relative rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center transition-[height] duration-300 ${
-                        isMapCollapsed ? "h-0 border-0" : "h-56 sm:h-64"
-                      } md:h-72`}
-                    >
-                      {/* Real MapContainer */}
-                      <div
-                        ref={mapContainerRef}
-                        className="absolute inset-0 z-0 w-full h-full"
-                        style={{ position: 'absolute', width: '100%', height: '100%' }}
-                      />
-
-                      {/* Offline Mode Banner */}
-                      {isOffline && (
-                        <div className="absolute top-3 left-3 z-20 bg-surface-container-lowest/90 backdrop-blur border border-outline-variant px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-md text-on-surface-variant">
-                          <span className="material-symbols-outlined text-sm text-clay">cloud_off</span>
-                          <span className="text-xs font-semibold">Offline map</span>
-                        </div>
-                      )}
-
-                      {/* Floating voice + ask buttons */}
-                      <div className="absolute top-3 right-3 z-20 flex flex-col gap-2">
-                        <button
-                          onClick={() => {
-                            setIsRecording(true);
-                            setTimeout(() => {
-                              setIsRecording(false);
-                              setCurrentTab("chat");
-                              handleQuickQuestion("pila plete padong colon?");
-                            }, 3000); // 3 seconds mock voice capture
-                          }}
-                          className={`
-                            w-11 h-11 rounded-full bg-clay hover:brightness-95 text-white flex items-center justify-center shadow-md transition-all duration-200 relative select-none
-                            ${isRecording ? "scale-110" : "active:scale-95"}
-                          `}
-                          title="Ask by voice"
-                        >
-                          {isRecording ? (
-                            <span className="material-symbols-outlined text-xl animate-pulse">graphic_eq</span>
-                          ) : (
-                            <span className="material-symbols-outlined text-xl">mic</span>
-                          )}
-                          {isRecording && (
-                            <span className="absolute inset-0 w-full h-full rounded-full border-4 border-clay/40 animate-ping" />
-                          )}
-                        </button>
-
-                        <button
-                          onClick={() => setCurrentTab("chat")}
-                          className="w-11 h-11 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shadow-md active:scale-95 select-none"
-                          title="Ask SugboWay"
-                        >
-                          <span className="material-symbols-outlined text-xl">forum</span>
-                        </button>
-                      </div>
-
-                      {/* Over-Map Control: shows which jeepney/bus is being tracked */}
-                      <div className="absolute bottom-3 left-3 right-3 bg-surface-container-lowest/85 backdrop-blur border border-outline-variant rounded-xl px-3 py-2.5 flex justify-between items-center z-10 shadow-sm">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="material-symbols-outlined text-cebu-blue shrink-0">directions_bus</span>
-                          <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-semibold text-on-surface truncate">
-                              {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `Tracking ${routes[selectedRouteIdx].legs[0]?.routeShortName || "Walk"}` : "Tap a route"}
-                            </span>
-                            <span className="text-xs text-on-surface-variant truncate">
-                              {selectedRouteIdx !== null && routes[selectedRouteIdx] ? `${formatDuration(routes[selectedRouteIdx].totalTimeSeconds)} along the road` : "Its road path shows up here"}
-                            </span>
-                          </div>
-                        </div>
-
-                        {selectedRouteIdx !== null && routes[selectedRouteIdx] && (
-                          <button
-                            onClick={() => setIsNavDrawerOpen(true)}
-                            className="bg-cebu-blue hover:bg-primary text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
-                          >
-                            <span className="material-symbols-outlined text-sm">navigation</span>
-                            Ride
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
                   {isRoutingLoading ? (
                     <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
                       <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
@@ -1498,15 +1427,17 @@ export default function DemoPage() {
                     </div>
                   ) : (
                     routes.map((route, idx) => (
-                      <div key={idx} style={{ order: idx * 2 }}>
-                        <RouteCard
-                          route={route}
-                          passengerType={passengerType}
-                          isSelected={selectedRouteIdx === idx}
-                          onClick={() => setSelectedRouteIdx(idx)}
-                          onStartNavigation={() => setIsNavDrawerOpen(true)}
-                        />
-                      </div>
+                      <RouteCard
+                        key={idx}
+                        route={route}
+                        passengerType={passengerType}
+                        isSelected={selectedRouteIdx === idx}
+                        expanded={selectedRouteIdx === idx}
+                        onClick={() => setSelectedRouteIdx((prev) => (prev === idx ? null : idx))}
+                        mapSlot={setMapSlot}
+                        isOffline={isOffline}
+                        onStartNavigation={() => setIsNavDrawerOpen(true)}
+                      />
                     ))
                   )}
                 </div>

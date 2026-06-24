@@ -40,6 +40,17 @@ interface RouteCardProps {
   /** Callback when the user clicks Start Live Commute button */
   onStartNavigation?: () => void;
 
+  /** Controlled expanded state. When provided, the card's dropdown is driven by
+   *  the parent (so only one card opens at a time and can host the shared map). */
+  expanded?: boolean;
+
+  /** Ref callback for the in-card map slot. The parent moves its single map
+   *  element into this node while the card is expanded. */
+  mapSlot?: (node: HTMLDivElement | null) => void;
+
+  /** Whether the app is in offline map mode (shows a small badge on the map). */
+  isOffline?: boolean;
+
   /** Optional class name */
   className?: string;
 }
@@ -61,10 +72,22 @@ export default function RouteCard({
   onClick,
   isSelected = false,
   onStartNavigation,
+  expanded,
+  mapSlot,
+  isOffline = false,
   className = "",
 }: RouteCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
   const [animatePress, setAnimatePress] = useState(false);
+
+  // Controlled when `expanded` is provided (parent drives a single-open dropdown
+  // so it can host the shared map); otherwise the card manages its own state.
+  const isControlled = expanded !== undefined;
+  const isExpanded = isControlled ? expanded : internalExpanded;
+  const toggleExpand = () => {
+    if (isControlled) onClick?.();
+    else setInternalExpanded((prev) => !prev);
+  };
 
   // Extract all transit legs
   const transitLegs = route.legs.filter((leg) => leg.type === "transit");
@@ -102,10 +125,12 @@ export default function RouteCard({
     setAnimatePress(true);
     setTimeout(() => setAnimatePress(false), 150);
 
-    if (onClick) {
-      onClick();
+    if (isControlled) {
+      onClick?.();
+    } else {
+      onClick?.();
+      setInternalExpanded((prev) => !prev);
     }
-    setIsExpanded((prev) => !prev);
   };
 
   return (
@@ -284,12 +309,12 @@ export default function RouteCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            setIsExpanded(!isExpanded);
+            toggleExpand();
           }}
           className="min-h-[48px] px-4 py-2 flex items-center justify-center gap-1.5 text-sm font-bold text-on-surface-variant hover:text-cebu-blue transition-colors rounded-xl select-none"
           aria-expanded={isExpanded}
         >
-          <span>{isExpanded ? "Hide Details" : "View Step-by-Step"}</span>
+          <span>{isExpanded ? "Hide details & map" : "View route & map"}</span>
           <span
             className={`material-symbols-outlined text-[18px] transition-transform duration-300 ${
               isExpanded ? "rotate-180" : ""
@@ -306,6 +331,32 @@ export default function RouteCard({
           className="mt-4 pt-4 border-t border-outline-variant/60 space-y-4 animate-[fadeIn_0.3s_ease-out]"
           onClick={(e) => e.stopPropagation()} // Prevent clicking details from closing it
         >
+          {/* Road-track map for this route. The parent moves its single map
+              element into this slot while the card is open. */}
+          {mapSlot && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-sm font-bold text-on-surface">
+                  <span className="material-symbols-outlined text-base text-cebu-blue">map</span>
+                  {transitLegs.length > 0 ? `${routeCode} road track` : "Walking path"}
+                </span>
+                {isOffline && (
+                  <span className="flex items-center gap-1 text-xs text-clay font-semibold">
+                    <span className="material-symbols-outlined text-sm">cloud_off</span>
+                    Offline
+                  </span>
+                )}
+              </div>
+              <div
+                ref={mapSlot}
+                className="relative h-52 sm:h-56 rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest"
+              />
+              <p className="text-xs text-on-surface-variant">
+                Blue line follows the actual streets this {transitLegs.length > 0 ? "jeepney/bus" : "walk"} takes.
+              </p>
+            </div>
+          )}
+
           <h4 className="text-sm font-bold text-on-surface">
             Step by step
           </h4>
