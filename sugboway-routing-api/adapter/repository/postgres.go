@@ -279,6 +279,46 @@ func (r *PostgresSpatialRepository) FetchRouteCongestionParams(routeID string) (
 	return pv, roadType, roadCapacity, nil
 }
 
+// FindRoutesServingOD returns every route whose LINESTRING passes within
+// radiusMeters of both the origin and destination. This surfaces direct route
+// options purely from geometry, so routes that have shapes but no scheduled
+// stop_times (and are therefore invisible to the Dijkstra graph) still appear.
+func (r *PostgresSpatialRepository) FindRoutesServingOD(oLat, oLon, dLat, dLon, radius float64) ([]domain.ServingRoute, error) {
+	ctx := context.Background()
+	query := `
+		SELECT r.route_id, r.route_short_name, r.route_long_name,
+		       COALESCE(r.is_modernized, false),
+		       COALESCE(r.has_aircon, false),
+		       COALESCE(r.has_conductor, true),
+		       ST_Length(rs.geom) AS meters
+		FROM route_shapes rs
+		JOIN trips t  ON t.shape_id = rs.shape_id
+		JOIN routes r ON r.route_id = t.route_id
+		WHERE ST_DWithin(rs.geom, ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, $5)
+		  AND ST_DWithin(rs.geom, ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, $5)
+		GROUP BY r.route_id, r.route_short_name, r.route_long_name,
+		         r.is_modernized, r.has_aircon, r.has_conductor, rs.geom
+		ORDER BY meters ASC
+		LIMIT 25;
+	`
+	rows, err := r.Pool.Query(ctx, query, oLon, oLat, dLon, dLat, radius)
+	if err != nil {
+		return nil, fmt.Errorf("serving-routes query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var out []domain.ServingRoute
+	for rows.Next() {
+		var s domain.ServingRoute
+		if err := rows.Scan(&s.RouteID, &s.RouteShortName, &s.RouteLongName,
+			&s.IsModernized, &s.HasAircon, &s.HasConductor, &s.DistanceMeters); err != nil {
+			return nil, fmt.Errorf("failed to scan serving route: %w", err)
+		}
+		out = append(out, s)
+	}
+	return out, nil
+}
+
 func (r *PostgresSpatialRepository) FetchRouteShape(routeID string) (string, error) {
 	ctx := context.Background()
 	query := `

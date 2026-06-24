@@ -236,6 +236,38 @@ func (h *RoutingHandler) GetCongestion(c *fiber.Ctx) error {
 	})
 }
 
+// GetRoutesServing returns all routes whose physical shape passes near both the
+// origin and destination — direct geometric matches across every route that has
+// geometry, including ones absent from the Dijkstra schedule graph.
+// GET /api/v1/routes/serving?origin_lat=&origin_lon=&dest_lat=&dest_lon=&radius=600
+func (h *RoutingHandler) GetRoutesServing(c *fiber.Ctx) error {
+	oLat, err1 := strconv.ParseFloat(c.Query("origin_lat"), 64)
+	oLon, err2 := strconv.ParseFloat(c.Query("origin_lon"), 64)
+	dLat, err3 := strconv.ParseFloat(c.Query("dest_lat"), 64)
+	dLon, err4 := strconv.ParseFloat(c.Query("dest_lon"), 64)
+	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "origin_lat, origin_lon, dest_lat, dest_lon are required floats",
+		})
+	}
+
+	radius, err := strconv.ParseFloat(c.Query("radius", "600"), 64)
+	if err != nil || radius <= 0 {
+		radius = 600
+	}
+
+	serving, err := h.Repo.FindRoutesServingOD(oLat, oLon, dLat, dLon, radius)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to find serving routes: %v", err),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"serving":            serving,
+		"searchRadiusMeters": radius,
+	})
+}
+
 // GetRouteShape returns the PostGIS GeoJSON geometry for a route's spatial path.
 // GET /api/v1/route/shape?route_id=route_13c
 func (h *RoutingHandler) GetRouteShape(c *fiber.Ctx) error {

@@ -5,7 +5,7 @@ import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import RouteCard from "@/components/route/RouteCard";
 import RouteCodeBadge from "@/components/route/RouteCodeBadge";
 import PlaceDropdown from "@/components/route/PlaceDropdown";
-import type { Place } from "@/data/places";
+import { searchPlaces, type Place } from "@/data/places";
 import NavigationDrawer from "@/components/route/NavigationDrawer";
 import ProximityAlert from "@/components/route/ProximityAlert";
 import { calculateFare, formatPHP } from "@/domain";
@@ -409,6 +409,70 @@ function resolveLocation(query: string, defaultCoords: { lat: number; lon: numbe
   return defaultCoords;
 }
 
+// Resolve free text to coordinates, preferring the full Cebu place dataset
+// (aliases included) and falling back to the legacy hub table.
+function resolvePlaceCoords(query: string, defaultCoords: { lat: number; lon: number }): { lat: number; lon: number } {
+  const hit = searchPlaces(query, 1)[0];
+  if (hit) return { lat: hit.lat, lon: hit.lon };
+  return resolveLocation(query, defaultCoords);
+}
+
+// Build a RouteResult from a geometric "serving" match (a route whose shape
+// passes near both endpoints). Single direct leg; fare is real (distance-based),
+// duration is an estimate at ~16 km/h average city speed.
+function servingToRouteResult(
+  s: any,
+  originLabel: string,
+  originCoords: { lat: number; lon: number },
+  destLabel: string,
+  destCoords: { lat: number; lon: number },
+  passengerType: PassengerType
+): RouteResult {
+  const distanceMeters = Number(s.distanceMeters) || 0;
+  const distanceKm = distanceMeters / 1000;
+  const fare = calculateFare(distanceKm, passengerType, 0).totalFare;
+  const durationSeconds = Math.max(300, Math.round((distanceKm / 16) * 3600));
+  const mkStop = (label: string, c: { lat: number; lon: number }, isTerminal: boolean) => ({
+    stopId: `loc_${label.toLowerCase().replace(/\s+/g, "_")}`,
+    stopName: label,
+    aliases: [],
+    location: { lat: c.lat, lon: c.lon },
+    routeIds: [s.routeShortName],
+    wheelchairAccessible: true,
+    hasShelter: false,
+    isTerminal,
+  });
+  const leg = {
+    type: "transit",
+    routeId: s.routeId,
+    routeShortName: s.routeShortName,
+    route: {
+      routeId: s.routeId,
+      routeShortName: s.routeShortName,
+      routeLongName: s.routeLongName,
+      routeType: s.isModernized ? "modern_ejeep" : "jeepney",
+      agencyId: "CCT",
+      isModernized: !!s.isModernized,
+      hasAircon: !!s.hasAircon,
+      hasConductor: s.hasConductor !== false,
+    },
+    fromStop: mkStop(originLabel || "Origin", originCoords, true),
+    toStop: mkStop(destLabel || "Destination", destCoords, false),
+    durationSeconds,
+    distanceMeters,
+    farePHP: fare,
+    instructions: [],
+  } as unknown as RouteLeg;
+  return {
+    totalTimeSeconds: durationSeconds,
+    totalFarePHP: fare,
+    transfers: 0,
+    crowdingWorstLeg: 0.3,
+    geoJson: { type: "FeatureCollection", features: [] },
+    legs: [leg],
+  } as RouteResult;
+}
+
 const ROUTING_API_URL = process.env.NEXT_PUBLIC_ROUTING_API_URL || "http://localhost:8080";
 const AI_API_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000";
 
@@ -560,23 +624,23 @@ export default function DemoPage() {
     setIsRoutingLoading(true);
     setRoutingError(null);
     try {
-      const originCoords = resolveLocation(origin, { lat: 10.3662, lon: 123.9169 });
-      const destCoords = resolveLocation(destination, { lat: 10.2974, lon: 123.8997 });
+      const originCoords = resolvePlaceCoords(origin, { lat: 10.3662, lon: 123.9169 });
+      const destCoords = resolvePlaceCoords(destination, { lat: 10.2974, lon: 123.8997 });
 
-      const url = `${ROUTING_API_URL}/api/v1/route/search?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lon}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lon}&passenger_type=${passengerType}&accessible=${isSafetyModeActive}`;
-      
-      const res = await fetch(url);
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Routing request failed: ${res.statusText}`);
-      }
-      const data = await res.json();
-      
-      if (Array.isArray(data)) {
-        // Fetch real-time BPR congestion metrics for each route's legs
-        const enrichedRoutes = await Promise.all(data.map(async (route: RouteResult) => {
-          let maxCrowding = 0.25; // Default safe level
-          
+      const searchUrl = `${ROUTING_API_URL}/api/v1/route/search?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lon}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lon}&passenger_type=${passengerType}&accessible=${isSafetyModeActive}`;
+      const servingUrl = `${ROUTING_API_URL}/api/v1/routes/serving?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lon}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lon}&radius=700`;
+
+      // Fetch graph routes (Dijkstra) and geometric direct routes in parallel.
+      const [searchSettled, servingSettled] = await Promise.allSettled([
+        fetch(searchUrl).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.statusText)))),
+        fetch(servingUrl).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      ]);
+
+      // 1. Dijkstra results (rich legs/transfers), enriched with live congestion.
+      let dijkstraRoutes: RouteResult[] = [];
+      if (searchSettled.status === "fulfilled" && Array.isArray(searchSettled.value)) {
+        dijkstraRoutes = await Promise.all(searchSettled.value.map(async (route: RouteResult) => {
+          let maxCrowding = 0.25;
           const enrichedLegs = await Promise.all(route.legs.map(async (leg: RouteLeg) => {
             if (leg.type === "transit" && leg.routeId) {
               try {
@@ -585,20 +649,11 @@ export default function DemoPage() {
                 );
                 if (congRes.ok) {
                   const congData = await congRes.json();
-                  const flowRatio = congData.flow_ratio ?? 0.25;
-                  
-                  // Map flow ratio and multipliers correctly to score
-                  let score = flowRatio;
-                  if (congData.is_peak) {
-                    // Apply peak window loading adjustments
-                    score = Math.min(score * 1.2, 1.0);
-                  }
-                  
+                  let score = congData.flow_ratio ?? 0.25;
+                  if (congData.is_peak) score = Math.min(score * 1.2, 1.0);
                   leg.fromStop.crowdingScore = score;
                   leg.toStop.crowdingScore = score;
-                  if (score > maxCrowding) {
-                    maxCrowding = score;
-                  }
+                  if (score > maxCrowding) maxCrowding = score;
                 }
               } catch (e) {
                 // Fail silently and use fallback
@@ -606,21 +661,33 @@ export default function DemoPage() {
             }
             return leg;
           }));
-
-          return {
-            ...route,
-            legs: enrichedLegs,
-            crowdingWorstLeg: maxCrowding,
-          };
+          return { ...route, legs: enrichedLegs, crowdingWorstLeg: maxCrowding };
         }));
-
-        setRoutes(enrichedRoutes);
-        if (enrichedRoutes.length > 0) {
-          setSelectedRouteIdx(0);
-        }
-      } else {
-        throw new Error("Invalid response format from routing engine");
       }
+
+      // 2. Geometric direct routes: every route whose shape passes near O and D.
+      // This surfaces ALL routes (incl. ones with no scheduled stop_times) so the
+      // results aren't limited to the Dijkstra graph.
+      let servingRoutes: RouteResult[] = [];
+      if (servingSettled.status === "fulfilled" && servingSettled.value?.serving) {
+        const seen = new Set(
+          dijkstraRoutes.map((r) => r.legs[0]?.routeShortName).filter(Boolean)
+        );
+        servingRoutes = (servingSettled.value.serving as any[])
+          .filter((s) => !seen.has(s.routeShortName))
+          .map((s) =>
+            servingToRouteResult(s, origin, originCoords, destination, destCoords, passengerType)
+          );
+      }
+
+      const merged = [...dijkstraRoutes, ...servingRoutes];
+      if (merged.length === 0 && searchSettled.status === "rejected") {
+        throw new Error(
+          (searchSettled.reason as Error)?.message || "Routing request failed"
+        );
+      }
+      setRoutes(merged);
+      setSelectedRouteIdx(merged.length > 0 ? 0 : null);
     } catch (err: any) {
       setRoutes([]);
       setRoutingError(err.message || "Failed to connect to the spatial routing engine.");
