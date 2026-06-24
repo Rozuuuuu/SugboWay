@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import ThemeProvider from "@/components/ThemeProvider";
+import SplashScreen from "@/components/SplashScreen";
 import "./globals.css";
 
 const inter = Inter({
@@ -56,6 +57,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-surface text-on-surface theme-transition">
+        <SplashScreen />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
