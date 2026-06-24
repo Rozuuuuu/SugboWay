@@ -539,6 +539,8 @@ export default function DemoPage() {
   const [isSafetyModeActive, setIsSafetyModeActive] = useState(false);
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  // Map is collapsible on mobile to give the route list more room.
+  const [isMapCollapsed, setIsMapCollapsed] = useState(false);
 
   // Auto-trigger Late-Night Safety Mode if local time is past 9 PM (21:00) or before 5 AM
   useEffect(() => {
@@ -781,14 +783,16 @@ export default function DemoPage() {
     }
   }, [mapStyle]);
 
-  // Call map.resize() when switching back to the map tab to prevent grey/blank canvas issues
+  // Call map.resize() when switching back to the map tab, or when the map is
+  // re-expanded on mobile, to prevent a grey/blank canvas after a size change.
   useEffect(() => {
-    if (currentTab === "map" && mapRef.current) {
+    if (currentTab === "map" && !isMapCollapsed && mapRef.current) {
+      // Wait for the height transition to finish before resizing.
       setTimeout(() => {
         mapRef.current?.resize();
-      }, 50); // Small timeout to ensure DOM layout has updated
+      }, 320);
     }
-  }, [currentTab]);
+  }, [currentTab, isMapCollapsed]);
 
   // Update Route Polyline and Markers on Selected Route index change
   useEffect(() => {
@@ -1359,7 +1363,29 @@ export default function DemoPage() {
 
                 {/* Map panel — stays in view while you scroll the route cards below */}
                 <div className="sticky top-16 z-10 bg-surface-container-low border border-outline-variant rounded-2xl p-2 shadow-sm">
-                  <div className="relative h-60 sm:h-64 md:h-72 rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center">
+                  {/* Collapse toggle (mobile only — map is always shown on desktop) */}
+                  <button
+                    onClick={() => setIsMapCollapsed((v) => !v)}
+                    className="md:hidden w-full flex items-center justify-between px-1.5 pb-2 text-on-surface-variant select-none"
+                    aria-expanded={!isMapCollapsed}
+                  >
+                    <span className="flex items-center gap-1.5 text-sm font-semibold">
+                      <span className="material-symbols-outlined text-base text-cebu-blue">map</span>
+                      Route map
+                    </span>
+                    <span className="flex items-center gap-1 text-xs">
+                      {isMapCollapsed ? "Show" : "Hide"}
+                      <span className={`material-symbols-outlined text-lg transition-transform duration-300 ${isMapCollapsed ? "" : "rotate-180"}`}>
+                        expand_more
+                      </span>
+                    </span>
+                  </button>
+
+                  <div
+                    className={`relative rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest flex items-center justify-center transition-[height] duration-300 ${
+                      isMapCollapsed ? "h-0 border-0" : "h-60 sm:h-64"
+                    } md:h-72`}
+                  >
                     {/* Real MapContainer */}
                     <div
                       ref={mapContainerRef}
