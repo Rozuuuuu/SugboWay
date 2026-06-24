@@ -631,9 +631,15 @@ export default function DemoPage() {
       const servingUrl = `${ROUTING_API_URL}/api/v1/routes/serving?origin_lat=${originCoords.lat}&origin_lon=${originCoords.lon}&dest_lat=${destCoords.lat}&dest_lon=${destCoords.lon}&radius=700`;
 
       // Fetch graph routes (Dijkstra) and geometric direct routes in parallel.
+      // A 404 from /route/search just means "no scheduled-graph route" (normal
+      // for routes without stop_times) — treat it as empty, not a failure.
       const [searchSettled, servingSettled] = await Promise.allSettled([
-        fetch(searchUrl).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.statusText)))),
-        fetch(servingUrl).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(searchUrl).then((r) =>
+          r.ok ? r.json() : r.status === 404 ? [] : Promise.reject(new Error(`search ${r.status}`))
+        ),
+        fetch(servingUrl)
+          .then((r) => (r.ok ? r.json() : r.status === 404 ? { serving: [] } : null))
+          .catch(() => null),
       ]);
 
       // 1. Dijkstra results (rich legs/transfers), enriched with live congestion.
@@ -681,16 +687,23 @@ export default function DemoPage() {
       }
 
       const merged = [...dijkstraRoutes, ...servingRoutes];
-      if (merged.length === 0 && searchSettled.status === "rejected") {
-        throw new Error(
-          (searchSettled.reason as Error)?.message || "Routing request failed"
-        );
+
+      // Only surface an error if BOTH endpoints failed to respond at all
+      // (network/down). An empty-but-successful result is a clean "no routes",
+      // not an error.
+      const searchHardFail = searchSettled.status === "rejected";
+      const servingHardFail =
+        servingSettled.status !== "fulfilled" || servingSettled.value == null;
+      if (merged.length === 0 && searchHardFail && servingHardFail) {
+        throw new Error("Couldn't reach the routing service. Check your connection and try again.");
       }
+
       setRoutes(merged);
       setSelectedRouteIdx(merged.length > 0 ? 0 : null);
     } catch (err: any) {
       setRoutes([]);
-      setRoutingError(err.message || "Failed to connect to the spatial routing engine.");
+      setSelectedRouteIdx(null);
+      setRoutingError(err.message || "Couldn't reach the routing service.");
     } finally {
       setIsRoutingLoading(false);
     }
@@ -790,16 +803,16 @@ export default function DemoPage() {
       routeMarkersRef.current.forEach((m) => m.remove());
       routeMarkersRef.current = [];
 
-      if (selectedRouteIdx === null) {
-        // Empty the track + dots without touching the base map.
+      // No valid selection -> clear the track + dots so a stale route never
+      // lingers on the map (without touching the base tiles).
+      const selectedRoute = selectedRouteIdx !== null ? routes[selectedRouteIdx] : null;
+      if (!selectedRoute) {
         trackDataRef.current = EMPTY_FEATURE_COLLECTION;
         stopsDataRef.current = EMPTY_FEATURE_COLLECTION;
         (map.getSource(ROUTE_TRACK_SOURCE) as any)?.setData(EMPTY_FEATURE_COLLECTION);
         (map.getSource(ROUTE_STOPS_SOURCE) as any)?.setData(EMPTY_FEATURE_COLLECTION);
         return;
       }
-      const selectedRoute = routes[selectedRouteIdx];
-      if (!selectedRoute) return;
 
       // Parallel fetch: shape geometry + intermediate stops for all transit legs
       const transitLegs = selectedRoute.legs.filter(
