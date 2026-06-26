@@ -1,5 +1,10 @@
 package domain
 
+import (
+	"context"
+	"time"
+)
+
 // GraphEdge represents a database edge loaded from GTFS trips and stop sequences
 // used to build the memory graph.
 type GraphEdge struct {
@@ -87,4 +92,35 @@ type SpatialRepositoryPort interface {
 type RoutingServicePort interface {
 	// FindBestRoutes calculates paths snapped to start/end locations matching preferences
 	FindBestRoutes(origin, destination Coordinate, prefs RoutePrefs) ([]RouteResult, error)
+}
+
+// User is an authenticated account.
+type User struct {
+	ID            int64
+	Email         string
+	PasswordHash  string
+	Tier          string
+	EmailVerified bool
+}
+
+// UserStore persists users. Implemented by the Postgres adapter; faked in tests.
+type UserStore interface {
+	// CreateUser inserts a new unverified user. Returns an error if the email
+	// already exists.
+	CreateUser(ctx context.Context, email, passwordHash, verificationTokenHash string, verificationExpiresAt time.Time) (*User, error)
+	// GetUserByEmail returns the user, or (nil, nil) if none exists.
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	// MarkVerifiedByTokenHash verifies the user holding an unexpired token hash.
+	// Returns true if a row was verified.
+	MarkVerifiedByTokenHash(ctx context.Context, tokenHash string) (bool, error)
+	// SetVerificationToken refreshes the token for an existing UNVERIFIED user.
+	// Returns true if such a user existed and was updated.
+	SetVerificationToken(ctx context.Context, email, tokenHash string, expiresAt time.Time) (bool, error)
+	// UpdateTier sets a user's plan tier.
+	UpdateTier(ctx context.Context, userID int64, tier string) error
+}
+
+// EmailSender sends transactional email. Implemented by the SMTP adapter.
+type EmailSender interface {
+	SendVerification(ctx context.Context, toEmail, verifyURL string) error
 }
