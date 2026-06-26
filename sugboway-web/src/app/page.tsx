@@ -44,6 +44,21 @@ function formatDuration(seconds: number): string {
   }`;
 }
 
+// Typical weekday traffic load across Metro Cebu by hour. Volumes reflect how full
+// roads/jeepneys tend to run based on common commuter experience: the 5 PM office +
+// school dismissal is the daily worst (Fridays especially), the 7 AM school-run is the
+// morning peak, and BPO shift changes keep the early evening heavy around Lahug/IT Park.
+const BUSY_HOURS = [
+  { label: "4 AM", volume: 15, rush: false, level: "Quiet", note: "Empty roads. Just dawn-shift workers and early Carbon market runs." },
+  { label: "7 AM", volume: 80, rush: true, level: "Heavy", note: "Morning peak — the school-run meets the office rush. Osmeña Blvd, Mango Ave and the IT Park approaches all crawl." },
+  { label: "9 AM", volume: 50, rush: false, level: "Moderate", note: "Morning rush eases, but Colon and the downtown core stay busy." },
+  { label: "12 PM", volume: 55, rush: true, level: "Busy", note: "Lunch-out bump around the malls and business parks." },
+  { label: "3 PM", volume: 40, rush: false, level: "Light", note: "The calm window — the easiest ride before the evening crush." },
+  { label: "5 PM", volume: 100, rush: true, level: "Gridlock", note: "Worst hour of the day. Office and school dismissal collide; jeepneys leave packed. Fridays are brutal." },
+  { label: "7 PM", volume: 85, rush: true, level: "Heavy", note: "Still heavy — BPO shift change keeps Lahug, Mango Ave and the Mandaue bridges clogged." },
+  { label: "10 PM", volume: 22, rush: false, level: "Quiet", note: "Roads finally clear, but jeeps thin out, so waits get longer." },
+] as const;
+
 // Helper to format distance into readable meters or kilometers
 function formatDistance(meters: number): string {
   if (meters < 1000) return `${Math.round(meters)}m`;
@@ -598,7 +613,7 @@ export default function DemoPage() {
 
   // Tab 2: Rush Hour States
   const [gaugeRotate, setGaugeRotate] = useState(45);
-  const [selectedHourBar, setSelectedHourBar] = useState<number | null>(3); // 5 PM bar is index 3
+  const [selectedHourBar, setSelectedHourBar] = useState<number | null>(5); // 5 PM — the daily worst (BUSY_HOURS index 5)
 
   // Tab 3: Chat States
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -1538,58 +1553,84 @@ export default function DemoPage() {
                   <h3 className="text-base font-bold text-on-surface">
                     Busiest hours
                   </h3>
-                  <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                    <span className="w-1.5 h-1.5 rounded-full bg-clay" />
-                    <span>Today</span>
+                  <div className="flex items-center gap-3 text-[11px] text-on-surface-variant">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-sm bg-alert-amber/80" />Rush
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-sm bg-cebu-blue/30" />Off-peak
+                    </span>
                   </div>
                 </div>
- 
-                <div className="flex items-end justify-between gap-1.5 sm:gap-3 h-44 pt-6 border-b border-outline-variant/30">
-                  {[
-                    { label: "4 AM", height: "h-[20%]", volume: "20%", rush: false },
-                    { label: "7 AM", height: "h-[75%]", volume: "75%", rush: true },
-                    { label: "9 AM", height: "h-[50%]", volume: "50%", rush: false },
-                    { label: "12 PM", height: "h-[60%]", volume: "60%", rush: true },
-                    { label: "3 PM", height: "h-[45%]", volume: "45%", rush: false },
-                    { label: "5 PM", height: "h-full", volume: "95%", rush: true },
-                    { label: "8 PM", height: "h-[80%]", volume: "80%", rush: true },
-                    { label: "11 PM", height: "h-[25%]", volume: "25%", rush: false },
-                  ].map((bar, idx) => {
+
+                {/* Bars — tap any to read that hour's outlook */}
+                <div className="flex items-end justify-between gap-1.5 sm:gap-3 h-44 border-b border-outline-variant/30">
+                  {BUSY_HOURS.map((bar, idx) => {
                     const isSelected = selectedHourBar === idx;
                     return (
-                      <div 
+                      <button
                         key={idx}
+                        type="button"
                         onClick={() => setSelectedHourBar(idx)}
-                        className="flex-1 flex flex-col items-center cursor-pointer group"
+                        aria-pressed={isSelected}
+                        aria-label={`${bar.label}: ${bar.volume}% full, ${bar.level}`}
+                        title={`${bar.label} — ${bar.volume}% full`}
+                        className="relative flex-1 h-full flex flex-col items-center justify-end cursor-pointer group focus:outline-none"
                       >
-                        {/* Bar Segment */}
-                        <div 
-                          className={`
-                            w-full rounded-t-lg transition-all duration-300
-                            ${bar.rush ? "bg-alert-amber/70 hover:bg-alert-amber" : "bg-surface-container-highest/60 hover:bg-surface-container-highest"}
-                            ${isSelected ? "ring-2 ring-cebu-blue ring-offset-2 scale-102" : ""}
-                            ${bar.height}
-                          `}
+                        {/* Value — always visible for the selected bar, on hover for the rest */}
+                        <span
+                          className={`text-[10px] font-bold mb-1 leading-none transition-opacity ${
+                            isSelected
+                              ? "opacity-100 text-cebu-blue"
+                              : "opacity-0 group-hover:opacity-100 text-on-surface-variant"
+                          }`}
                         >
-                          <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-on-surface text-white text-[9px] font-bold rounded px-1.5 py-0.5 absolute -translate-y-8 select-none">
-                            {bar.volume}
-                          </div>
-                        </div>
-                        <span className="text-[10px] text-on-surface-variant mt-2 font-medium">
-                          {bar.label}
+                          {bar.volume}%
                         </span>
-                      </div>
+                        {/* Bar segment */}
+                        <div
+                          className={`w-full rounded-t-lg transition-all duration-300 ${
+                            bar.rush
+                              ? "bg-alert-amber/80 group-hover:bg-alert-amber"
+                              : "bg-cebu-blue/30 group-hover:bg-cebu-blue/50"
+                          } ${isSelected ? "ring-2 ring-cebu-blue ring-offset-2 ring-offset-surface-container-lowest" : ""}`}
+                          style={{ height: `${bar.volume}%` }}
+                        />
+                      </button>
                     );
                   })}
                 </div>
 
-                {/* Dynamic detail depending on clicked bar */}
-                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/40 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-cebu-blue text-base">info</span>
-                  <span className="text-sm text-on-surface">
-                    {selectedHourBar !== null
-                      ? selectedHourBar === 5 ? "5 PM is the worst — jeepneys run packed (about 95% full)." : "Tap any bar to see how busy that hour gets."
-                      : "Tap any bar to see how busy that hour gets."}
+                {/* Hour labels — aligned under each bar */}
+                <div className="flex justify-between gap-1.5 sm:gap-3 -mt-2">
+                  {BUSY_HOURS.map((bar, idx) => (
+                    <span
+                      key={idx}
+                      className={`flex-1 text-center text-[10px] ${
+                        selectedHourBar === idx
+                          ? "text-on-surface font-bold"
+                          : "text-on-surface-variant font-medium"
+                      }`}
+                    >
+                      {bar.label}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Dynamic detail for the selected bar */}
+                <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant/40 flex items-start gap-2">
+                  <span className="material-symbols-outlined text-cebu-blue text-base leading-tight">info</span>
+                  <span className="text-sm text-on-surface leading-snug">
+                    {selectedHourBar !== null ? (
+                      <>
+                        <span className="font-bold">
+                          {BUSY_HOURS[selectedHourBar].label} · {BUSY_HOURS[selectedHourBar].level} ({BUSY_HOURS[selectedHourBar].volume}% full).
+                        </span>{" "}
+                        {BUSY_HOURS[selectedHourBar].note}
+                      </>
+                    ) : (
+                      "Tap any bar to see how busy that hour gets."
+                    )}
                   </span>
                 </div>
               </section>

@@ -15,8 +15,8 @@ export default function SplashScreen() {
   useEffect(() => {
     // Fill the bar (CSS width transition animates it), then fade + unmount.
     const t1 = setTimeout(() => setProgress(100), 60);
-    const t2 = setTimeout(() => setFading(true), 1200);
-    const t3 = setTimeout(() => setGone(true), 1750);
+    const t2 = setTimeout(() => setFading(true), 1700);
+    const t3 = setTimeout(() => setGone(true), 2250);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -48,7 +48,7 @@ export default function SplashScreen() {
       {/* Loading bar */}
       <div className="w-44 h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
         <div
-          className="h-full rounded-full bg-cebu-blue transition-[width] duration-[1100ms] ease-out"
+          className="h-full rounded-full bg-cebu-blue transition-[width] duration-[1600ms] ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
