@@ -188,3 +188,65 @@ func TestUpgradeRequiresAuthAndRaisesTier(t *testing.T) {
 		t.Fatalf("tier => pro, got %v", out["user"])
 	}
 }
+
+func TestRegisterWeakPassword(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testApp(store, &fakeEmail{})
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"short"}`, "")
+	if code != 400 || out["error"] != "weak_password" {
+		t.Fatalf("weak password => 400 weak_password, got %d %v", code, out)
+	}
+}
+
+func TestRegisterInvalidEmail(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testApp(store, &fakeEmail{})
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"notanemail","password":"sugbo123"}`, "")
+	if code != 400 || out["error"] != "invalid_email" {
+		t.Fatalf("invalid email => 400 invalid_email, got %d %v", code, out)
+	}
+}
+
+func TestResendAlwaysOK(t *testing.T) {
+	store := newFakeStore()
+	mail := &fakeEmail{}
+	app, _ := testApp(store, mail)
+
+	// never-registered email => still 200 (no enumeration)
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/resend", `{"email":"ghost@b.com"}`, "")
+	if code != 200 {
+		t.Fatalf("resend for unknown email => 200, got %d", code)
+	}
+
+	// register a real user, then resend => 200
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	code, _ = doJSON(t, app, "POST", "/api/v1/auth/resend", `{"email":"a@b.com"}`, "")
+	if code != 200 {
+		t.Fatalf("resend for known email => 200, got %d", code)
+	}
+}
+
+func TestUpgradeRejectsInvalidPlan(t *testing.T) {
+	store := newFakeStore()
+	mail := &fakeEmail{}
+	app, _ := testApp(store, mail)
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	token := mail.lastURL[strings.Index(mail.lastURL, "token=")+len("token="):]
+	doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
+	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	jwtTok, _ := out["token"].(string)
+
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/upgrade", `{"plan":"deluxe"}`, jwtTok)
+	if code != 400 {
+		t.Fatalf("upgrade with invalid plan => 400, got %d", code)
+	}
+}
+
+func TestRequireAuthRejectsMalformedToken(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testApp(store, &fakeEmail{})
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/upgrade", `{"plan":"pro"}`, "not.a.jwt")
+	if code != 401 {
+		t.Fatalf("malformed bearer token => 401, got %d", code)
+	}
+}
