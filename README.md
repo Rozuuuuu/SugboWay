@@ -75,6 +75,12 @@ PostGIS database.
 - **Proximity etiquette** — geolocation-driven "Lugar lang" / "Bayad po" cues
   fired within 200 m of your stop, with a soft coin-tap chime.
 - **Offline-friendly map** — PMTiles vector tiles and an offline style fallback.
+- **Accounts & plans** — real, **email-verified** accounts via the Go API (a `users`
+  table, bcrypt passwords, HS256 JWT). The Python AI service enforces a per-tier chat
+  quota from the JWT's `tier` claim: **Guest 5/hr · Free 10/hr · Pro ₱149/mo (100/hr) ·
+  Max ₱349/mo (unlimited)**. New users must verify their email before they can log in.
+  Plan upgrades are a **front-end demo** (no real payments); only the chat quota is
+  actually enforced.
 - **Warm, local design** — a sand-and-sea palette, Plus Jakarta Sans for UI,
   JetBrains Mono for route codes, and Cebu Blue (`#0056B3`) for the active track.
 
@@ -148,10 +154,14 @@ supports both `postgis` and `vector` extensions.
 See each service's `.env.example`. Summary:
 
 **sugboway-routing-api** — `DATABASE_URL` (PostGIS), `PORT` (default 8080),
-`RUN_MIGRATIONS` (default on).
+`RUN_MIGRATIONS` (default on). For accounts/auth: `AUTH_JWT_SECRET` (shared with the AI
+service), `APP_BASE_URL` (web origin, for the post-verify redirect), `PUBLIC_API_URL`
+(this API's public origin, for the email link), and SMTP (`SMTP_HOST`, `SMTP_PORT`,
+`SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`).
 
 **sugboway-ai-service** — `DATABASE_URL` (same DB), `GEMINI_API_KEY`,
-`ROUTING_API_URL`, optional `REDIS_URL` / `OPENWEATHER_KEY`.
+`ROUTING_API_URL`, `AUTH_JWT_SECRET` (**must match** the routing API — used to verify
+the JWT and apply the per-tier chat quota), optional `REDIS_URL` / `OPENWEATHER_KEY`.
 
 **sugboway-web** (`.env.local`) — `NEXT_PUBLIC_ROUTING_API_URL`,
 `NEXT_PUBLIC_AI_API_URL`, optional `NEXT_PUBLIC_WEATHER_API_KEY`.
@@ -281,8 +291,9 @@ Warm and local rather than generic. Defined as Tailwind v4 tokens in
 - **Road-snapped geometry**: pipeline-ready but pending a real route source
   file or a loaded `osm_nodes` table (see above). Stop *ordering* is already
   correct (`GROUP BY … ORDER BY MIN(stop_sequence)`).
-- **Premium / quota**: the upgrade flow is a front-end demo, not a payment
-  integration.
+- **Accounts / quota**: accounts and email verification are **real** (Go API + SMTP),
+  and the per-tier chat quota is enforced server-side. The **plan upgrade** itself is a
+  front-end-triggered demo — it sets the tier without a payment integration.
 
 ---
 

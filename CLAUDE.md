@@ -109,8 +109,8 @@ are configured in the Render dashboard (not committed). See each service's `.env
 
 | Service | Host | Build / start | Required env |
 |---|---|---|---|
-| `sugboway-routing-api` | Render | `go build` → run binary | `DATABASE_URL` (Neon), `PORT` (Render injects), `RUN_MIGRATIONS` |
-| `sugboway-ai-service` | Render | `pip install -r requirements.txt` → `python main.py` (uvicorn) | `DATABASE_URL` (same Neon DB), `GEMINI_API_KEY`, `ROUTING_API_URL` (the deployed routing API), optional `REDIS_URL` / `OPENWEATHER_KEY` |
+| `sugboway-routing-api` | Render | `go build` → run binary | `DATABASE_URL` (Neon), `PORT` (Render injects), `RUN_MIGRATIONS`, `AUTH_JWT_SECRET`, `APP_BASE_URL`, `PUBLIC_API_URL`, `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM` |
+| `sugboway-ai-service` | Render | `pip install -r requirements.txt` → `python main.py` (uvicorn) | `DATABASE_URL` (same Neon DB), `GEMINI_API_KEY`, `ROUTING_API_URL` (the deployed routing API), `AUTH_JWT_SECRET` (must match the routing API), optional `REDIS_URL` / `OPENWEATHER_KEY` |
 | `sugboway-web` | Render | `npm run build` → `npm start` | `NEXT_PUBLIC_ROUTING_API_URL`, `NEXT_PUBLIC_AI_API_URL` (the deployed service URLs), optional `NEXT_PUBLIC_WEATHER_API_KEY` |
 | PostgreSQL/PostGIS | Neon | — | shared `DATABASE_URL` used by both backends |
 
@@ -135,9 +135,25 @@ The pipeline is built to be cheap and strictly on-topic, in this order:
    restricted to four tools in `agent/tools.py`: `get_route_options`, `calculate_fare`,
    `check_congestion`, `verify_stop`. The `AgentExecutor` is a module-level singleton.
 
-The chat endpoint (`main.py`) rate-limits to **5 requests/hour per IP**, surfaced via
-`X-RateLimit-Remaining`. `GEMINI_API_KEY` is auto-mapped to `GOOGLE_API_KEY` for
-langchain-google-genai.
+The chat endpoint (`main.py`) enforces a **per-tier hourly quota**, surfaced via
+`X-RateLimit-Remaining` and a `tier`/`remaining` field in the response.
+`GEMINI_API_KEY` is auto-mapped to `GOOGLE_API_KEY` for langchain-google-genai.
+
+### Accounts & auth quota (cross-service)
+
+The **Go routing API owns identity** (`adapter/api/auth_handler.go`, `domain/auth.go`,
+the `users` table): bcrypt passwords, email-verification-before-login over **SMTP**, and
+demo plan upgrades. On login it issues an **HS256 JWT carrying the user's `tier`**.
+
+The **Python AI service enforces the quota** (`auth_quota.py`): `/chat` reads the
+`Authorization: Bearer` header, verifies the JWT with the **shared `AUTH_JWT_SECRET`**,
+and applies the tier's limit — **Free 10/hr, Pro 100/hr, Max unlimited**, keyed by user
+id. No token ⇒ **guest 5/hr per IP** (unchanged). A present-but-invalid token ⇒ 401.
+Only the chat quota is enforced; Pro/Max "perks" are pricing-card copy, not feature gates.
+
+`AUTH_JWT_SECRET` **must be identical** on both backends; the SMTP vars + `APP_BASE_URL`
+/ `PUBLIC_API_URL` live on the Go service. The web app talks only to the Go API for auth
+(`src/components/AuthProvider.tsx`); upgrades are a front-end-triggered demo, not payments.
 
 ### Web ⇄ backend resilience
 
