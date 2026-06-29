@@ -31,8 +31,11 @@ const PricingPlans = ({ onRequireAuth }: { onRequireAuth: () => void }) => {
       return;
     }
     setBusy(plan.id);
-    await upgrade(plan.upgradeTo);
-    setBusy(null);
+    try {
+      await upgrade(plan.upgradeTo);
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (

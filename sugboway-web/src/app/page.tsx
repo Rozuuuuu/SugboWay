@@ -1087,8 +1087,10 @@ export default function DemoPage() {
             {
               id: String(prev.length + 1),
               sender: "ai",
-              text: `You've used your 5 free questions for this hour. Go Premium for unlimited route planning, or check back in a bit.`,
-              cebuanoText: "Nahurot na imong 5 ka libreng pangutana karong orasa. Pwede ka mag-Premium para walay limit.",
+              text: isAuthed
+                ? `You've used all ${tierLimitLabel} of your questions for this hour. ${user?.tier === "free" ? "Upgrade to Pro or Max for more." : "Upgrade to Max for unlimited."} Or check back in a bit.`
+                : `You've used your 5 free questions for this hour. Create a free account for 10 per hour, or check back in a bit.`,
+              cebuanoText: "Nahurot na imong pangutana karong orasa. Sulayi pag-usab sa makadiyot.",
               timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             }
           ]);
@@ -2038,9 +2040,13 @@ export default function DemoPage() {
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-on-surface">That's your 5 free questions</h3>
+                <h3 className="text-lg font-bold text-on-surface">
+                  {isAuthed ? "You've reached your hourly limit" : "That's your 5 free questions"}
+                </h3>
                 <p className="text-sm text-on-surface-variant leading-relaxed">
-                  You've used your free questions for this hour. Go Premium for unlimited questions and offline maps.
+                  {isAuthed
+                    ? "You've used your questions for this hour. Upgrade for a higher limit, or come back soon."
+                    : "You've used your free questions for this hour. Create a free account for 10 per hour."}
                 </p>
               </div>
 
