@@ -38,6 +38,18 @@ func (m *MockSpatialRepository) FetchRouteConductorInfo(routeID string) (bool, b
 	return true, false, false, nil
 }
 
+func (m *MockSpatialRepository) FindRoutesServingOD(oLat, oLon, dLat, dLon, radiusMeters float64) ([]ServingRoute, error) {
+	return nil, nil
+}
+
+func (m *MockSpatialRepository) FetchAllRoutes() ([]RouteSummary, error) {
+	return nil, nil
+}
+
+func (m *MockSpatialRepository) FindRoutesPassing(lat, lon, radiusMeters float64) ([]RouteSummary, error) {
+	return nil, nil
+}
+
 func TestDijkstraSearch(t *testing.T) {
 	// 1. Arrange Mock Nodes and Edges representing Cebu lines
 	mockStops := []GTFSStop{

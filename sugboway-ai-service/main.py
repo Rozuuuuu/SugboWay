@@ -6,6 +6,7 @@ import os
 import time
 from collections import defaultdict
 from dotenv import load_dotenv
+import auth_quota
 
 # Load environment variables
 load_dotenv()
@@ -33,27 +34,20 @@ app.add_middleware(
 # IP -> list of timestamps
 _rate_limit_store = defaultdict(list)
 
-def check_ip_rate_limit(ip: str) -> tuple[bool, int, int]:
-    """
-    Implements a sliding window rate limiter: Max 5 requests per hour.
-    Returns (is_limited, remaining_requests, reset_seconds).
-    """
+def check_rate_limit(key: str, limit) -> tuple[bool, int, int]:
+    """Sliding-window limiter. `limit` None means unlimited.
+    Returns (is_limited, remaining, reset_seconds)."""
+    if limit is None:
+        return False, 999999, 0
     now = time.time()
     one_hour_ago = now - 3600
-    
-    # Clean up old request timestamps
-    timestamps = [t for t in _rate_limit_store[ip] if t > one_hour_ago]
-    _rate_limit_store[ip] = timestamps
-    
-    limit = 5
-    
+    timestamps = [t for t in _rate_limit_store[key] if t > one_hour_ago]
+    _rate_limit_store[key] = timestamps
     if len(timestamps) >= limit:
         oldest = timestamps[0]
-        reset_seconds = int(oldest + 3600 - now)
-        return True, 0, max(1, reset_seconds)
-        
+        return True, 0, max(1, int(oldest + 3600 - now))
     timestamps.append(now)
-    _rate_limit_store[ip] = timestamps
+    _rate_limit_store[key] = timestamps
     return False, limit - len(timestamps), 0
 
 class ChatRequest(BaseModel):
@@ -72,25 +66,40 @@ def health_check():
 @app.post("/api/v1/chat")
 async def chat_endpoint(request: ChatRequest, raw_request: Request):
     client_ip = raw_request.client.host if raw_request.client else "127.0.0.1"
-    
-    # Apply IP-based freemium rate limiting
-    is_limited, remaining, reset_seconds = check_ip_rate_limit(client_ip)
+
+    # Identify the caller: a valid Bearer token => per-user tier limit;
+    # otherwise => guest (5/hour per IP). A present-but-invalid token => 401.
+    tier = "guest"
+    rate_key = f"ip:{client_ip}"
+    limit = auth_quota.GUEST_LIMIT
+    authz = raw_request.headers.get("Authorization", "")
+    if authz.startswith("Bearer "):
+        try:
+            claims = auth_quota.verify_token(authz[len("Bearer "):])
+            tier = claims["tier"]
+            rate_key = f"user:{claims['user_id']}"
+            limit = auth_quota.tier_limit(tier)
+        except Exception:
+            return JSONResponse(status_code=401, content={"error": "invalid_token"})
+
+    is_limited, remaining, reset_seconds = check_rate_limit(rate_key, limit)
     if is_limited:
         return JSONResponse(
             status_code=429,
             content={
                 "error": "rate_limited",
-                "message": "You have exceeded the free tier quota of 5 AI queries per hour.",
+                "message": "You've reached your hourly question limit.",
                 "remaining": 0,
-                "reset_seconds": reset_seconds
-            }
+                "reset_seconds": reset_seconds,
+                "tier": tier,
+            },
         )
         
     try:
         from fastapi.concurrency import run_in_threadpool
         from agent.orchestrator import process_message
         reply = await run_in_threadpool(process_message, request.message)
-        response = JSONResponse(content={"reply": reply, "remaining": remaining})
+        response = JSONResponse(content={"reply": reply, "remaining": remaining, "tier": tier})
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         response.headers["X-RateLimit-Reset"] = "3600"
         return response

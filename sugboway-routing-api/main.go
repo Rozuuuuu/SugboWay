@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"sugboway-routing-api/adapter/api"
+	"sugboway-routing-api/adapter/email"
 	"sugboway-routing-api/adapter/repository"
 	"sugboway-routing-api/domain"
 
@@ -57,6 +58,26 @@ func main() {
 	// 4. Construct API Handler Adapters
 	routingHandler := api.NewRoutingHandler(repo, routingService)
 
+	// Auth: config from env (shared JWT secret with the AI service).
+	jwtSecret := os.Getenv("AUTH_JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "dev-insecure-secret-change-me"
+		log.Println("[SugboWay Routing API] WARNING: AUTH_JWT_SECRET not set — using an insecure dev default. Set it in production.")
+	}
+	appBaseURL := envOr("APP_BASE_URL", "http://localhost:3000")
+	publicAPIURL := envOr("PUBLIC_API_URL", "http://localhost:8080")
+
+	userStore := repository.NewPostgresUserStore(repo.Pool)
+	mailSender := email.NewSMTPSender(
+		os.Getenv("SMTP_HOST"), envOr("SMTP_PORT", "587"),
+		os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASS"),
+		envOr("SMTP_FROM", "SugboWay <no-reply@sugboway.app>"),
+	)
+	authHandler := api.NewAuthHandler(userStore, mailSender, api.AuthConfig{
+		JWTSecret: jwtSecret, AppBaseURL: appBaseURL, PublicAPIURL: publicAPIURL,
+		TokenTTL: 7 * 24 * time.Hour, VerifyTTL: 24 * time.Hour,
+	})
+
 	// 5. Scaffold Fiber Web Server
 	app := fiber.New(fiber.Config{
 		AppName:      "SugboWay Transit Routing Engine v1.0",
@@ -84,6 +105,14 @@ func main() {
 	apiGroup.Get("/route/stops", routingHandler.GetRouteStops)
 	apiGroup.Get("/route/conductor", routingHandler.GetConductorInfo)
 
+	authGroup := app.Group("/api/v1/auth")
+	authGroup.Post("/register", authHandler.Register)
+	authGroup.Get("/verify", authHandler.Verify)
+	authGroup.Post("/resend", authHandler.Resend)
+	authGroup.Post("/login", authHandler.Login)
+	authGroup.Post("/upgrade", authHandler.RequireAuth, authHandler.Upgrade)
+	authGroup.Get("/me", authHandler.RequireAuth, authHandler.Me)
+
 	// Direct check endpoint
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -106,4 +135,11 @@ func main() {
 	log.Println("[SugboWay Routing API] Gracefully shutting down...")
 	_ = app.Shutdown()
 	log.Println("[SugboWay Routing API] Server stopped.")
+}
+
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
