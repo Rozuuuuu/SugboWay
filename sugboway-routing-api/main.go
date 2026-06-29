@@ -68,11 +68,26 @@ func main() {
 	publicAPIURL := envOr("PUBLIC_API_URL", "http://localhost:8080")
 
 	userStore := repository.NewPostgresUserStore(repo.Pool)
-	mailSender := email.NewSMTPSender(
-		os.Getenv("SMTP_HOST"), envOr("SMTP_PORT", "587"),
-		os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASS"),
-		envOr("SMTP_FROM", "SugboWay <no-reply@sugboway.app>"),
-	)
+
+	// Email provider selection. Prefer Brevo's HTTPS API (works on hosts that
+	// block outbound SMTP, e.g. Render); fall back to SMTP; otherwise warn.
+	emailFrom := envOr("EMAIL_FROM", envOr("SMTP_FROM", "SugboWay <no-reply@sugboway.app>"))
+	var mailSender domain.EmailSender
+	switch {
+	case os.Getenv("BREVO_API_KEY") != "":
+		mailSender = email.NewBrevoSender(os.Getenv("BREVO_API_KEY"), emailFrom)
+		log.Println("[SugboWay Routing API] Email: using Brevo HTTP API.")
+	case os.Getenv("SMTP_HOST") != "":
+		mailSender = email.NewSMTPSender(
+			os.Getenv("SMTP_HOST"), envOr("SMTP_PORT", "587"),
+			os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASS"), emailFrom,
+		)
+		log.Println("[SugboWay Routing API] Email: using SMTP.")
+	default:
+		// Build a sender that will fail (and log) on send, so the app still boots.
+		mailSender = email.NewSMTPSender("", "587", "", "", emailFrom)
+		log.Println("[SugboWay Routing API] WARNING: no email provider configured (set BREVO_API_KEY or SMTP_*). Verification emails will fail.")
+	}
 	authHandler := api.NewAuthHandler(userStore, mailSender, api.AuthConfig{
 		JWTSecret: jwtSecret, AppBaseURL: appBaseURL, PublicAPIURL: publicAPIURL,
 		TokenTTL: 7 * 24 * time.Hour, VerifyTTL: 24 * time.Hour,
