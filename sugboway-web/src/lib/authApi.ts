@@ -2,6 +2,7 @@ const BASE = process.env.NEXT_PUBLIC_ROUTING_API_URL ?? "http://localhost:8080";
 
 export type Tier = "free" | "pro" | "max";
 export interface AuthUser {
+  name: string;
   email: string;
   tier: Tier;
 }
@@ -19,22 +20,33 @@ interface RegisterResult {
   error?: string;
 }
 
+// Abort a request that takes too long so the UI fails fast with a clear error
+// instead of hanging (e.g. a cold backend or a blocked/slow network).
+const REQUEST_TIMEOUT_MS = 30000;
+
 async function post(path: string, body: unknown, token?: string) {
-  const res = await fetch(`${BASE}/api/v1/auth${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  return { status: res.status, data };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${BASE}/api/v1/auth${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export const authApi = {
-  async register(email: string, password: string): Promise<RegisterResult> {
-    const { status, data } = await post("/register", { email, password });
+  async register(name: string, email: string, password: string): Promise<RegisterResult> {
+    const { status, data } = await post("/register", { name, email, password });
     if (status === 202) return { ok: true, emailSent: data.email_sent !== false };
     return { ok: false, error: data.error ?? "register_failed" };
   },

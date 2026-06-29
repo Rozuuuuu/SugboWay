@@ -10,7 +10,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
   isAuthed: boolean;
-  register: (email: string, password: string) => Promise<{ ok: boolean; emailSent?: boolean; error?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ ok: boolean; emailSent?: boolean; error?: string }>;
   login: (email: string, password: string) => Promise<{ ok: boolean; needsVerification?: boolean; error?: string }>;
   resend: (email: string) => Promise<void>;
   logout: () => void;
@@ -57,8 +57,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     localStorage.setItem(USER_KEY, JSON.stringify(u));
   }, []);
 
-  const register = useCallback(async (email: string, password: string) => {
-    const r = await authApi.register(email, password);
+  const register = useCallback(async (name: string, email: string, password: string) => {
+    const r = await authApi.register(name, email, password);
     return { ok: r.ok, emailSent: r.emailSent, error: r.error };
   }, []);
 

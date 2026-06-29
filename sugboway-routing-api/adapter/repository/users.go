@@ -26,15 +26,15 @@ func normalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
 }
 
-func (s *PostgresUserStore) CreateUser(ctx context.Context, email, passwordHash, tokenHash string, expiresAt time.Time) (*domain.User, error) {
+func (s *PostgresUserStore) CreateUser(ctx context.Context, name, email, passwordHash, tokenHash string, expiresAt time.Time) (*domain.User, error) {
 	email = normalizeEmail(email)
 	const q = `
-		INSERT INTO users (email, password_hash, verification_token_hash, verification_expires_at)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, email, password_hash, tier, email_verified`
+		INSERT INTO users (name, email, password_hash, verification_token_hash, verification_expires_at)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, name, email, password_hash, tier, email_verified`
 	u := &domain.User{}
-	err := s.Pool.QueryRow(ctx, q, email, passwordHash, tokenHash, expiresAt).
-		Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Tier, &u.EmailVerified)
+	err := s.Pool.QueryRow(ctx, q, name, email, passwordHash, tokenHash, expiresAt).
+		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Tier, &u.EmailVerified)
 	if err != nil {
 		return nil, err
 	}
@@ -44,11 +44,11 @@ func (s *PostgresUserStore) CreateUser(ctx context.Context, email, passwordHash,
 func (s *PostgresUserStore) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 	email = normalizeEmail(email)
 	const q = `
-		SELECT id, email, password_hash, tier, email_verified
+		SELECT id, name, email, password_hash, tier, email_verified
 		FROM users WHERE email = $1`
 	u := &domain.User{}
 	err := s.Pool.QueryRow(ctx, q, email).
-		Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Tier, &u.EmailVerified)
+		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Tier, &u.EmailVerified)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

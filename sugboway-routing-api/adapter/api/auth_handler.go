@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -32,6 +34,7 @@ func NewAuthHandler(store domain.UserStore, email domain.EmailSender, cfg AuthCo
 }
 
 type credentials struct {
+	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -41,7 +44,7 @@ func validEmail(e string) bool {
 }
 
 func userJSON(u *domain.User) fiber.Map {
-	return fiber.Map{"email": u.Email, "tier": u.Tier}
+	return fiber.Map{"name": u.Name, "email": u.Email, "tier": u.Tier}
 }
 
 // Register creates an unverified user and emails a verification link.
@@ -57,6 +60,10 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	if len(in.Password) < 8 {
 		return c.Status(400).JSON(fiber.Map{"error": "weak_password"})
 	}
+	in.Name = strings.TrimSpace(in.Name)
+	if in.Name == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "missing_name"})
+	}
 	if existing, _ := h.store.GetUserByEmail(c.Context(), in.Email); existing != nil {
 		return c.Status(409).JSON(fiber.Map{"error": "email_taken"})
 	}
@@ -68,14 +75,23 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "token_failed"})
 	}
-	if _, err := h.store.CreateUser(c.Context(), in.Email, hash, tokenHash, time.Now().Add(h.cfg.VerifyTTL)); err != nil {
+	if _, err := h.store.CreateUser(c.Context(), in.Name, in.Email, hash, tokenHash, time.Now().Add(h.cfg.VerifyTTL)); err != nil {
 		return c.Status(409).JSON(fiber.Map{"error": "email_taken"})
 	}
-	emailSent := true
-	if err := h.email.SendVerification(c.Context(), in.Email, h.verifyURL(raw)); err != nil {
-		emailSent = false
-	}
-	return c.Status(202).JSON(fiber.Map{"status": "verify_email", "email_sent": emailSent})
+	// Send the verification email in the background. SMTP can be slow or blocked
+	// (especially on PaaS hosts), so sending it inline would make this request
+	// hang. The account already exists; failures are logged for diagnosis and the
+	// user can use "Resend". A fresh context is used since the request's ends here.
+	verifyURL := h.verifyURL(raw)
+	go func(email, url string) {
+		if err := h.email.SendVerification(context.Background(), email, url); err != nil {
+			log.Printf("[auth] verification email to %s failed: %v", email, err)
+		} else {
+			log.Printf("[auth] verification email sent to %s", email)
+		}
+	}(in.Email, verifyURL)
+
+	return c.Status(202).JSON(fiber.Map{"status": "verify_email"})
 }
 
 func (h *AuthHandler) verifyURL(rawToken string) string {
@@ -152,7 +168,12 @@ func (h *AuthHandler) Upgrade(c *fiber.Ctx) error {
 	if err := h.store.UpdateTier(c.Context(), userID, in.Plan); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "update_failed"})
 	}
-	return h.issue(c, &domain.User{ID: userID, Email: claims.Email, Tier: in.Plan})
+	// Re-fetch so the returned user reflects live DB state (tier + name).
+	u, err := h.store.GetUserByEmail(c.Context(), claims.Email)
+	if err != nil || u == nil {
+		u = &domain.User{ID: userID, Email: claims.Email, Tier: in.Plan}
+	}
+	return h.issue(c, u)
 }
 
 // Me returns the caller's account summary.

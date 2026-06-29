@@ -14,6 +14,7 @@ interface Props {
 const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
   const { login, register, resend } = useAuth();
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,14 +36,19 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
     weak_password: "Use at least 8 characters.",
     invalid_email: "Enter a valid email address.",
     email_not_verified: "Please verify your email first.",
+    missing_name: "Please enter your name.",
   };
 
   const submit = async () => {
+    if (mode === "register" && name.trim() === "") {
+      setError(friendly.missing_name);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       if (mode === "register") {
-        const r = await register(email, password);
+        const r = await register(name.trim(), email, password);
         if (r.ok) setMode("check-email");
         else setError(friendly[r.error ?? ""] ?? "Something went wrong. Try again.");
       } else {
@@ -96,6 +102,20 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
             </div>
 
             <div className="space-y-3">
+              {mode === "register" && (
+                <label className="block">
+                  <span className="text-xs font-semibold text-on-surface-variant">Full name</span>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    aria-invalid={!!error}
+                    autoComplete="name"
+                    className="mt-1 w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm text-on-surface focus:outline-none focus:border-cebu-blue"
+                    placeholder="Juan dela Cruz"
+                  />
+                </label>
+              )}
               <label className="block">
                 <span className="text-xs font-semibold text-on-surface-variant">Email</span>
                 <input

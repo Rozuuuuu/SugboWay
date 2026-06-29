@@ -1894,7 +1894,10 @@ export default function DemoPage() {
                         <span className="material-symbols-outlined text-3xl">account_circle</span>
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-base font-bold text-on-surface truncate">{user?.email}</h3>
+                        <h3 className="text-base font-bold text-on-surface truncate">{user?.name || user?.email}</h3>
+                        {user?.name && (
+                          <p className="text-xs text-on-surface-variant truncate">{user?.email}</p>
+                        )}
                         <span className="inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-full bg-clay/10 text-clay capitalize">
                           {user?.tier} plan
                         </span>

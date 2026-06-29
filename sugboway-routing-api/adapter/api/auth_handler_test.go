@@ -25,13 +25,13 @@ func newFakeStore() *fakeStore {
 	return &fakeStore{users: map[string]*domain.User{}, tokenByHsh: map[string]string{}, nextID: 0}
 }
 
-func (f *fakeStore) CreateUser(_ context.Context, email, hash, tokenHash string, _ time.Time) (*domain.User, error) {
+func (f *fakeStore) CreateUser(_ context.Context, name, email, hash, tokenHash string, _ time.Time) (*domain.User, error) {
 	email = strings.ToLower(email)
 	if _, ok := f.users[email]; ok {
 		return nil, fiber.NewError(409, "exists")
 	}
 	f.nextID++
-	u := &domain.User{ID: f.nextID, Email: email, PasswordHash: hash, Tier: "free", EmailVerified: false}
+	u := &domain.User{ID: f.nextID, Name: name, Email: email, PasswordHash: hash, Tier: "free", EmailVerified: false}
 	f.users[email] = u
 	f.tokenByHsh[tokenHash] = email
 	return u, nil
@@ -66,11 +66,43 @@ func (f *fakeStore) UpdateTier(_ context.Context, id int64, tier string) error {
 	return nil
 }
 
-type fakeEmail struct{ lastURL string }
+// fakeEmail captures verification URLs. SendVerification now runs in a goroutine
+// (the handler sends asynchronously), so tests must wait for the URL rather than
+// read a field synchronously.
+type fakeEmail struct{ urls chan string }
+
+func newFakeEmail() *fakeEmail { return &fakeEmail{urls: make(chan string, 8)} }
 
 func (e *fakeEmail) SendVerification(_ context.Context, _ string, url string) error {
-	e.lastURL = url
+	// Non-blocking so a bare &fakeEmail{} (nil channel, URL unused) never blocks.
+	select {
+	case e.urls <- url:
+	default:
+	}
 	return nil
+}
+
+// waitURL blocks briefly for the next verification URL from the async send.
+func (e *fakeEmail) waitURL(t *testing.T) string {
+	t.Helper()
+	select {
+	case u := <-e.urls:
+		return u
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for verification email")
+		return ""
+	}
+}
+
+// waitToken returns the token query value from the next verification URL.
+func (e *fakeEmail) waitToken(t *testing.T) string {
+	t.Helper()
+	u := e.waitURL(t)
+	i := strings.Index(u, "token=")
+	if i < 0 {
+		t.Fatalf("no token in verify URL: %q", u)
+	}
+	return u[i+len("token="):]
 }
 
 func testApp(store domain.UserStore, mail domain.EmailSender) (*fiber.App, *AuthHandler) {
@@ -109,32 +141,33 @@ func doJSON(t *testing.T, app *fiber.App, method, path, body, bearer string) (in
 
 func TestRegisterThenLoginBlockedUntilVerified(t *testing.T) {
 	store := newFakeStore()
-	mail := &fakeEmail{}
+	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
 
-	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 202 {
 		t.Fatalf("register => 202, got %d", code)
 	}
-	if mail.lastURL == "" || !strings.Contains(mail.lastURL, "/api/v1/auth/verify?token=") {
-		t.Fatalf("expected a verify URL, got %q", mail.lastURL)
+	url := mail.waitURL(t)
+	if !strings.Contains(url, "/api/v1/auth/verify?token=") {
+		t.Fatalf("expected a verify URL, got %q", url)
 	}
 
 	// login before verifying => 403
-	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 403 || out["error"] != "email_not_verified" {
 		t.Fatalf("login before verify => 403 email_not_verified, got %d %v", code, out)
 	}
 
 	// verify via the emailed link
-	token := mail.lastURL[strings.Index(mail.lastURL, "token=")+len("token="):]
+	token := url[strings.Index(url, "token=")+len("token="):]
 	code, _ = doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
 	if code != 302 {
 		t.Fatalf("verify => 302 redirect, got %d", code)
 	}
 
 	// login now succeeds with a token
-	code, out = doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	code, out = doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 200 || out["token"] == nil {
 		t.Fatalf("login after verify => 200 + token, got %d %v", code, out)
 	}
@@ -143,8 +176,8 @@ func TestRegisterThenLoginBlockedUntilVerified(t *testing.T) {
 func TestRegisterDuplicateEmail(t *testing.T) {
 	store := newFakeStore()
 	app, _ := testApp(store, &fakeEmail{})
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
-	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 409 {
 		t.Fatalf("duplicate => 409, got %d", code)
 	}
@@ -152,10 +185,10 @@ func TestRegisterDuplicateEmail(t *testing.T) {
 
 func TestLoginWrongPassword(t *testing.T) {
 	store := newFakeStore()
-	mail := &fakeEmail{}
+	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
-	token := mail.lastURL[strings.Index(mail.lastURL, "token=")+len("token="):]
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
+	token := mail.waitToken(t)
 	doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
 	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"nope"}`, "")
 	if code != 401 || out["error"] != "invalid_credentials" {
@@ -165,12 +198,12 @@ func TestLoginWrongPassword(t *testing.T) {
 
 func TestUpgradeRequiresAuthAndRaisesTier(t *testing.T) {
 	store := newFakeStore()
-	mail := &fakeEmail{}
+	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
-	token := mail.lastURL[strings.Index(mail.lastURL, "token=")+len("token="):]
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
+	token := mail.waitToken(t)
 	doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
-	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	jwtTok, _ := out["token"].(string)
 
 	// no auth => 401
@@ -207,6 +240,16 @@ func TestRegisterInvalidEmail(t *testing.T) {
 	}
 }
 
+func TestRegisterMissingName(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testApp(store, &fakeEmail{})
+	// valid email + password but blank name => 400 missing_name
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"  ","email":"a@b.com","password":"sugbo123"}`, "")
+	if code != 400 || out["error"] != "missing_name" {
+		t.Fatalf("missing name => 400 missing_name, got %d %v", code, out)
+	}
+}
+
 func TestResendAlwaysOK(t *testing.T) {
 	store := newFakeStore()
 	mail := &fakeEmail{}
@@ -219,7 +262,7 @@ func TestResendAlwaysOK(t *testing.T) {
 	}
 
 	// register a real user, then resend => 200
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	code, _ = doJSON(t, app, "POST", "/api/v1/auth/resend", `{"email":"a@b.com"}`, "")
 	if code != 200 {
 		t.Fatalf("resend for known email => 200, got %d", code)
@@ -228,12 +271,12 @@ func TestResendAlwaysOK(t *testing.T) {
 
 func TestUpgradeRejectsInvalidPlan(t *testing.T) {
 	store := newFakeStore()
-	mail := &fakeEmail{}
+	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
-	token := mail.lastURL[strings.Index(mail.lastURL, "token=")+len("token="):]
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
+	token := mail.waitToken(t)
 	doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
-	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	jwtTok, _ := out["token"].(string)
 
 	code, _ := doJSON(t, app, "POST", "/api/v1/auth/upgrade", `{"plan":"deluxe"}`, jwtTok)
