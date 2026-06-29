@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -71,11 +73,20 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	if _, err := h.store.CreateUser(c.Context(), in.Email, hash, tokenHash, time.Now().Add(h.cfg.VerifyTTL)); err != nil {
 		return c.Status(409).JSON(fiber.Map{"error": "email_taken"})
 	}
-	emailSent := true
-	if err := h.email.SendVerification(c.Context(), in.Email, h.verifyURL(raw)); err != nil {
-		emailSent = false
-	}
-	return c.Status(202).JSON(fiber.Map{"status": "verify_email", "email_sent": emailSent})
+	// Send the verification email in the background. SMTP can be slow or blocked
+	// (especially on PaaS hosts), so sending it inline would make this request
+	// hang. The account already exists; failures are logged for diagnosis and the
+	// user can use "Resend". A fresh context is used since the request's ends here.
+	verifyURL := h.verifyURL(raw)
+	go func(email, url string) {
+		if err := h.email.SendVerification(context.Background(), email, url); err != nil {
+			log.Printf("[auth] verification email to %s failed: %v", email, err)
+		} else {
+			log.Printf("[auth] verification email sent to %s", email)
+		}
+	}(in.Email, verifyURL)
+
+	return c.Status(202).JSON(fiber.Map{"status": "verify_email"})
 }
 
 func (h *AuthHandler) verifyURL(rawToken string) string {

@@ -19,17 +19,28 @@ interface RegisterResult {
   error?: string;
 }
 
+// Abort a request that takes too long so the UI fails fast with a clear error
+// instead of hanging (e.g. a cold backend or a blocked/slow network).
+const REQUEST_TIMEOUT_MS = 30000;
+
 async function post(path: string, body: unknown, token?: string) {
-  const res = await fetch(`${BASE}/api/v1/auth${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  return { status: res.status, data };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${BASE}/api/v1/auth${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export const authApi = {
