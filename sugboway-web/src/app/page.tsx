@@ -21,6 +21,9 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useCebuTime } from "@/hooks/useCebuTime";
 import { useCebuWeather } from "@/hooks/useCebuWeather";
 import PeakWarning from "@/components/route/PeakWarning";
+import { useAuth } from "@/components/AuthProvider";
+import AuthModal from "@/components/auth/AuthModal";
+import PricingPlans from "@/components/auth/PricingPlans";
 
 // Register PMTiles protocol handler globally once in the browser environment
 if (typeof window !== "undefined") {
@@ -541,6 +544,19 @@ export default function DemoPage() {
   
   // Dynamic Cebu environmental awareness hooks
   const { isPeak, peakLabel, cebuHour, cebuMinute } = useCebuTime();
+
+  // Auth state + modal control
+  const { user, isAuthed, token, logout } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login");
+
+  const openAuth = (mode: "login" | "register") => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
+  };
+
+  // Quota shown in the UI. Guests start at 5, free at 10; refined by each chat response.
+  const tierLimitLabel = !isAuthed ? 5 : user?.tier === "pro" ? 100 : user?.tier === "max" ? Infinity : 10;
   const { condition: weatherCondition, betaAdjustment, description: weatherDesc, temperature: weatherTemp } = useCebuWeather();
 
   // Format Cebu Local Time (12-hour AM/PM with accurate minutes)
@@ -605,9 +621,8 @@ export default function DemoPage() {
     dismissAlert,
   } = useProximityEtiquette(isNavDrawerOpen ? activeTransitLeg : null);
 
-  // Freemium Quota & Premium States
-  const [isPremiumUser, setIsPremiumUser] = useState(false);
-  const [remainingQuota, setRemainingQuota] = useState(5);
+  // Freemium Quota State
+  const [remainingQuota, setRemainingQuota] = useState<number>(5);
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [rateLimitResetSeconds, setRateLimitResetSeconds] = useState(0);
 
@@ -1029,6 +1044,15 @@ export default function DemoPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, isAiLoading]);
 
+  // Surface the email-verification redirect: prompt sign-in once on load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("verified") === "1") {
+      openAuth("login");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   // Traffic Gauge Pointer Jitter Effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -1047,6 +1071,7 @@ export default function DemoPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ message: question }),
       });
@@ -1858,61 +1883,59 @@ export default function DemoPage() {
           {/* TAB 4: PROFILE & EMERGENCY HUB */}
           <div className={currentTab === "profile" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
-              {/* Profile Card */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-full bg-cebu-blue/10 flex items-center justify-center text-cebu-blue shrink-0">
-                  <span className="material-symbols-outlined text-3xl">account_circle</span>
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-on-surface">Sugbo Commuter</h3>
-                  <p className="text-sm text-on-surface-variant mt-0.5 capitalize">{passengerType} fare</p>
-                </div>
+              {/* Account */}
+              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 space-y-4">
+                {isAuthed ? (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-full bg-cebu-blue/10 flex items-center justify-center text-cebu-blue shrink-0">
+                        <span className="material-symbols-outlined text-3xl">account_circle</span>
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-base font-bold text-on-surface truncate">{user?.email}</h3>
+                        <span className="inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-full bg-clay/10 text-clay capitalize">
+                          {user?.tier} plan
+                        </span>
+                      </div>
+                    </div>
+                    <div className="bg-surface-container border border-outline-variant/40 rounded-xl p-4 flex justify-between items-center">
+                      <span className="text-xs text-on-surface-variant">Questions left this hour</span>
+                      <span className="text-base font-bold text-on-surface">
+                        {user?.tier === "max" ? "Unlimited" : `${remainingQuota} of ${tierLimitLabel === Infinity ? "∞" : tierLimitLabel}`}
+                      </span>
+                    </div>
+                    <button onClick={logout} className="text-sm font-semibold text-on-surface-variant hover:text-error">
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center space-y-3 py-2">
+                    <span className="material-symbols-outlined text-cebu-blue text-4xl">account_circle</span>
+                    <div>
+                      <h3 className="text-base font-bold text-on-surface">You&apos;re browsing as a guest</h3>
+                      <p className="text-sm text-on-surface-variant mt-1">
+                        Guests get 5 questions/hour. Create a free account for 10.
+                      </p>
+                    </div>
+                    <div className="flex gap-2 justify-center">
+                      <button onClick={() => openAuth("register")} className="bg-cebu-blue text-white font-semibold text-sm px-4 py-2.5 rounded-xl active:scale-95 transition-transform">
+                        Create account
+                      </button>
+                      <button onClick={() => openAuth("login")} className="bg-surface-container border border-outline-variant text-on-surface font-semibold text-sm px-4 py-2.5 rounded-xl active:scale-95 transition-transform">
+                        Sign in
+                      </button>
+                    </div>
+                  </div>
+                )}
               </section>
 
-              {/* SugboWay Premium Subscription Card */}
-              <section className="bg-surface-container-lowest border border-clay/40 rounded-2xl p-5 space-y-4">
-                <div className="flex justify-between items-start gap-3">
-                  <div>
-                    <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
-                      <span className="material-symbols-outlined text-clay">star</span>
-                      SugboWay Premium
-                    </h3>
-                    <p className="text-sm text-on-surface-variant mt-1.5 leading-relaxed">
-                      Unlimited questions, offline maps you can save, and earlier heads-up on crowded routes.
-                    </p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${isPremiumUser ? "bg-safe-green/10 text-safe-green" : "bg-surface-container-high text-on-surface-variant"}`}>
-                    {isPremiumUser ? "Active" : "Free"}
-                  </span>
-                </div>
-
-                <div className="bg-surface-container border border-outline-variant/40 rounded-xl p-4 flex justify-between items-center">
-                  <div className="flex flex-col">
-                    <span className="text-xs text-on-surface-variant">Questions left this hour</span>
-                    <span className="text-base font-bold text-on-surface mt-0.5">
-                      {isPremiumUser ? "Unlimited" : `${remainingQuota} of 5`}
-                    </span>
-                  </div>
-
-                  {!isPremiumUser && (
-                    <button
-                      onClick={() => {
-                        setIsPremiumUser(true);
-                        setRemainingQuota(9999);
-                        setIsRateLimited(false);
-                      }}
-                      className="bg-clay hover:brightness-95 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-all active:scale-95"
-                    >
-                      Upgrade
-                    </button>
-                  )}
-                </div>
-
-                {!isPremiumUser && (
-                  <p className="text-xs text-on-surface-variant text-center">
-                    ₱49/month — keeps Cebu's community maps running.
-                  </p>
-                )}
+              {/* Plans */}
+              <section className="space-y-3">
+                <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-clay">workspace_premium</span>
+                  Plans
+                </h3>
+                <PricingPlans onRequireAuth={() => openAuth("register")} />
               </section>
 
               {/* Emergency hotlines */}
@@ -1944,33 +1967,6 @@ export default function DemoPage() {
                 </div>
               </section>
 
-              {/* Saved stations list */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 space-y-3">
-                <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-clay">bookmark</span>
-                  Saved stops
-                </h3>
-                <div className="space-y-2">
-                  {[
-                    { name: "Cebu IT Park Terminal", lines: ["04L", "17B", "MyBus"] },
-                    { name: "Ayala Center Terminal", lines: ["13C", "17B", "12L"] }
-                  ].map((station, i) => (
-                    <button key={i} className="w-full text-left p-3 bg-surface-container-low border border-outline-variant/40 rounded-xl flex justify-between items-center gap-3 hover:border-cebu-blue transition-colors">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-on-surface truncate">{station.name}</p>
-                        <div className="flex gap-1.5 mt-1.5">
-                          {station.lines.map((ln) => (
-                            <span key={ln} className="bg-cebu-blue/10 text-cebu-blue text-xs font-semibold px-1.5 py-0.5 rounded tabular-nums">
-                              {ln}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <span className="material-symbols-outlined text-outline shrink-0">chevron_right</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
           </div>
 
         </div>
@@ -2060,13 +2056,16 @@ export default function DemoPage() {
               <div className="flex flex-col gap-2 pt-1">
                 <button
                   onClick={() => {
-                    setIsPremiumUser(true);
-                    setRemainingQuota(9999);
                     setIsRateLimited(false);
+                    if (isAuthed) {
+                      setCurrentTab("profile");
+                    } else {
+                      openAuth("register");
+                    }
                   }}
                   className="w-full bg-clay hover:brightness-95 text-white font-semibold text-sm py-3 rounded-xl transition-all active:scale-95"
                 >
-                  Go Premium · ₱49/mo
+                  {isAuthed ? "See plans" : "Create a free account"}
                 </button>
                 <button
                   onClick={() => setIsRateLimited(false)}
@@ -2078,6 +2077,8 @@ export default function DemoPage() {
             </div>
           </div>
         )}
+
+        <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} initialMode={authModalMode} />
 
       </div>
     </div>
