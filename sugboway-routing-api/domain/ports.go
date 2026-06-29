@@ -97,6 +97,7 @@ type RoutingServicePort interface {
 // User is an authenticated account.
 type User struct {
 	ID            int64
+	Name          string
 	Email         string
 	PasswordHash  string
 	Tier          string
@@ -107,7 +108,7 @@ type User struct {
 type UserStore interface {
 	// CreateUser inserts a new unverified user. Returns an error if the email
 	// already exists.
-	CreateUser(ctx context.Context, email, passwordHash, verificationTokenHash string, verificationExpiresAt time.Time) (*User, error)
+	CreateUser(ctx context.Context, name, email, passwordHash, verificationTokenHash string, verificationExpiresAt time.Time) (*User, error)
 	// GetUserByEmail returns the user, or (nil, nil) if none exists.
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	// MarkVerifiedByTokenHash verifies the user holding an unexpired token hash.

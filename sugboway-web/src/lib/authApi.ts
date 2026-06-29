@@ -2,6 +2,7 @@ const BASE = process.env.NEXT_PUBLIC_ROUTING_API_URL ?? "http://localhost:8080";
 
 export type Tier = "free" | "pro" | "max";
 export interface AuthUser {
+  name: string;
   email: string;
   tier: Tier;
 }
@@ -44,8 +45,8 @@ async function post(path: string, body: unknown, token?: string) {
 }
 
 export const authApi = {
-  async register(email: string, password: string): Promise<RegisterResult> {
-    const { status, data } = await post("/register", { email, password });
+  async register(name: string, email: string, password: string): Promise<RegisterResult> {
+    const { status, data } = await post("/register", { name, email, password });
     if (status === 202) return { ok: true, emailSent: data.email_sent !== false };
     return { ok: false, error: data.error ?? "register_failed" };
   },

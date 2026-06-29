@@ -25,13 +25,13 @@ func newFakeStore() *fakeStore {
 	return &fakeStore{users: map[string]*domain.User{}, tokenByHsh: map[string]string{}, nextID: 0}
 }
 
-func (f *fakeStore) CreateUser(_ context.Context, email, hash, tokenHash string, _ time.Time) (*domain.User, error) {
+func (f *fakeStore) CreateUser(_ context.Context, name, email, hash, tokenHash string, _ time.Time) (*domain.User, error) {
 	email = strings.ToLower(email)
 	if _, ok := f.users[email]; ok {
 		return nil, fiber.NewError(409, "exists")
 	}
 	f.nextID++
-	u := &domain.User{ID: f.nextID, Email: email, PasswordHash: hash, Tier: "free", EmailVerified: false}
+	u := &domain.User{ID: f.nextID, Name: name, Email: email, PasswordHash: hash, Tier: "free", EmailVerified: false}
 	f.users[email] = u
 	f.tokenByHsh[tokenHash] = email
 	return u, nil
@@ -144,7 +144,7 @@ func TestRegisterThenLoginBlockedUntilVerified(t *testing.T) {
 	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
 
-	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 202 {
 		t.Fatalf("register => 202, got %d", code)
 	}
@@ -154,7 +154,7 @@ func TestRegisterThenLoginBlockedUntilVerified(t *testing.T) {
 	}
 
 	// login before verifying => 403
-	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 403 || out["error"] != "email_not_verified" {
 		t.Fatalf("login before verify => 403 email_not_verified, got %d %v", code, out)
 	}
@@ -167,7 +167,7 @@ func TestRegisterThenLoginBlockedUntilVerified(t *testing.T) {
 	}
 
 	// login now succeeds with a token
-	code, out = doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	code, out = doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 200 || out["token"] == nil {
 		t.Fatalf("login after verify => 200 + token, got %d %v", code, out)
 	}
@@ -176,8 +176,8 @@ func TestRegisterThenLoginBlockedUntilVerified(t *testing.T) {
 func TestRegisterDuplicateEmail(t *testing.T) {
 	store := newFakeStore()
 	app, _ := testApp(store, &fakeEmail{})
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
-	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	if code != 409 {
 		t.Fatalf("duplicate => 409, got %d", code)
 	}
@@ -187,7 +187,7 @@ func TestLoginWrongPassword(t *testing.T) {
 	store := newFakeStore()
 	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	token := mail.waitToken(t)
 	doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
 	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"nope"}`, "")
@@ -200,10 +200,10 @@ func TestUpgradeRequiresAuthAndRaisesTier(t *testing.T) {
 	store := newFakeStore()
 	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	token := mail.waitToken(t)
 	doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
-	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	jwtTok, _ := out["token"].(string)
 
 	// no auth => 401
@@ -240,6 +240,16 @@ func TestRegisterInvalidEmail(t *testing.T) {
 	}
 }
 
+func TestRegisterMissingName(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testApp(store, &fakeEmail{})
+	// valid email + password but blank name => 400 missing_name
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"  ","email":"a@b.com","password":"sugbo123"}`, "")
+	if code != 400 || out["error"] != "missing_name" {
+		t.Fatalf("missing name => 400 missing_name, got %d %v", code, out)
+	}
+}
+
 func TestResendAlwaysOK(t *testing.T) {
 	store := newFakeStore()
 	mail := &fakeEmail{}
@@ -252,7 +262,7 @@ func TestResendAlwaysOK(t *testing.T) {
 	}
 
 	// register a real user, then resend => 200
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	code, _ = doJSON(t, app, "POST", "/api/v1/auth/resend", `{"email":"a@b.com"}`, "")
 	if code != 200 {
 		t.Fatalf("resend for known email => 200, got %d", code)
@@ -263,10 +273,10 @@ func TestUpgradeRejectsInvalidPlan(t *testing.T) {
 	store := newFakeStore()
 	mail := newFakeEmail()
 	app, _ := testApp(store, mail)
-	doJSON(t, app, "POST", "/api/v1/auth/register", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	token := mail.waitToken(t)
 	doJSON(t, app, "GET", "/api/v1/auth/verify?token="+token, "", "")
-	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	_, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
 	jwtTok, _ := out["token"].(string)
 
 	code, _ := doJSON(t, app, "POST", "/api/v1/auth/upgrade", `{"plan":"deluxe"}`, jwtTok)
