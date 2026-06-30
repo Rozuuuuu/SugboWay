@@ -119,9 +119,29 @@ type UserStore interface {
 	SetVerificationToken(ctx context.Context, email, tokenHash string, expiresAt time.Time) (bool, error)
 	// UpdateTier sets a user's plan tier.
 	UpdateTier(ctx context.Context, userID int64, tier string) error
+	// CreateVerifiedUser inserts a new already-verified, password-less account
+	// (used for Google sign-up). Errors if the email already exists.
+	CreateVerifiedUser(ctx context.Context, name, email string) (*User, error)
+	// MarkVerifiedByEmail flags an existing account verified (used when linking a
+	// Google login to a pre-existing unverified account).
+	MarkVerifiedByEmail(ctx context.Context, email string) error
 }
 
 // EmailSender sends transactional email. Implemented by the SMTP adapter.
 type EmailSender interface {
 	SendVerification(ctx context.Context, toEmail, verifyURL string) error
+}
+
+// GoogleIdentity is the verified identity from a Google ID token.
+type GoogleIdentity struct {
+	Sub           string
+	Email         string
+	Name          string
+	EmailVerified bool
+}
+
+// GoogleVerifier validates a Google ID token. Implemented by the idtoken adapter;
+// faked in tests.
+type GoogleVerifier interface {
+	Verify(ctx context.Context, credential string) (*GoogleIdentity, error)
 }
