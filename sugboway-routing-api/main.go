@@ -10,6 +10,7 @@ import (
 
 	"sugboway-routing-api/adapter/api"
 	"sugboway-routing-api/adapter/email"
+	"sugboway-routing-api/adapter/google"
 	"sugboway-routing-api/adapter/repository"
 	"sugboway-routing-api/domain"
 
@@ -88,7 +89,14 @@ func main() {
 		mailSender = email.NewSMTPSender("", "587", "", "", emailFrom)
 		log.Println("[SugboWay Routing API] WARNING: no email provider configured (set BREVO_API_KEY or SMTP_*). Verification emails will fail.")
 	}
-	authHandler := api.NewAuthHandler(userStore, mailSender, api.AuthConfig{
+	var googleVerifier domain.GoogleVerifier
+	if gid := os.Getenv("GOOGLE_CLIENT_ID"); gid != "" {
+		googleVerifier = google.NewIDTokenVerifier(gid)
+		log.Println("[SugboWay Routing API] Google sign-in: enabled.")
+	} else {
+		log.Println("[SugboWay Routing API] Google sign-in: disabled (GOOGLE_CLIENT_ID unset).")
+	}
+	authHandler := api.NewAuthHandler(userStore, mailSender, googleVerifier, api.AuthConfig{
 		JWTSecret: jwtSecret, AppBaseURL: appBaseURL, PublicAPIURL: publicAPIURL,
 		TokenTTL: 7 * 24 * time.Hour, VerifyTTL: 24 * time.Hour,
 	})
@@ -125,6 +133,7 @@ func main() {
 	authGroup.Get("/verify", authHandler.Verify)
 	authGroup.Post("/resend", authHandler.Resend)
 	authGroup.Post("/login", authHandler.Login)
+	authGroup.Post("/google", authHandler.Google)
 	authGroup.Post("/upgrade", authHandler.RequireAuth, authHandler.Upgrade)
 	authGroup.Get("/me", authHandler.RequireAuth, authHandler.Me)
 
