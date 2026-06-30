@@ -88,11 +88,32 @@ in both services. Treat it like a password — don't commit it anywhere.
 
 ---
 
-## Task B — Verification email (SMTP) + links, on the Go service
+## ⚠️ Render blocks SMTP — use Brevo (HTTPS) instead
 
-All of these go on **sugboway-routing-api** only (it sends the email and builds the
-links). This guide uses **Gmail** as the SMTP provider (you chose SMTP); any SMTP
-provider works the same way — only the host/port/credentials differ.
+Render throttles/blocks outbound **SMTP**, so Gmail/SMTP verification email often just
+times out there. The app now prefers **Brevo's HTTPS email API**, which Render allows.
+If `BREVO_API_KEY` is set it is used; otherwise it falls back to SMTP.
+
+### Task B (recommended) — Brevo email API, on the Go service
+
+1. Create a free account at **brevo.com**.
+2. **Verify a sender:** Brevo → Senders & Domains → add and verify the email address you'll
+   send *from* (a single-sender verification is enough to start; a verified domain is better later).
+3. **Make an API key:** Brevo → SMTP & API → **API Keys** → Generate a new key → copy it.
+4. Render → **sugboway-routing-api** → **Environment** → add:
+   - `BREVO_API_KEY` = *(the key)*
+   - `EMAIL_FROM` = the **verified sender**, e.g. `SugboWay <you@yourdomain.com>` (the address must be the one you verified in step 2)
+   - `APP_BASE_URL` = `https://sugboway-web.onrender.com` (web URL, no trailing slash)
+   - `PUBLIC_API_URL` = `https://sugboway-routing-api.onrender.com` (this API's URL, no trailing slash)
+5. **Save** → the service redeploys. The logs will print `Email: using Brevo HTTP API.` on boot,
+   and `verification email sent to …` on each sign-up.
+
+> You do **not** need any SMTP_* vars when using Brevo.
+
+### Task B (alternative) — SMTP, on the Go service
+
+Only if you specifically want SMTP (and confirmed your Render plan allows it). This guide
+uses **Gmail**; any SMTP provider works the same way — only the host/port/credentials differ.
 
 ### Step B1 — Create a Gmail App Password
 
@@ -176,8 +197,8 @@ If `email_sent` is `false`, the SMTP settings are wrong — see troubleshooting.
 
 | Symptom | Most likely cause | Fix |
 |---|---|---|
-| Register returns `email_sent: false` | Wrong SMTP host/port/user/pass, or Gmail blocked it | Re-check the 5 SMTP vars; confirm the App Password has no spaces; read the routing-API logs in Render |
-| No email arrives (but `email_sent: true`) | In Spam, or `SMTP_FROM` ≠ `SMTP_USER` on Gmail | Check Spam; set `SMTP_FROM` to the same Gmail address (try the plain address with no display name) |
+| No email arrives (Brevo) | `EMAIL_FROM` isn't a verified Brevo sender, or bad key | Logs show `brevo api 401/400 …`; verify the sender in Brevo and confirm `BREVO_API_KEY`; check Spam |
+| No email arrives (SMTP) | Render blocking SMTP, wrong creds, or Spam | Logs show `smtp dial … i/o timeout` (Render block → switch to Brevo) or `smtp auth …`; check Spam |
 | Verify link 404s or redirects wrong | `PUBLIC_API_URL` / `APP_BASE_URL` wrong | Use the exact `https://…onrender.com` URLs, **no trailing slash**, `https` not `http` |
 | Logged in, but chat still caps at 5 / returns 401 | `AUTH_JWT_SECRET` mismatch between the two services | Put the **identical** value in both; let both redeploy |
 | Modal says "Can't reach the server" | Web app's `NEXT_PUBLIC_ROUTING_API_URL` not pointing at the deployed API | That var is **baked at build time** — fix it and **rebuild** the web service |
@@ -190,8 +211,7 @@ If `email_sent` is `false`, the SMTP settings are wrong — see troubleshooting.
 - [ ] `DATABASE_URL` (the Neon connection string) is set on **both** backends.
 - [ ] Generated one strong `AUTH_JWT_SECRET`.
 - [ ] Same `AUTH_JWT_SECRET` on **both** sugboway-routing-api and sugboway-ai-service.
-- [ ] Gmail 2-Step Verification on; App Password created.
-- [ ] `SMTP_HOST/PORT/USER/PASS/FROM` set on sugboway-routing-api (`SMTP_FROM` = the Gmail address).
+- [ ] Email set on sugboway-routing-api: **`BREVO_API_KEY` + `EMAIL_FROM`** (a verified Brevo sender) — recommended on Render — or the `SMTP_*` vars.
 - [ ] `APP_BASE_URL` = web URL, `PUBLIC_API_URL` = routing-API URL (both `https`, no trailing slash).
 - [ ] Both services redeployed and "Live".
 - [ ] Ran the end-to-end test: register → email → verify → sign in → chat (10/hr).
