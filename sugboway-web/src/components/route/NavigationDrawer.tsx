@@ -127,7 +127,7 @@ export default function NavigationDrawer({
           </div>
           <button 
             onClick={onClose} 
-            className="p-1 hover:bg-surface-container-high rounded-full text-on-surface-variant transition-colors"
+            className="p-1 hover:bg-surface-container-high rounded-full text-on-surface-variant transition-all active:scale-90"
           >
             <span className="material-symbols-outlined text-base">close</span>
           </button>
@@ -215,14 +215,14 @@ export default function NavigationDrawer({
           <button 
             onClick={handlePrevStep}
             disabled={activeLegIndex === 0 && activeStepIndex === 0}
-            className="flex-1 bg-surface-container-high hover:bg-surface-container-highest disabled:bg-surface-container-low text-on-surface-variant disabled:text-outline font-bold py-3 rounded-xl transition-all text-xs border border-outline-variant/30 select-none"
+            className="flex-1 bg-surface-container-high hover:bg-surface-container-highest disabled:bg-surface-container-low text-on-surface-variant disabled:text-outline font-bold py-3 rounded-xl transition-all active:scale-95 disabled:active:scale-100 text-xs border border-outline-variant/30 select-none"
           >
             Back Step
           </button>
           
           <button 
             onClick={handleNextStep}
-            className="flex-1 bg-cebu-blue hover:bg-primary text-white font-bold py-3 rounded-xl transition-all text-xs select-none shadow-sm flex items-center justify-center gap-1.5"
+            className="flex-1 bg-cebu-blue hover:bg-primary text-white font-bold py-3 rounded-xl transition-all active:scale-95 text-xs select-none shadow-sm flex items-center justify-center gap-1.5"
           >
             <span>
               {activeLegIndex === legs.length - 1 && activeStepIndex === instructions.length - 1 

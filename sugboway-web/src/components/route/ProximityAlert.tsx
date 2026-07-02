@@ -46,7 +46,7 @@ export default function ProximityAlert({
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={onToggleMute}
-                  className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-colors flex items-center justify-center"
+                  className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-all active:scale-90 flex items-center justify-center"
                   title={isMuted ? "Unmute chime (metal tap sound)" : "Mute chime"}
                 >
                   <span className="material-symbols-outlined text-base">
@@ -55,7 +55,7 @@ export default function ProximityAlert({
                 </button>
                 <button
                   onClick={onDismiss}
-                  className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-colors flex items-center justify-center"
+                  className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-all active:scale-90 flex items-center justify-center"
                   title="Dismiss alert"
                 >
                   <span className="material-symbols-outlined text-base">close</span>

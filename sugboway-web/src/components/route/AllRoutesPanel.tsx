@@ -262,7 +262,7 @@ export default function AllRoutesPanel({
         {searchInput && (
           <button
             onClick={() => setSearchInput("")}
-            className="text-on-surface-variant hover:text-on-surface shrink-0"
+            className="text-on-surface-variant hover:text-on-surface shrink-0 transition-all active:scale-90"
             aria-label="Clear search"
           >
             <span className="material-symbols-outlined text-lg">close</span>
@@ -276,7 +276,7 @@ export default function AllRoutesPanel({
           <button
             key={c.key}
             onClick={() => setVehicle(c.key)}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all active:scale-95 ${
               vehicle === c.key
                 ? "bg-cebu-blue text-white border-cebu-blue"
                 : "bg-surface-container text-on-surface-variant border-outline-variant/50 hover:border-outline-variant"
@@ -288,7 +288,7 @@ export default function AllRoutesPanel({
 
         <button
           onClick={() => setAirconOnly((v) => !v)}
-          className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1 ${
+          className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all active:scale-95 flex items-center gap-1 ${
             airconOnly
               ? "bg-aircon-cyan text-white border-aircon-cyan"
               : "bg-surface-container text-on-surface-variant border-outline-variant/50 hover:border-outline-variant"
@@ -318,7 +318,7 @@ export default function AllRoutesPanel({
           <button
             key={p}
             onClick={() => setPassengerType(p)}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize transition-colors ${
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize transition-all active:scale-95 ${
               passengerType === p
                 ? "bg-cebu-blue/10 text-cebu-blue"
                 : "text-on-surface-variant hover:bg-surface-container"
@@ -337,16 +337,20 @@ export default function AllRoutesPanel({
         </div>
       ) : error ? (
         <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
-          <span className="material-symbols-outlined text-error text-3xl">error</span>
+          <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error mb-1">
+            <span className="material-symbols-outlined text-2xl">error</span>
+          </div>
           <p className="text-sm text-error font-semibold">{error}</p>
-          <button onClick={fetchAll} className="mt-1 text-sm font-semibold text-cebu-blue hover:underline">
+          <button onClick={fetchAll} className="mt-1 text-sm font-semibold text-cebu-blue hover:underline active:scale-95 transition-transform">
             Try again
           </button>
         </div>
       ) : allRoutes.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
-          <span className="material-symbols-outlined text-outline text-3xl">cloud_off</span>
-          <p className="text-sm text-on-surface-variant font-semibold mt-2">No routes available yet.</p>
+          <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-2">
+            <span className="material-symbols-outlined text-2xl">cloud_off</span>
+          </div>
+          <p className="text-sm text-on-surface-variant font-semibold">No routes available yet.</p>
           <p className="text-xs text-outline mt-1">
             The server returned an empty list — the database may need seeding (apply the route
             migrations / run seed_runner.py).
@@ -354,8 +358,10 @@ export default function AllRoutesPanel({
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
-          <span className="material-symbols-outlined text-outline text-3xl">search_off</span>
-          <p className="text-sm text-on-surface-variant font-semibold mt-2">
+          <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-2">
+            <span className="material-symbols-outlined text-2xl">search_off</span>
+          </div>
+          <p className="text-sm text-on-surface-variant font-semibold">
             {query ? `No routes go through "${query}".` : "No routes match these filters."}
           </p>
           <p className="text-xs text-outline mt-1">Try another place, code, or filter.</p>
@@ -387,7 +393,7 @@ export default function AllRoutesPanel({
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={safePage <= 1}
-                className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95 disabled:active:scale-100"
               >
                 <span className="material-symbols-outlined text-base">chevron_left</span>
                 Prev
@@ -398,7 +404,7 @@ export default function AllRoutesPanel({
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={safePage >= totalPages}
-                className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                className="flex items-center gap-1 text-sm font-semibold px-3 py-2 rounded-lg bg-surface-container disabled:opacity-40 disabled:cursor-not-allowed text-on-surface-variant hover:bg-surface-container-high transition-all active:scale-95 disabled:active:scale-100"
               >
                 Next
                 <span className="material-symbols-outlined text-base">chevron_right</span>
