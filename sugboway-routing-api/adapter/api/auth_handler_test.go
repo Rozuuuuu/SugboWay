@@ -66,6 +66,25 @@ func (f *fakeStore) UpdateTier(_ context.Context, id int64, tier string) error {
 	return nil
 }
 
+func (f *fakeStore) CreateVerifiedUser(_ context.Context, name, email string) (*domain.User, error) {
+	email = strings.ToLower(email)
+	if _, ok := f.users[email]; ok {
+		return nil, fiber.NewError(409, "exists")
+	}
+	f.nextID++
+	u := &domain.User{ID: f.nextID, Name: name, Email: email, Tier: "free", EmailVerified: true}
+	f.users[email] = u
+	return u, nil
+}
+
+func (f *fakeStore) MarkVerifiedByEmail(_ context.Context, email string) error {
+	if u, ok := f.users[strings.ToLower(email)]; ok {
+		u.EmailVerified = true
+		u.PasswordHash = "" // mirrors the real adapter: pre-hijack mitigation
+	}
+	return nil
+}
+
 // fakeEmail captures verification URLs. SendVerification now runs in a goroutine
 // (the handler sends asynchronously), so tests must wait for the URL rather than
 // read a field synchronously.
@@ -105,8 +124,18 @@ func (e *fakeEmail) waitToken(t *testing.T) string {
 	return u[i+len("token="):]
 }
 
+// fakeGoogle is an in-memory GoogleVerifier for tests.
+type fakeGoogle struct {
+	id  *domain.GoogleIdentity
+	err error
+}
+
+func (g *fakeGoogle) Verify(_ context.Context, _ string) (*domain.GoogleIdentity, error) {
+	return g.id, g.err
+}
+
 func testApp(store domain.UserStore, mail domain.EmailSender) (*fiber.App, *AuthHandler) {
-	h := NewAuthHandler(store, mail, AuthConfig{
+	h := NewAuthHandler(store, mail, nil, AuthConfig{
 		JWTSecret: "test-secret", AppBaseURL: "http://web", PublicAPIURL: "http://api",
 		TokenTTL: time.Hour, VerifyTTL: 24 * time.Hour,
 	})
@@ -118,6 +147,20 @@ func testApp(store domain.UserStore, mail domain.EmailSender) (*fiber.App, *Auth
 	g.Post("/login", h.Login)
 	g.Post("/upgrade", h.RequireAuth, h.Upgrade)
 	g.Get("/me", h.RequireAuth, h.Me)
+	return app, h
+}
+
+func testAppGoogle(store domain.UserStore, mail domain.EmailSender, g domain.GoogleVerifier) (*fiber.App, *AuthHandler) {
+	h := NewAuthHandler(store, mail, g, AuthConfig{
+		JWTSecret: "test-secret", AppBaseURL: "http://web", PublicAPIURL: "http://api",
+		TokenTTL: time.Hour, VerifyTTL: 24 * time.Hour,
+	})
+	app := fiber.New()
+	grp := app.Group("/api/v1/auth")
+	grp.Post("/register", h.Register)
+	grp.Get("/verify", h.Verify)
+	grp.Post("/login", h.Login)
+	grp.Post("/google", h.Google)
 	return app, h
 }
 
@@ -291,5 +334,79 @@ func TestRequireAuthRejectsMalformedToken(t *testing.T) {
 	code, _ := doJSON(t, app, "POST", "/api/v1/auth/upgrade", `{"plan":"pro"}`, "not.a.jwt")
 	if code != 401 {
 		t.Fatalf("malformed bearer token => 401, got %d", code)
+	}
+}
+
+func TestGoogleNewUserCreatesVerifiedAccount(t *testing.T) {
+	store := newFakeStore()
+	g := &fakeGoogle{id: &domain.GoogleIdentity{Sub: "g1", Email: "new@gmail.com", Name: "Goog Le", EmailVerified: true}}
+	app, _ := testAppGoogle(store, newFakeEmail(), g)
+
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/google", `{"credential":"x"}`, "")
+	if code != 200 || out["token"] == nil {
+		t.Fatalf("new google user => 200 + token, got %d %v", code, out)
+	}
+	user, _ := out["user"].(map[string]any)
+	if user["name"] != "Goog Le" || user["tier"] != "free" {
+		t.Fatalf("expected name+free tier, got %v", out["user"])
+	}
+	u, _ := store.GetUserByEmail(context.Background(), "new@gmail.com")
+	if u == nil || !u.EmailVerified {
+		t.Fatalf("user should exist and be verified, got %v", u)
+	}
+}
+
+func TestGoogleLinksUnverifiedPasswordAccount(t *testing.T) {
+	store := newFakeStore()
+	g := &fakeGoogle{id: &domain.GoogleIdentity{Sub: "g2", Email: "a@b.com", Name: "Juan", EmailVerified: true}}
+	app, _ := testAppGoogle(store, newFakeEmail(), g)
+
+	// pre-existing UNVERIFIED password account with the same email
+	doJSON(t, app, "POST", "/api/v1/auth/register", `{"name":"Juan","email":"a@b.com","password":"sugbo123"}`, "")
+
+	code, _ := doJSON(t, app, "POST", "/api/v1/auth/google", `{"credential":"x"}`, "")
+	if code != 200 {
+		t.Fatalf("google link => 200, got %d", code)
+	}
+	// Linking clears any pre-verification password (account pre-hijacking
+	// mitigation): an attacker could have registered this email with their own
+	// password before the real owner ever signed in. Password login must fail.
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	if code != 401 || out["error"] != "invalid_credentials" {
+		t.Fatalf("after google link, pre-set password must be cleared => 401, got %d %v", code, out)
+	}
+	// ...and the account itself is now a verified, password-less Google account.
+	u, _ := store.GetUserByEmail(context.Background(), "a@b.com")
+	if u == nil || !u.EmailVerified || u.PasswordHash != "" {
+		t.Fatalf("expected verified password-less account, got %+v", u)
+	}
+}
+
+func TestGoogleNotConfiguredReturns503(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testAppGoogle(store, newFakeEmail(), nil) // no verifier
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/google", `{"credential":"x"}`, "")
+	if code != 503 || out["error"] != "google_not_configured" {
+		t.Fatalf("unconfigured => 503 google_not_configured, got %d %v", code, out)
+	}
+}
+
+func TestGoogleInvalidTokenReturns401(t *testing.T) {
+	store := newFakeStore()
+	g := &fakeGoogle{err: fiber.NewError(401, "bad")}
+	app, _ := testAppGoogle(store, newFakeEmail(), g)
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/google", `{"credential":"x"}`, "")
+	if code != 401 || out["error"] != "invalid_google_token" {
+		t.Fatalf("bad token => 401 invalid_google_token, got %d %v", code, out)
+	}
+}
+
+func TestGoogleUnverifiedEmailReturns401(t *testing.T) {
+	store := newFakeStore()
+	g := &fakeGoogle{id: &domain.GoogleIdentity{Sub: "g3", Email: "x@gmail.com", Name: "X", EmailVerified: false}}
+	app, _ := testAppGoogle(store, newFakeEmail(), g)
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/google", `{"credential":"x"}`, "")
+	if code != 401 || out["error"] != "google_email_unverified" {
+		t.Fatalf("unverified google email => 401 google_email_unverified, got %d %v", code, out)
 	}
 }

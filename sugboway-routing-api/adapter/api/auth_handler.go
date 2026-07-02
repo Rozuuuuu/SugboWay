@@ -23,14 +23,15 @@ type AuthConfig struct {
 
 // AuthHandler serves the /api/v1/auth endpoints.
 type AuthHandler struct {
-	store domain.UserStore
-	email domain.EmailSender
-	cfg   AuthConfig
+	store  domain.UserStore
+	email  domain.EmailSender
+	google domain.GoogleVerifier // nil when GOOGLE_CLIENT_ID is unset
+	cfg    AuthConfig
 }
 
-// NewAuthHandler builds an auth handler.
-func NewAuthHandler(store domain.UserStore, email domain.EmailSender, cfg AuthConfig) *AuthHandler {
-	return &AuthHandler{store: store, email: email, cfg: cfg}
+// NewAuthHandler builds an auth handler. google may be nil (feature disabled).
+func NewAuthHandler(store domain.UserStore, email domain.EmailSender, google domain.GoogleVerifier, cfg AuthConfig) *AuthHandler {
+	return &AuthHandler{store: store, email: email, google: google, cfg: cfg}
 }
 
 type credentials struct {
@@ -143,6 +144,44 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 	if !u.EmailVerified {
 		return c.Status(403).JSON(fiber.Map{"error": "email_not_verified"})
+	}
+	return h.issue(c, u)
+}
+
+// Google verifies a Google ID token and signs the user in (find-or-create,
+// link by email). Disabled with 503 when no verifier is configured.
+func (h *AuthHandler) Google(c *fiber.Ctx) error {
+	if h.google == nil {
+		return c.Status(503).JSON(fiber.Map{"error": "google_not_configured"})
+	}
+	var in struct {
+		Credential string `json:"credential"`
+	}
+	if err := c.BodyParser(&in); err != nil || in.Credential == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid_body"})
+	}
+	id, err := h.google.Verify(c.Context(), in.Credential)
+	if err != nil || id == nil {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid_google_token"})
+	}
+	if !id.EmailVerified {
+		return c.Status(401).JSON(fiber.Map{"error": "google_email_unverified"})
+	}
+	email := strings.ToLower(strings.TrimSpace(id.Email))
+
+	u, _ := h.store.GetUserByEmail(c.Context(), email)
+	if u == nil {
+		created, err := h.store.CreateVerifiedUser(c.Context(), id.Name, email)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "create_failed"})
+		}
+		return h.issue(c, created)
+	}
+	if !u.EmailVerified {
+		if err := h.store.MarkVerifiedByEmail(c.Context(), email); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "verify_failed"})
+		}
+		u.EmailVerified = true
 	}
 	return h.issue(c, u)
 }

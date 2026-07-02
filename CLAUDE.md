@@ -144,6 +144,10 @@ The chat endpoint (`main.py`) enforces a **per-tier hourly quota**, surfaced via
 The **Go routing API owns identity** (`adapter/api/auth_handler.go`, `domain/auth.go`,
 the `users` table): bcrypt passwords, email-verification-before-login over **SMTP**, and
 demo plan upgrades. On login it issues an **HS256 JWT carrying the user's `tier`**.
+`POST /api/v1/auth/google` verifies a Google ID token (audience = `GOOGLE_CLIENT_ID`)
+and find-or-creates the user (linking by email), returning the same JWT as password
+login; when the client ID is unset the endpoint returns 503 and the web app hides the
+"Continue with Google" button (`NEXT_PUBLIC_GOOGLE_CLIENT_ID`, build-time).
 
 The **Python AI service enforces the quota** (`auth_quota.py`): `/chat` reads the
 `Authorization: Bearer` header, verifies the JWT with the **shared `AUTH_JWT_SECRET`**,

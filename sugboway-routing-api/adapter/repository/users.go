@@ -95,3 +95,28 @@ func (s *PostgresUserStore) UpdateTier(ctx context.Context, userID int64, tier s
 	_, err := s.Pool.Exec(ctx, q, userID, tier)
 	return err
 }
+
+func (s *PostgresUserStore) CreateVerifiedUser(ctx context.Context, name, email string) (*domain.User, error) {
+	email = normalizeEmail(email)
+	const q = `
+		INSERT INTO users (name, email, password_hash, email_verified)
+		VALUES ($1, $2, '', TRUE)
+		RETURNING id, name, email, password_hash, tier, email_verified`
+	u := &domain.User{}
+	err := s.Pool.QueryRow(ctx, q, name, email).
+		Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash, &u.Tier, &u.EmailVerified)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+func (s *PostgresUserStore) MarkVerifiedByEmail(ctx context.Context, email string) error {
+	email = normalizeEmail(email)
+	// Also clear any password set before verification: an attacker could have
+	// pre-registered this email with their own password (account pre-hijacking).
+	// Google has just proven email ownership, so only Google sign-in survives.
+	const q = `UPDATE users SET email_verified = TRUE, password_hash = '', updated_at = now() WHERE email = $1`
+	_, err := s.Pool.Exec(ctx, q, email)
+	return err
+}

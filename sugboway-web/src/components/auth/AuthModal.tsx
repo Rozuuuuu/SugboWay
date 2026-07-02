@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import GoogleButton from "@/components/auth/GoogleButton";
 
 type Mode = "login" | "register" | "check-email";
 
@@ -99,6 +100,13 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
               <button onClick={onClose} aria-label="Close" className="text-on-surface-variant hover:text-on-surface">
                 <span className="material-symbols-outlined">close</span>
               </button>
+            </div>
+
+            <GoogleButton onError={setError} onSuccess={onClose} />
+            <div className="flex items-center gap-3 text-xs text-on-surface-variant">
+              <span className="h-px flex-1 bg-outline-variant" />
+              or
+              <span className="h-px flex-1 bg-outline-variant" />
             </div>
 
             <div className="space-y-3">

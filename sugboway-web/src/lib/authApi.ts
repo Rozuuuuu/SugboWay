@@ -59,6 +59,12 @@ export const authApi = {
     return { ok: false, error: data.error ?? "login_failed" };
   },
 
+  async googleLogin(credential: string): Promise<LoginResult> {
+    const { status, data } = await post("/google", { credential });
+    if (status === 200) return { ok: true, token: data.token, user: data.user };
+    return { ok: false, error: data.error ?? "google_failed" };
+  },
+
   async resend(email: string): Promise<void> {
     await post("/resend", { email });
   },

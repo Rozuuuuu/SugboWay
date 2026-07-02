@@ -12,6 +12,7 @@ interface AuthContextValue {
   isAuthed: boolean;
   register: (name: string, email: string, password: string) => Promise<{ ok: boolean; emailSent?: boolean; error?: string }>;
   login: (email: string, password: string) => Promise<{ ok: boolean; needsVerification?: boolean; error?: string }>;
+  googleLogin: (credential: string) => Promise<{ ok: boolean; error?: string }>;
   resend: (email: string) => Promise<void>;
   logout: () => void;
   upgrade: (plan: "pro" | "max") => Promise<{ ok: boolean; error?: string }>;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextValue>({
   isAuthed: false,
   register: async () => ({ ok: false }),
   login: async () => ({ ok: false }),
+  googleLogin: async () => ({ ok: false }),
   resend: async () => {},
   logout: () => {},
   upgrade: async () => ({ ok: false }),
@@ -68,6 +70,12 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     return { ok: r.ok, needsVerification: r.needsVerification, error: r.error };
   }, [persist]);
 
+  const googleLogin = useCallback(async (credential: string) => {
+    const r = await authApi.googleLogin(credential);
+    if (r.ok && r.token && r.user) persist(r.token, r.user);
+    return { ok: r.ok, error: r.error };
+  }, [persist]);
+
   const resend = useCallback(async (email: string) => {
     await authApi.resend(email);
   }, []);
@@ -87,7 +95,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [token, persist]);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthed: !!token, register, login, resend, logout, upgrade }}>
+    <AuthContext.Provider value={{ user, token, isAuthed: !!token, register, login, googleLogin, resend, logout, upgrade }}>
       {children}
     </AuthContext.Provider>
   );
