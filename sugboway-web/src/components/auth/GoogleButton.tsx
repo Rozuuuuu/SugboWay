@@ -84,8 +84,10 @@ const GoogleButton = ({ onError, onSuccess }: GoogleButtonProps) => {
           type: "standard",
           theme: "outline",
           size: "large",
+          shape: "pill",
           text: "continue_with",
-          width: 320,
+          logo_alignment: "left",
+          width: 336,
         });
       })
       .catch(() => {
@@ -97,7 +99,17 @@ const GoogleButton = ({ onError, onSuccess }: GoogleButtonProps) => {
   }, [googleLogin]);
 
   if (!CLIENT_ID) return null;
-  return <div ref={ref} className="flex justify-center" />;
+  return (
+    <div className="space-y-4">
+      {/* Divider lives here so it disappears with the button when Google is off. */}
+      <div className="flex items-center gap-3 text-xs text-on-surface-variant">
+        <span className="h-px flex-1 bg-outline-variant" />
+        or continue with
+        <span className="h-px flex-1 bg-outline-variant" />
+      </div>
+      <div ref={ref} className="flex justify-center min-h-[44px]" />
+    </div>
+  );
 };
 
 export default GoogleButton;
