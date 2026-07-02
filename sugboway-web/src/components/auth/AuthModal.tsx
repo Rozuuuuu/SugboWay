@@ -102,7 +102,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
               </button>
             </div>
 
-            <GoogleButton onError={setError} />
+            <GoogleButton onError={setError} onSuccess={onClose} />
             <div className="flex items-center gap-3 text-xs text-on-surface-variant">
               <span className="h-px flex-1 bg-outline-variant" />
               or

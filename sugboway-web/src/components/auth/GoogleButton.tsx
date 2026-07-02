@@ -44,9 +44,22 @@ const loadScript = (): Promise<void> =>
     document.head.appendChild(s);
   });
 
-const GoogleButton = ({ onError }: { onError?: (msg: string) => void }) => {
+interface GoogleButtonProps {
+  onError?: (msg: string) => void;
+  onSuccess?: () => void;
+}
+
+const GoogleButton = ({ onError, onSuccess }: GoogleButtonProps) => {
   const { googleLogin } = useAuth();
   const ref = useRef<HTMLDivElement>(null);
+
+  // The parent may pass unstable inline callbacks (e.g. onClose from page state).
+  // Keep them in a ref so the GIS effect below doesn't re-fire per parent render
+  // (re-running renderButton stacks duplicate buttons into the same div).
+  const callbacksRef = useRef<GoogleButtonProps>({ onError, onSuccess });
+  useEffect(() => {
+    callbacksRef.current = { onError, onSuccess };
+  });
 
   useEffect(() => {
     if (!CLIENT_ID || !ref.current) return;
@@ -57,9 +70,14 @@ const GoogleButton = ({ onError }: { onError?: (msg: string) => void }) => {
         window.google.accounts.id.initialize({
           client_id: CLIENT_ID,
           callback: (resp) => {
-            void googleLogin(resp.credential).then((r) => {
-              if (!r.ok && onError) onError("Google sign-in failed. Please try again.");
-            });
+            void googleLogin(resp.credential)
+              .then((r) => {
+                if (r.ok) callbacksRef.current.onSuccess?.();
+                else callbacksRef.current.onError?.("Google sign-in failed. Please try again.");
+              })
+              .catch(() => {
+                callbacksRef.current.onError?.("Google sign-in failed. Please try again.");
+              });
           },
         });
         window.google.accounts.id.renderButton(ref.current, {
@@ -71,12 +89,12 @@ const GoogleButton = ({ onError }: { onError?: (msg: string) => void }) => {
         });
       })
       .catch(() => {
-        if (onError) onError("Couldn't load Google sign-in.");
+        callbacksRef.current.onError?.("Couldn't load Google sign-in.");
       });
     return () => {
       cancelled = true;
     };
-  }, [googleLogin, onError]);
+  }, [googleLogin]);
 
   if (!CLIENT_ID) return null;
   return <div ref={ref} className="flex justify-center" />;
