@@ -80,7 +80,9 @@ PostGIS database.
   quota from the JWT's `tier` claim: **Guest 5/hr · Free 10/hr · Pro ₱149/mo (100/hr) ·
   Max ₱349/mo (unlimited)**. New users must verify their email before they can log in.
   Plan upgrades are a **front-end demo** (no real payments); only the chat quota is
-  actually enforced.
+  actually enforced. **Google sign-in** is supported too (a Google Identity Services
+  ID token, verified server-side, that links to an existing account by email) — it's
+  optional, enabled via `GOOGLE_CLIENT_ID` / `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
 - **Warm, local design** — a sand-and-sea palette, Plus Jakarta Sans for UI,
   JetBrains Mono for route codes, and Cebu Blue (`#0056B3`) for the active track.
 
