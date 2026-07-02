@@ -65,50 +65,72 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
     }
   };
 
+  const inputClass =
+    "mt-1 w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm text-on-surface transition-colors duration-150 focus:outline-none focus:border-cebu-blue focus:ring-2 focus:ring-cebu-blue/15";
+
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/40 animate-[fadeIn_0.15s_ease-out]" onClick={onClose}>
       <div
-        className="w-full max-w-sm bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4 animate-[fadeIn_0.2s_ease-out]"
+        className="relative w-full max-w-sm bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4 shadow-2xl animate-[scaleUp_0.25s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         {mode === "check-email" ? (
           <div className="text-center space-y-3">
-            <span className="material-symbols-outlined text-cebu-blue text-4xl">mark_email_unread</span>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute top-4 right-4 p-1.5 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 active:scale-90 transition-all"
+            >
+              <span className="material-symbols-outlined text-[20px] block">close</span>
+            </button>
+            <div className="w-14 h-14 mx-auto rounded-full bg-cebu-blue/10 flex items-center justify-center text-cebu-blue">
+              <span className="material-symbols-outlined text-3xl">mark_email_unread</span>
+            </div>
             <h2 className="text-lg font-bold text-on-surface">Check your email</h2>
             <p className="text-sm text-on-surface-variant leading-relaxed">
               We sent a verification link to <span className="font-semibold">{email}</span>. Open it, then sign in.
             </p>
             <button
               onClick={() => resend(email)}
-              className="text-sm font-semibold text-cebu-blue hover:underline"
+              className="text-sm font-semibold text-cebu-blue hover:underline active:scale-95 transition-transform inline-block"
             >
               Resend email
             </button>
             <button
               onClick={() => setMode("login")}
-              className="block w-full mt-2 bg-cebu-blue text-white font-semibold text-sm py-2.5 rounded-xl active:scale-95 transition-transform"
+              className="block w-full mt-2 bg-cebu-blue hover:brightness-95 text-white font-semibold text-sm py-2.5 rounded-xl active:scale-95 transition-all"
             >
               Back to sign in
             </button>
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-on-surface">
-                {mode === "login" ? "Welcome back" : "Create your account"}
-              </h2>
-              <button onClick={onClose} aria-label="Close" className="text-on-surface-variant hover:text-on-surface">
-                <span className="material-symbols-outlined">close</span>
+            {/* Branded header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/Logo.png" alt="" className="w-10 h-10 rounded-xl shadow-sm shrink-0" />
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-on-surface leading-tight">
+                    {mode === "login" ? "Welcome back" : "Create your account"}
+                  </h2>
+                  <p className="text-xs text-on-surface-variant mt-0.5">
+                    {mode === "login"
+                      ? "Sign in to your SugboWay account"
+                      : "Free accounts get 10 questions an hour"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="p-1.5 -mr-1.5 -mt-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-on-surface/5 active:scale-90 transition-all shrink-0"
+              >
+                <span className="material-symbols-outlined text-[20px] block">close</span>
               </button>
             </div>
 
-            <GoogleButton onError={setError} onSuccess={onClose} />
-            <div className="flex items-center gap-3 text-xs text-on-surface-variant">
-              <span className="h-px flex-1 bg-outline-variant" />
-              or
-              <span className="h-px flex-1 bg-outline-variant" />
-            </div>
-
+            {/* Form first */}
             <div className="space-y-3">
               {mode === "register" && (
                 <label className="block">
@@ -119,7 +141,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
                     onChange={(e) => setName(e.target.value)}
                     aria-invalid={!!error}
                     autoComplete="name"
-                    className="mt-1 w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm text-on-surface focus:outline-none focus:border-cebu-blue"
+                    className={inputClass}
                     placeholder="Juan dela Cruz"
                   />
                 </label>
@@ -131,7 +153,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   aria-invalid={!!error}
-                  className="mt-1 w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm text-on-surface focus:outline-none focus:border-cebu-blue"
+                  className={inputClass}
                   placeholder="you@example.com"
                 />
               </label>
@@ -143,21 +165,25 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && submit()}
                   aria-invalid={!!error}
-                  className="mt-1 w-full bg-surface-container border border-outline-variant rounded-xl px-3 py-2.5 text-sm text-on-surface focus:outline-none focus:border-cebu-blue"
+                  className={inputClass}
                   placeholder={mode === "register" ? "At least 8 characters" : "••••••••"}
                 />
               </label>
 
-              {error && <p className="text-xs text-error font-medium">{error}</p>}
+              {error && <p className="text-xs text-error font-medium animate-[fadeIn_0.15s_ease-out]">{error}</p>}
 
               <button
                 onClick={submit}
                 disabled={busy}
-                className="w-full bg-cebu-blue text-white font-semibold text-sm py-2.5 rounded-xl active:scale-95 transition-transform disabled:opacity-60"
+                className="w-full bg-cebu-blue hover:brightness-95 text-white font-semibold text-sm py-2.5 rounded-xl active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
               >
                 {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
               </button>
             </div>
+
+            {/* Google below the form (divider lives inside the button component,
+                so both disappear together when Google sign-in isn't configured) */}
+            <GoogleButton onError={setError} onSuccess={onClose} />
 
             <p className="text-xs text-center text-on-surface-variant">
               {mode === "login" ? "New to SugboWay? " : "Already have an account? "}
@@ -166,7 +192,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
                   setMode(mode === "login" ? "register" : "login");
                   setError(null);
                 }}
-                className="font-semibold text-cebu-blue hover:underline"
+                className="font-semibold text-cebu-blue hover:underline active:scale-95 transition-transform inline-block"
               >
                 {mode === "login" ? "Create an account" : "Sign in"}
               </button>

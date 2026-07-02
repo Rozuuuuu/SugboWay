@@ -63,7 +63,7 @@ export default function PeakWarning({
             </span>
             <button
               onClick={onDismiss}
-              className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-colors flex items-center justify-center"
+              className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-all active:scale-90 flex items-center justify-center"
               title="Dismiss"
               aria-label="Dismiss peak traffic warning"
             >

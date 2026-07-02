@@ -1222,7 +1222,7 @@ export default function DemoPage() {
                 onClick={() => setCurrentTab(item.id as any)}
                 className={`
                   w-full flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm font-semibold
-                  transition-colors duration-150 select-none
+                  transition-all duration-150 select-none active:scale-[0.98]
                   ${
                     isActive
                       ? "bg-cebu-blue/10 text-cebu-blue"
@@ -1338,7 +1338,7 @@ export default function DemoPage() {
 
               <button
                 onClick={() => setIsWeatherAlertOpen(false)}
-                className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-colors flex items-center justify-center shrink-0"
+                className="p-1.5 rounded-full hover:bg-on-surface/5 text-on-surface-variant transition-all active:scale-90 flex items-center justify-center shrink-0"
                 title="Dismiss Weather Notification"
                 aria-label="Dismiss Weather Notification"
               >
@@ -1356,7 +1356,7 @@ export default function DemoPage() {
                   <button
                     key={key}
                     onClick={() => switchRoutesView(key)}
-                    className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-colors ${
+                    className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all active:scale-[0.98] ${
                       routesView === key
                         ? "bg-surface-container-lowest text-cebu-blue shadow-xs"
                         : "text-on-surface-variant hover:text-on-surface"
@@ -1506,15 +1506,19 @@ export default function DemoPage() {
                     </div>
                   ) : routingError ? (
                     <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
-                      <span className="material-symbols-outlined text-error text-3xl">error</span>
+                      <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error mb-1">
+                        <span className="material-symbols-outlined text-2xl">error</span>
+                      </div>
                       <p className="text-sm text-error font-semibold">{routingError}</p>
                       <p className="text-xs text-on-surface-variant">Showing saved routes for now.</p>
-                      <button onClick={fetchRoutes} className="mt-2 text-sm font-semibold text-cebu-blue hover:underline">Try again</button>
+                      <button onClick={fetchRoutes} className="mt-2 text-sm font-semibold text-cebu-blue hover:underline active:scale-95 transition-transform">Try again</button>
                     </div>
                   ) : routes.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
-                      <span className="material-symbols-outlined text-outline text-3xl">sentiment_dissatisfied</span>
-                      <p className="text-sm text-on-surface-variant font-semibold mt-2">No routes found.</p>
+                      <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-2">
+                        <span className="material-symbols-outlined text-2xl">wrong_location</span>
+                      </div>
+                      <p className="text-sm text-on-surface-variant font-semibold">No routes found.</p>
                       <p className="text-xs text-outline mt-1">Try a different start or destination.</p>
                     </div>
                   ) : (
@@ -1602,7 +1606,7 @@ export default function DemoPage() {
                         aria-pressed={isSelected}
                         aria-label={`${bar.label}: ${bar.volume}% full, ${bar.level}`}
                         title={`${bar.label} — ${bar.volume}% full`}
-                        className="relative flex-1 h-full flex flex-col items-center justify-end cursor-pointer group focus:outline-none"
+                        className="relative flex-1 h-full flex flex-col items-center justify-end cursor-pointer group focus:outline-none transition-transform active:scale-[0.97]"
                       >
                         {/* Value — always visible for the selected bar, on hover for the rest */}
                         <span
@@ -1703,7 +1707,7 @@ export default function DemoPage() {
                       {/* Interactive Switch */}
                       <button 
                         onClick={() => setIsSafetyModeActive(!isSafetyModeActive)}
-                        className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-colors ${isSafetyModeActive ? "bg-aircon-cyan" : "bg-outline-variant/50"}`}
+                        className={`w-10 h-6 flex items-center rounded-full p-0.5 transition-all active:scale-95 ${isSafetyModeActive ? "bg-aircon-cyan" : "bg-outline-variant/50"}`}
                       >
                         <div className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform ${isSafetyModeActive ? "translate-x-4" : "translate-x-0"}`} />
                       </button>
@@ -1909,7 +1913,7 @@ export default function DemoPage() {
                         {user?.tier === "max" ? "Unlimited" : `${remainingQuota} of ${tierLimitLabel === Infinity ? "∞" : tierLimitLabel}`}
                       </span>
                     </div>
-                    <button onClick={logout} className="text-sm font-semibold text-on-surface-variant hover:text-error">
+                    <button onClick={logout} className="text-sm font-semibold text-on-surface-variant hover:text-error transition-all active:scale-95">
                       Sign out
                     </button>
                   </>
@@ -1960,7 +1964,7 @@ export default function DemoPage() {
                     <a
                       key={i}
                       href={`tel:${hotline.phone.replace(/[^0-9]/g, "")}`}
-                      className="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-4 flex justify-between items-center gap-3 hover:border-cebu-blue transition-colors"
+                      className="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-4 flex justify-between items-center gap-3 hover:border-cebu-blue transition-all active:scale-[0.99]"
                     >
                       <div className="min-w-0">
                         <h4 className="text-sm font-semibold text-on-surface truncate">{hotline.name}</h4>
@@ -1995,7 +1999,7 @@ export default function DemoPage() {
                 key={item.id}
                 onClick={() => setCurrentTab(item.id as any)}
                 className={`
-                  flex flex-col items-center justify-center transition-all duration-300 select-none min-w-[64px] min-h-[48px]
+                  flex flex-col items-center justify-center transition-all duration-300 select-none min-w-[64px] min-h-[48px] active:scale-90
                   ${isActive ? "text-primary font-extrabold scale-105" : "text-on-surface-variant hover:text-on-surface"}
                 `}
               >
@@ -2078,7 +2082,7 @@ export default function DemoPage() {
                 </button>
                 <button
                   onClick={() => setIsRateLimited(false)}
-                  className="w-full bg-surface-container-highest hover:bg-on-surface/5 text-on-surface text-sm py-2.5 rounded-xl transition-all font-medium"
+                  className="w-full bg-surface-container-highest hover:bg-on-surface/5 text-on-surface text-sm py-2.5 rounded-xl transition-all active:scale-95 font-medium"
                 >
                   Maybe later
                 </button>

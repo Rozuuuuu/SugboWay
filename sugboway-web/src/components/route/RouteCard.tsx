@@ -311,7 +311,7 @@ export default function RouteCard({
             e.stopPropagation();
             toggleExpand();
           }}
-          className="min-h-[48px] px-4 py-2 flex items-center justify-center gap-1.5 text-sm font-bold text-on-surface-variant hover:text-cebu-blue transition-colors rounded-xl select-none"
+          className="min-h-[48px] px-4 py-2 flex items-center justify-center gap-1.5 text-sm font-bold text-on-surface-variant hover:text-cebu-blue transition-all active:scale-95 rounded-xl select-none"
           aria-expanded={isExpanded}
         >
           <span>{isExpanded ? "Hide details & map" : "View route & map"}</span>
