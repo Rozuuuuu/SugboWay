@@ -14,7 +14,7 @@ unchanged. Google accounts are created verified and on the Free tier.
 | Decision | Choice |
 |---|---|
 | Flow | **Google Identity Services (GIS) ID-token**: the web gets a Google ID token client-side and POSTs it to Go, which verifies it and returns our JWT. No redirect, no client secret. |
-| Account linking | **Link by email.** A Google sign-in whose email already exists logs into that account; if it was unverified, it becomes verified. Email is the unique key. |
+| Account linking | **Link by email.** A Google sign-in whose email already exists logs into that account; if it was unverified, it becomes verified **and its pre-verification password is cleared** (account pre-hijacking mitigation — see §8). Email is the unique key. |
 | Google button | Standard **rendered "Continue with Google" button** (not One-Tap). |
 | Set-password for Google accounts | **Out of scope.** Google accounts have no password and sign in via Google only. A clean future add. |
 | Config | `GOOGLE_CLIENT_ID` (Go, for audience check) and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (web, build-time). Feature is off (button hidden / endpoint 503) when unset. |
@@ -143,8 +143,10 @@ it's find-or-create). The check-email state is unaffected.
 1. **New Google user:** button → ID token → `/auth/google` → no existing account →
    create verified Free user (name from Google) → our JWT → logged in.
 2. **Existing password user (verified), same email:** logs into that account.
-3. **Existing password user (unverified), same email:** account becomes verified, logs
-   in. (They can later use Google or their password.)
+3. **Existing password user (unverified), same email:** account becomes verified and its
+   pre-verification password is **cleared**, then logs in via Google. (The password was
+   set before email ownership was proven, so it can't be trusted — see §8. The user
+   continues with Google; setting a new password is a future password-reset flow.)
 4. **Google not configured:** button hidden; endpoint returns 503 if called directly.
 
 ## 7. Error handling
@@ -164,6 +166,14 @@ it's find-or-create). The check-email state is unaffected.
   the client ID is public by design.
 - Google accounts have an empty `password_hash`, so password login for them fails
   (`bcrypt` on `''` never matches) — they can only use Google. Acceptable and documented.
+- **Account pre-hijacking mitigation (decided at final review):** an attacker could
+  pre-register a victim's email with the attacker's password (account sits unverified).
+  If linking via Google merely verified the account, that attacker password would remain
+  valid. Therefore linking a **never-verified** account also **clears its
+  `password_hash`** — only the Google-proven owner keeps access. Verified accounts keep
+  their password (they proved email ownership themselves). Tradeoff accepted: a
+  legitimate self-registered-but-never-verified user loses that password and continues
+  with Google (password reset is a future flow).
 - Our JWT, quota, and tiers are unchanged; a Google user is an ordinary Free user.
 
 ## 9. Testing

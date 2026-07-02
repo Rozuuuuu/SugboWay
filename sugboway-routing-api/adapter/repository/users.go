@@ -113,7 +113,10 @@ func (s *PostgresUserStore) CreateVerifiedUser(ctx context.Context, name, email 
 
 func (s *PostgresUserStore) MarkVerifiedByEmail(ctx context.Context, email string) error {
 	email = normalizeEmail(email)
-	const q = `UPDATE users SET email_verified = TRUE, updated_at = now() WHERE email = $1`
+	// Also clear any password set before verification: an attacker could have
+	// pre-registered this email with their own password (account pre-hijacking).
+	// Google has just proven email ownership, so only Google sign-in survives.
+	const q = `UPDATE users SET email_verified = TRUE, password_hash = '', updated_at = now() WHERE email = $1`
 	_, err := s.Pool.Exec(ctx, q, email)
 	return err
 }

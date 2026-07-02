@@ -80,6 +80,7 @@ func (f *fakeStore) CreateVerifiedUser(_ context.Context, name, email string) (*
 func (f *fakeStore) MarkVerifiedByEmail(_ context.Context, email string) error {
 	if u, ok := f.users[strings.ToLower(email)]; ok {
 		u.EmailVerified = true
+		u.PasswordHash = "" // mirrors the real adapter: pre-hijack mitigation
 	}
 	return nil
 }
@@ -367,10 +368,17 @@ func TestGoogleLinksUnverifiedPasswordAccount(t *testing.T) {
 	if code != 200 {
 		t.Fatalf("google link => 200, got %d", code)
 	}
-	// now password login should succeed (account became verified)
-	code, _ = doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
-	if code != 200 {
-		t.Fatalf("after google link, password login => 200, got %d", code)
+	// Linking clears any pre-verification password (account pre-hijacking
+	// mitigation): an attacker could have registered this email with their own
+	// password before the real owner ever signed in. Password login must fail.
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/login", `{"email":"a@b.com","password":"sugbo123"}`, "")
+	if code != 401 || out["error"] != "invalid_credentials" {
+		t.Fatalf("after google link, pre-set password must be cleared => 401, got %d %v", code, out)
+	}
+	// ...and the account itself is now a verified, password-less Google account.
+	u, _ := store.GetUserByEmail(context.Background(), "a@b.com")
+	if u == nil || !u.EmailVerified || u.PasswordHash != "" {
+		t.Fatalf("expected verified password-less account, got %+v", u)
 	}
 }
 

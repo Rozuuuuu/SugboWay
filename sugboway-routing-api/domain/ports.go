@@ -122,8 +122,10 @@ type UserStore interface {
 	// CreateVerifiedUser inserts a new already-verified, password-less account
 	// (used for Google sign-up). Errors if the email already exists.
 	CreateVerifiedUser(ctx context.Context, name, email string) (*User, error)
-	// MarkVerifiedByEmail flags an existing account verified (used when linking a
-	// Google login to a pre-existing unverified account).
+	// MarkVerifiedByEmail flags an existing account verified and clears any
+	// pre-verification password (used when linking a Google login to a
+	// pre-existing unverified account; the cleared password mitigates account
+	// pre-hijacking — the password was set before email ownership was proven).
 	MarkVerifiedByEmail(ctx context.Context, email string) error
 }
 
