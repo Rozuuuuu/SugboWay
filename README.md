@@ -159,14 +159,19 @@ See each service's `.env.example`. Summary:
 `RUN_MIGRATIONS` (default on). For accounts/auth: `AUTH_JWT_SECRET` (shared with the AI
 service), `APP_BASE_URL` (web origin, for the post-verify redirect), `PUBLIC_API_URL`
 (this API's public origin, for the email link), and SMTP (`SMTP_HOST`, `SMTP_PORT`,
-`SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`).
+`SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`). Optional: `ALLOWED_ORIGINS` (CORS allow-list,
+comma-separated; defaults to `APP_BASE_URL` + localhost) and `WEATHER_API_KEY`
+(weatherapi.com key, served via `GET /api/v1/weather` — kept server-side, never
+shipped to the browser).
 
 **sugboway-ai-service** — `DATABASE_URL` (same DB), `GEMINI_API_KEY`,
 `ROUTING_API_URL`, `AUTH_JWT_SECRET` (**must match** the routing API — used to verify
-the JWT and apply the per-tier chat quota), optional `REDIS_URL` / `OPENWEATHER_KEY`.
+the JWT and apply the per-tier chat quota), optional `ALLOWED_ORIGINS`, `REDIS_URL` /
+`OPENWEATHER_KEY`.
 
 **sugboway-web** (`.env.local`) — `NEXT_PUBLIC_ROUTING_API_URL`,
-`NEXT_PUBLIC_AI_API_URL`, optional `NEXT_PUBLIC_WEATHER_API_KEY`.
+`NEXT_PUBLIC_AI_API_URL` (both build-time), optional `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
+The weather key is no longer a web var — it moved to `WEATHER_API_KEY` on the routing API.
 
 ### Database migrations
 
