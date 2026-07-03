@@ -109,9 +109,9 @@ are configured in the Render dashboard (not committed). See each service's `.env
 
 | Service | Host | Build / start | Required env |
 |---|---|---|---|
-| `sugboway-routing-api` | Render | `go build` → run binary | `DATABASE_URL` (Neon), `PORT` (Render injects), `RUN_MIGRATIONS`, `AUTH_JWT_SECRET`, `APP_BASE_URL`, `PUBLIC_API_URL`, `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM` |
+| `sugboway-routing-api` | Render | `go build` → run binary | `DATABASE_URL` (Neon), `PORT` (Render injects), `RUN_MIGRATIONS`, `AUTH_JWT_SECRET`, `APP_BASE_URL`, `PUBLIC_API_URL`, `SMTP_*`/`BREVO_API_KEY`, `GOOGLE_CLIENT_ID`, optional `ALLOWED_ORIGINS` + `WEATHER_API_KEY` |
 | `sugboway-ai-service` | Render | `pip install -r requirements.txt` → `python main.py` (uvicorn) | `DATABASE_URL` (same Neon DB), `GEMINI_API_KEY`, `ROUTING_API_URL` (the deployed routing API), `AUTH_JWT_SECRET` (must match the routing API), optional `REDIS_URL` / `OPENWEATHER_KEY` |
-| `sugboway-web` | Render | `npm run build` → `npm start` | `NEXT_PUBLIC_ROUTING_API_URL`, `NEXT_PUBLIC_AI_API_URL` (the deployed service URLs), optional `NEXT_PUBLIC_WEATHER_API_KEY` |
+| `sugboway-web` | Render | `npm run build` → `npm start` | `NEXT_PUBLIC_ROUTING_API_URL`, `NEXT_PUBLIC_AI_API_URL` (the deployed service URLs), optional `NEXT_PUBLIC_GOOGLE_CLIENT_ID` |
 | PostgreSQL/PostGIS | Neon | — | shared `DATABASE_URL` used by both backends |
 
 Deploy notes:
@@ -158,6 +158,22 @@ Only the chat quota is enforced; Pro/Max "perks" are pricing-card copy, not feat
 `AUTH_JWT_SECRET` **must be identical** on both backends; the SMTP vars + `APP_BASE_URL`
 / `PUBLIC_API_URL` live on the Go service. The web app talks only to the Go API for auth
 (`src/components/AuthProvider.tsx`); upgrades are a front-end-triggered demo, not payments.
+
+### Security posture
+
+- **Rate limiting:** the Go API rate-limits per IP (Fiber `limiter`) — 300/min
+  globally (`/health` exempt), 20/min on `/api/v1/auth/*`; graceful 429 JSON. The
+  Python `/chat` limits per user (JWT) or per IP for guests. Limits are in-memory
+  (per-instance).
+- **Input validation:** Go auth bodies use a strict JSON bind (`strictBind`,
+  `DisallowUnknownFields`) with per-field length caps; Fiber `BodyLimit` is 64 KB.
+  Python `ChatRequest` is `extra="forbid"` with a length-capped `message`. DB access
+  is parameterized (pgx), so SQL injection isn't the exposure — bounds and strictness are.
+- **Secrets:** no keys client-side. `NEXT_PUBLIC_*` are only non-secret URLs + the
+  Google **client** ID (public by design). The weather key is server-side
+  (`WEATHER_API_KEY`, proxied via `GET /api/v1/weather`). Dev fallbacks for
+  `AUTH_JWT_SECRET`/`DATABASE_URL` warn loudly and are local-only.
+- **CORS** is restricted to `ALLOWED_ORIGINS` (default: web origin + localhost), not `*`.
 
 ### Web ⇄ backend resilience
 

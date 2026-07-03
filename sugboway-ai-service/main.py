@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
+import logging
 import os
 import time
 from collections import defaultdict
@@ -10,6 +11,8 @@ import auth_quota
 
 # Load environment variables
 load_dotenv()
+
+logger = logging.getLogger("sugboway-ai")
 
 # Map GEMINI_API_KEY to GOOGLE_API_KEY for langchain-google-genai
 if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
@@ -21,13 +24,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration
+# CORS: restrict to the web app's origin(s) instead of "*". Set ALLOWED_ORIGINS
+# (comma-separated) in production; defaults to the deployed web app + localhost.
+_allowed = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://sugboway-web.onrender.com,http://localhost:3000",
+)
+allow_origins = [o.strip() for o in _allowed.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For development
+    allow_origins=allow_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # In-memory sliding window rate limit store
@@ -51,8 +60,13 @@ def check_rate_limit(key: str, limit) -> tuple[bool, int, int]:
     return False, limit - len(timestamps), 0
 
 class ChatRequest(BaseModel):
-    message: str
-    user_id: str | None = None
+    # Schema-based validation: reject unexpected fields and bound every input
+    # (OWASP: strict input validation). `message` is required and length-capped;
+    # a Gemini prompt far beyond this is abuse, not a real question.
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    message: str = Field(min_length=1, max_length=2000)
+    user_id: str | None = Field(default=None, max_length=128)
     preferences: dict | None = None
 
 class ChatResponse(BaseModel):
@@ -103,8 +117,11 @@ async def chat_endpoint(request: ChatRequest, raw_request: Request):
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         response.headers["X-RateLimit-Reset"] = "3600"
         return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        # Log the real error server-side; return a generic message so internal
+        # details (stack, config, keys in messages) never leak to the client.
+        logger.exception("chat processing failed")
+        raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 
 if __name__ == "__main__":
     import uvicorn

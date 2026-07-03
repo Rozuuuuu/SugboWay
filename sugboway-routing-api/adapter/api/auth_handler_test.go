@@ -283,6 +283,28 @@ func TestRegisterInvalidEmail(t *testing.T) {
 	}
 }
 
+func TestRegisterRejectsUnknownField(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testApp(store, &fakeEmail{})
+	// An unexpected field must be rejected (strict schema validation).
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/register",
+		`{"name":"Juan","email":"a@b.com","password":"sugbo123","is_admin":true}`, "")
+	if code != 400 || out["error"] != "invalid_body" {
+		t.Fatalf("unknown field => 400 invalid_body, got %d %v", code, out)
+	}
+}
+
+func TestRegisterRejectsOverlongName(t *testing.T) {
+	store := newFakeStore()
+	app, _ := testApp(store, &fakeEmail{})
+	long := strings.Repeat("a", 200) // > maxNameLen (80)
+	code, out := doJSON(t, app, "POST", "/api/v1/auth/register",
+		`{"name":"`+long+`","email":"a@b.com","password":"sugbo123"}`, "")
+	if code != 400 || out["error"] != "invalid_name" {
+		t.Fatalf("overlong name => 400 invalid_name, got %d %v", code, out)
+	}
+}
+
 func TestRegisterMissingName(t *testing.T) {
 	store := newFakeStore()
 	app, _ := testApp(store, &fakeEmail{})

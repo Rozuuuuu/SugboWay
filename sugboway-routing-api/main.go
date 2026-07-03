@@ -16,8 +16,19 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
+
+// rate429 is the graceful JSON body returned when a limiter trips (OWASP: fail
+// closed with a clear, non-leaky message + a Retry-After hint).
+func rate429(c *fiber.Ctx) error {
+	c.Set("Retry-After", "60")
+	return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+		"error":   "rate_limited",
+		"message": "Too many requests. Please slow down and try again shortly.",
+	})
+}
 
 func main() {
 	// 1. Load Configurations from Env Variables
@@ -106,15 +117,45 @@ func main() {
 		AppName:      "SugboWay Transit Routing Engine v1.0",
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
+		// Cap request bodies. All our POST bodies are tiny JSON (auth); this
+		// blocks oversized-payload DoS (OWASP: enforce resource limits).
+		BodyLimit: 64 * 1024, // 64 KB
 	})
 
-	// Inject standard middlewares (Logger and CORS)
 	app.Use(logger.New())
+
+	// CORS: restrict to known browser origins instead of "*". Defaults to the web
+	// app origin (APP_BASE_URL) + localhost; override with ALLOWED_ORIGINS
+	// (comma-separated). Authorization is allowed so the browser can send the
+	// Bearer token to /upgrade and /me.
+	allowedOrigins := envOr("ALLOWED_ORIGINS", appBaseURL+",http://localhost:3000")
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowOrigins: allowedOrigins,
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		AllowMethods: "GET, POST, HEAD, PUT, DELETE, OPTIONS",
 	}))
+
+	// Global rate limit: a generous per-IP ceiling that stops scraping/DoS while
+	// leaving normal interactive use (map panning, route searches) unaffected.
+	// /health is exempt so uptime probes never trip it.
+	app.Use(limiter.New(limiter.Config{
+		Max:        300,
+		Expiration: 1 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string { return c.IP() },
+		Next: func(c *fiber.Ctx) bool {
+			return c.Path() == "/health"
+		},
+		LimitReached: rate429,
+	}))
+
+	// Stricter per-IP limit for authentication (brute-force, signup spam, and
+	// verification-email bombing all funnel through /api/v1/auth/*).
+	authLimiter := limiter.New(limiter.Config{
+		Max:          20,
+		Expiration:   1 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string { return c.IP() },
+		LimitReached: rate429,
+	})
 
 	// Bind endpoints matching RAG fencing specifications
 	apiGroup := app.Group("/api/v1")
@@ -128,7 +169,11 @@ func main() {
 	apiGroup.Get("/route/stops", routingHandler.GetRouteStops)
 	apiGroup.Get("/route/conductor", routingHandler.GetConductorInfo)
 
-	authGroup := app.Group("/api/v1/auth")
+	// Weather proxy — keeps the weatherapi.com key server-side (see WeatherHandler).
+	weatherHandler := api.NewWeatherHandler()
+	apiGroup.Get("/weather", weatherHandler.GetWeather)
+
+	authGroup := app.Group("/api/v1/auth", authLimiter)
 	authGroup.Post("/register", authHandler.Register)
 	authGroup.Get("/verify", authHandler.Verify)
 	authGroup.Post("/resend", authHandler.Resend)
