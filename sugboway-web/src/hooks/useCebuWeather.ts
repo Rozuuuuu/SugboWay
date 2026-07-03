@@ -11,8 +11,10 @@ interface WeatherState {
 }
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
-const CEBU_LAT = 10.3157;
-const CEBU_LON = 123.8854;
+
+// Weather is fetched via the routing API's server-side proxy so the weatherapi.com
+// key never ships to the browser (it lives in WEATHER_API_KEY on the Go service).
+const ROUTING_API_URL = process.env.NEXT_PUBLIC_ROUTING_API_URL ?? "http://localhost:8080";
 
 export function useCebuWeather() {
   const [state, setState] = useState<WeatherState>({
@@ -28,31 +30,19 @@ export function useCebuWeather() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchWeather = async () => {
-    const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
-    if (!apiKey || apiKey === "undefined" || apiKey === "null" || apiKey.trim() === "") {
-      setState(prev => ({
-        ...prev,
-        description: "Weather API key not configured",
-        isLoading: false,
-      }));
-      return;
-    }
-
     setState(prev => ({ ...prev, isLoading: true }));
 
     try {
-      const res = await fetch(
-        `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${CEBU_LAT},${CEBU_LON}`
-      );
+      const res = await fetch(`${ROUTING_API_URL}/api/v1/weather`);
 
       if (!res.ok) throw new Error(`Weather fetch failed with status ${res.status}`);
 
       const data = await res.json();
-      
-      const text = data?.current?.condition?.text || "Clear";
+
+      const text = data?.text || "Clear";
       const lowerText = text.toLowerCase();
-      const temp = data?.current?.temp_c ?? null;
-      const humidity = data?.current?.humidity ?? null;
+      const temp = data?.temp_c ?? null;
+      const humidity = data?.humidity ?? null;
 
       let condition: WeatherState["condition"] = "clear";
       let betaAdjustment = 0;
