@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"log"
 	"strconv"
 	"strings"
@@ -11,6 +13,30 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 )
+
+// Input length caps (OWASP: bound every user-supplied field). Bodies are also
+// capped globally by Fiber's BodyLimit; these give precise per-field errors.
+const (
+	maxEmailLen      = 254  // RFC 5321
+	maxPasswordLen   = 128  // bcrypt only reads 72 bytes; cap the input anyway
+	maxNameLen       = 80
+	maxCredentialLen = 8192 // a Google ID token (JWT) is ~1-2 KB
+)
+
+// strictBind decodes a JSON body into dst, rejecting unknown/unexpected fields
+// (schema-based validation). Returns an error on malformed bodies or extra keys.
+func strictBind(c *fiber.Ctx, dst any) error {
+	dec := json.NewDecoder(bytes.NewReader(c.Body()))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		return err
+	}
+	// Reject trailing garbage after the first JSON value.
+	if dec.More() {
+		return fiber.ErrBadRequest
+	}
+	return nil
+}
 
 // AuthConfig holds the auth handler's runtime configuration.
 type AuthConfig struct {
@@ -51,19 +77,22 @@ func userJSON(u *domain.User) fiber.Map {
 // Register creates an unverified user and emails a verification link.
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var in credentials
-	if err := c.BodyParser(&in); err != nil {
+	if err := strictBind(c, &in); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid_body"})
 	}
 	in.Email = strings.ToLower(strings.TrimSpace(in.Email))
 	if !validEmail(in.Email) {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid_email"})
 	}
-	if len(in.Password) < 8 {
+	if len(in.Password) < 8 || len(in.Password) > maxPasswordLen {
 		return c.Status(400).JSON(fiber.Map{"error": "weak_password"})
 	}
 	in.Name = strings.TrimSpace(in.Name)
 	if in.Name == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "missing_name"})
+	}
+	if len(in.Name) > maxNameLen {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid_name"})
 	}
 	if existing, _ := h.store.GetUserByEmail(c.Context(), in.Email); existing != nil {
 		return c.Status(409).JSON(fiber.Map{"error": "email_taken"})
@@ -118,7 +147,7 @@ func (h *AuthHandler) Verify(c *fiber.Ctx) error {
 // Resend regenerates and re-sends a verification email. Always 200 (no enumeration).
 func (h *AuthHandler) Resend(c *fiber.Ctx) error {
 	var in credentials
-	if err := c.BodyParser(&in); err != nil {
+	if err := strictBind(c, &in); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid_body"})
 	}
 	in.Email = strings.ToLower(strings.TrimSpace(in.Email))
@@ -134,7 +163,7 @@ func (h *AuthHandler) Resend(c *fiber.Ctx) error {
 // Login issues a JWT for verified users only.
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	var in credentials
-	if err := c.BodyParser(&in); err != nil {
+	if err := strictBind(c, &in); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid_body"})
 	}
 	in.Email = strings.ToLower(strings.TrimSpace(in.Email))
@@ -157,7 +186,7 @@ func (h *AuthHandler) Google(c *fiber.Ctx) error {
 	var in struct {
 		Credential string `json:"credential"`
 	}
-	if err := c.BodyParser(&in); err != nil || in.Credential == "" {
+	if err := strictBind(c, &in); err != nil || in.Credential == "" || len(in.Credential) > maxCredentialLen {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid_body"})
 	}
 	id, err := h.google.Verify(c.Context(), in.Credential)
@@ -199,7 +228,7 @@ func (h *AuthHandler) Upgrade(c *fiber.Ctx) error {
 	var in struct {
 		Plan string `json:"plan"`
 	}
-	if err := c.BodyParser(&in); err != nil || (in.Plan != "pro" && in.Plan != "max") {
+	if err := strictBind(c, &in); err != nil || (in.Plan != "pro" && in.Plan != "max") {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid_plan"})
 	}
 	claims := c.Locals("claims").(*domain.Claims)
