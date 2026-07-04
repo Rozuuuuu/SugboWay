@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import GoogleButton from "@/components/auth/GoogleButton";
+import BrandMark from "@/components/BrandMark";
 
 type Mode = "login" | "register" | "check-email";
 
@@ -108,8 +109,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
             {/* Branded header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/Logo.png" alt="" className="w-10 h-10 rounded-xl shadow-sm shrink-0" />
+                <BrandMark className="w-9 h-10 shrink-0" />
                 <div className="min-w-0">
                   <h2 className="text-lg font-bold text-on-surface leading-tight">
                     {mode === "login" ? "Welcome back" : "Create your account"}

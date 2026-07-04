@@ -21,6 +21,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useCebuTime } from "@/hooks/useCebuTime";
 import { useCebuWeather } from "@/hooks/useCebuWeather";
 import PeakWarning from "@/components/route/PeakWarning";
+import BrandMark from "@/components/BrandMark";
 import { useAuth } from "@/components/AuthProvider";
 import AuthModal from "@/components/auth/AuthModal";
 import PricingPlans from "@/components/auth/PricingPlans";
@@ -1200,7 +1201,7 @@ export default function DemoPage() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-outline-variant p-4 gap-6 theme-transition">
         <div className="flex items-center gap-3 px-1 py-2">
-          <img src="/Logo.png" alt="SugboWay" className="w-9 h-9 object-contain rounded-lg" />
+          <BrandMark className="w-8 h-9" />
           <div className="flex flex-col leading-tight">
             <h1 className="text-base font-bold text-on-surface">SugboWay</h1>
             <span className="text-xs text-on-surface-variant">Cebu transit</span>
@@ -1257,7 +1258,7 @@ export default function DemoPage() {
         {/* Top AppBar */}
         <header className="sticky top-0 z-40 flex justify-between items-center px-4 h-16 safe-top bg-surface/90 backdrop-blur border-b border-outline-variant theme-transition">
           <div className="flex items-center gap-2.5">
-            <img src="/Logo.png" alt="SugboWay" className="md:hidden w-8 h-8 object-contain rounded-lg" />
+            <BrandMark className="md:hidden w-7 h-8" />
             <h1 className="text-lg font-bold text-on-surface md:text-base md:text-on-surface-variant md:font-semibold">
               <span className="md:hidden">SugboWay</span>
               <span className="hidden md:inline">
@@ -1273,11 +1274,15 @@ export default function DemoPage() {
             {/* Cebu Time & Weather */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium text-on-surface-variant">
               <span className="tabular-nums">{formattedTime}</span>
-              <span className="w-px h-3 bg-outline-variant" />
-              <span className="material-symbols-outlined text-[15px] text-clay">
-                {weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
-              </span>
-              <span className="tabular-nums">{weatherTemp !== null ? `${Math.round(weatherTemp)}°` : "—"}</span>
+              {weatherTemp !== null && (
+                <>
+                  <span className="w-px h-3 bg-outline-variant" />
+                  <span className="material-symbols-outlined text-[15px] text-clay">
+                    {weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
+                  </span>
+                  <span className="tabular-nums">{`${Math.round(weatherTemp)}°`}</span>
+                </>
+              )}
             </div>
 
             {/* Live status dot */}
