@@ -2059,12 +2059,12 @@ export default function DemoPage() {
         {isRateLimited && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
             <div className="bg-surface-container-high border border-outline-variant shadow-2xl rounded-2xl p-6 max-w-sm w-full space-y-4 animate-[scaleUp_0.3s_ease-out] text-center">
-              <div className="w-14 h-14 bg-clay/10 rounded-full flex items-center justify-center mx-auto text-clay">
-                <span className="material-symbols-outlined text-3xl">star</span>
+              <div className="sw-btn-clay w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-white">
+                <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
               </div>
 
               <div className="space-y-1.5">
-                <h3 className="text-lg font-bold text-on-surface">
+                <h3 className="text-xl font-extrabold tracking-tight text-on-surface">
                   {isAuthed ? "You've reached your hourly limit" : "That's your 5 free questions"}
                 </h3>
                 <p className="text-sm text-on-surface-variant leading-relaxed">
@@ -2093,7 +2093,7 @@ export default function DemoPage() {
                       openAuth("register");
                     }
                   }}
-                  className="w-full bg-clay hover:brightness-95 text-white font-semibold text-sm py-3 rounded-xl transition-all active:scale-95"
+                  className="sw-btn-clay w-full font-bold text-sm py-3 rounded-xl"
                 >
                   {isAuthed ? "See plans" : "Create a free account"}
                 </button>

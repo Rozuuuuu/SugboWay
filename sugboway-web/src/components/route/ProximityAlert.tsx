@@ -33,9 +33,9 @@ export default function ProximityAlert({
       <div className="bg-surface-container-high border border-safe-green/40 shadow-xl rounded-2xl p-5 flex flex-col gap-4 theme-transition">
         <div className="flex items-start gap-4">
           {/* Attention icon with a single wave cue */}
-          <div className="w-12 h-12 rounded-full bg-safe-green/10 flex items-center justify-center shrink-0 relative">
+          <div className="w-12 h-12 rounded-2xl bg-safe-green/15 flex items-center justify-center shrink-0 relative">
             <span className="material-symbols-outlined text-safe-green text-2xl">campaign</span>
-            <span className="absolute inset-0 rounded-full border-2 border-safe-green/40 animate-ping opacity-75" />
+            <span className="absolute inset-0 rounded-2xl border-2 border-safe-green/40 animate-ping opacity-75" />
           </div>
 
           <div className="flex-1 min-w-0">
@@ -63,7 +63,7 @@ export default function ProximityAlert({
               </div>
             </div>
 
-            <h3 className="text-base font-bold text-on-surface mt-1 truncate pr-2">
+            <h3 className="text-lg font-extrabold tracking-tight text-on-surface mt-1 truncate pr-2">
               Approaching {nextStopName}
             </h3>
             

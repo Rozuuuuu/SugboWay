@@ -103,7 +103,7 @@ export default function PlaceDropdown({
   return (
     <div ref={rootRef} className="relative">
       {/* Field shell — matches the surrounding search inputs */}
-      <div className="flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant hover:border-cebu-blue focus-within:border-cebu-blue transition-colors group">
+      <div className="flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant hover:border-cebu-blue focus-within:border-cebu-blue focus-within:ring-2 focus-within:ring-cebu-blue/20 transition-all group">
         <span className="material-symbols-outlined text-outline group-focus-within:text-cebu-blue shrink-0">
           {icon}
         </span>

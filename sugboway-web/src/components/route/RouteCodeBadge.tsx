@@ -41,7 +41,7 @@ const SIZE_CLASSES = {
 // ---------------------------------------------------------------------------
 
 const VARIANT_CLASSES = {
-  default: "bg-cebu-blue text-white dark:text-on-primary-fixed",
+  default: "sw-fill-sea shadow-[var(--sw-glow-blue)]",
   inactive: "bg-transparent text-outline border border-outline",
   alert: "bg-alert-amber text-on-tertiary-fixed",
 } as const;
