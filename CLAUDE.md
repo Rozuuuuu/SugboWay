@@ -175,6 +175,36 @@ Only the chat quota is enforced; Pro/Max "perks" are pricing-card copy, not feat
   `AUTH_JWT_SECRET`/`DATABASE_URL` warn loudly and are local-only.
 - **CORS** is restricted to `ALLOWED_ORIGINS` (default: web origin + localhost), not `*`.
 
+### Key decisions & build gotchas (branch `redesign/warm-local-ui`)
+
+Things that cost real time to figure out — read before touching auth, email, deploy, or the logo:
+
+- **Render blocks outbound SMTP.** Gmail/SMTP verification email times out there. Email
+  now prefers **Brevo's HTTPS API** (`BREVO_API_KEY` → `adapter/email/brevo.go`); SMTP is
+  a fallback (`main.go` picks Brevo if the key is set, else SMTP, else warns). See
+  `docs/brevo-setup.md`.
+- **Registration email is sent in a background goroutine** (`auth_handler.go` `Register`),
+  never inline — a slow/blocked SMTP send used to hang the request for minutes. The SMTP
+  sender also has a 15s dial timeout.
+- **`google.golang.org/api` (Google sign-in) raised the Go floor to `go 1.25.8`** in
+  `sugboway-routing-api/go.mod`. Render's builder must be ≥1.25. If a deploy fails on a
+  Go-version error, pin the dep to an older release.
+- **Weather key is server-side.** It moved from `NEXT_PUBLIC_WEATHER_API_KEY` (was in the
+  browser bundle) to `WEATHER_API_KEY` on the Go service, proxied via `GET /api/v1/weather`
+  (`adapter/api/weather_handler.go`). The web hook calls that proxy.
+- **Google sign-in links by email and CLEARS a pre-verification password** when linking a
+  never-verified account (`MarkVerifiedByEmail` account-pre-hijacking mitigation). Google
+  accounts have an empty `password_hash` (Google-only sign-in). Optional via
+  `GOOGLE_CLIENT_ID` / `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; 503 / hidden button when unset.
+- **Do NOT use `public/Logo.png` as the in-app logo** — it's a 1536×1024 logo *mockup*
+  (backdrop + wordmark baked in) that turns to mush at small sizes. Use the
+  `<BrandMark>` SVG component (`src/components/BrandMark.tsx`) instead.
+- **The dark floating "N" in dev is the Next.js dev indicator**, not a UI bug — it's not
+  in production builds.
+- **Design/spec/plan docs** for the big features live in `docs/superpowers/{specs,plans}/`
+  (auth, Google sign-in). The web app is **mobile-first**; the desktop layout is a
+  centered column (a known limitation, not a bug).
+
 ### Web ⇄ backend resilience
 
 The web app ships with **mock routes** so it renders even when the backend is offline,
