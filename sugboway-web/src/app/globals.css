@@ -374,6 +374,163 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-backdrop-filter: blur(16px) saturate(180%);
 }
 
+/* ===========================================================================
+   Bold Design Language v2
+   ---------------------------------------------------------------------------
+   A confident visual signature: the "sea" gradient (Cebu-blue → aircon-cyan)
+   as the brand's hero sweep, layered card elevation, gradient wordmark, and a
+   colored glow on primary actions. Light + dark aware.
+   =========================================================================== */
+:root {
+  --sw-gradient-sea: linear-gradient(135deg, #0a6cd4 0%, #0056b3 48%, #00838f 100%);
+  --sw-gradient-sea-soft: linear-gradient(135deg, rgba(0, 86, 179, 0.14), rgba(0, 131, 143, 0.12));
+  --sw-gradient-clay: linear-gradient(135deg, #d2691e 0%, #b8501e 100%);
+  --sw-glow-blue: 0 10px 26px -10px rgba(0, 86, 179, 0.5);
+  --sw-shadow-card: 0 1px 2px rgba(28, 24, 19, 0.05), 0 12px 30px -20px rgba(28, 24, 19, 0.3);
+  --sw-shadow-card-hover: 0 2px 6px rgba(28, 24, 19, 0.07), 0 20px 44px -22px rgba(28, 24, 19, 0.4);
+}
+html.dark, .dark {
+  --sw-gradient-sea: linear-gradient(135deg, #2a86ec 0%, #0f63c4 50%, #0d8493 100%);
+  --sw-gradient-sea-soft: linear-gradient(135deg, rgba(60, 130, 220, 0.16), rgba(20, 150, 165, 0.14));
+  --sw-glow-blue: 0 10px 28px -10px rgba(60, 130, 220, 0.55);
+  --sw-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 14px 34px -22px rgba(0, 0, 0, 0.75);
+  --sw-shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.55), 0 22px 46px -22px rgba(0, 0, 0, 0.85);
+}
+
+/* Layered, elevated card — replaces flat 1px-bordered surfaces */
+.sw-card {
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 1.25rem;
+  box-shadow: var(--sw-shadow-card);
+  transition: box-shadow 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+}
+/* Hairline highlight along the top edge for a crisp lit look */
+.sw-card-lit {
+  position: relative;
+}
+.sw-card-lit::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  opacity: 0.6;
+  pointer-events: none;
+}
+.dark .sw-card-lit::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+}
+.sw-card-interactive {
+  cursor: pointer;
+}
+.sw-card-interactive:hover {
+  box-shadow: var(--sw-shadow-card-hover);
+  border-color: color-mix(in srgb, var(--color-cebu-blue) 45%, var(--color-outline-variant));
+  transform: translateY(-1px);
+}
+
+/* Brand tile: the gradient square that carries the BrandMark */
+.sw-brand-tile {
+  background: var(--sw-gradient-sea);
+  box-shadow: var(--sw-glow-blue);
+}
+
+/* Plain sea-gradient fill (chat bubbles, avatars, accents) — no glow */
+.sw-fill-sea {
+  background: var(--sw-gradient-sea);
+  color: #fff;
+}
+
+/* Gradient wordmark / accent text */
+.sw-text-gradient {
+  background: var(--sw-gradient-sea);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Primary action: gradient fill + colored glow */
+.sw-btn-primary {
+  background: var(--sw-gradient-sea);
+  color: #fff;
+  box-shadow: var(--sw-glow-blue);
+  transition: filter 0.2s ease, transform 0.12s ease, box-shadow 0.3s ease;
+}
+.sw-btn-primary:hover {
+  filter: brightness(1.07);
+}
+.sw-btn-primary:active {
+  transform: scale(0.98);
+}
+.sw-btn-primary:disabled {
+  filter: grayscale(0.3) brightness(0.9);
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Warm "clay" premium action — for upgrade CTAs */
+.sw-btn-clay {
+  background: var(--sw-gradient-clay);
+  color: #fff;
+  box-shadow: 0 8px 22px -10px rgba(184, 80, 30, 0.55);
+  transition: filter 0.2s ease, transform 0.12s ease;
+}
+.sw-btn-clay:hover {
+  filter: brightness(1.06);
+}
+.sw-btn-clay:active {
+  transform: scale(0.97);
+}
+.sw-btn-clay:disabled {
+  opacity: 0.6;
+}
+
+/* Featured plan card — gradient border via padding-box/border-box trick */
+.sw-card-featured {
+  border: 1.5px solid transparent !important;
+  border-radius: 1rem;
+  background:
+    linear-gradient(var(--color-surface-container-lowest), var(--color-surface-container-lowest)) padding-box,
+    var(--sw-gradient-clay) border-box;
+  box-shadow: 0 12px 32px -18px rgba(184, 80, 30, 0.5);
+}
+
+/* Soft gradient wash for hero surfaces (contained, overflow-hidden parent) */
+.sw-hero-bloom {
+  position: relative;
+  overflow: hidden;
+}
+.sw-hero-bloom::after {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 22rem;
+  height: 22rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(0, 131, 143, 0.16), transparent 62%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Gradient accent chip that precedes bold section titles */
+.sw-title-accent {
+  display: inline-block;
+  width: 0.28rem;
+  height: 1.05em;
+  border-radius: 9999px;
+  background: var(--sw-gradient-sea);
+  vertical-align: -0.15em;
+}
+
+/* Active-tab pill using the sea gradient (nav) */
+.sw-nav-active {
+  background: var(--sw-gradient-sea-soft);
+  color: var(--color-cebu-blue);
+}
+
 /* ---------------------------------------------------------------------------
    Safe Area Insets (for notched phones)
    --------------------------------------------------------------------------- */

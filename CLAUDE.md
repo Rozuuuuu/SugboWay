@@ -19,6 +19,24 @@ The web app calls the Go and Python services **directly** over HTTP (via
 `NEXT_PUBLIC_ROUTING_API_URL` / `NEXT_PUBLIC_AI_API_URL`). There are no Next.js API
 routes — do not add server-side proxy routes without reason.
 
+## Workflow rule: always hand over ready-to-run push commands
+
+Whenever a chunk of work is finished and ready to ship (after a bug fix or feature, or
+whenever the user signals they're ready to commit/push), **end the reply with complete,
+copy-paste-ready git commands** — the user runs the push themselves. Fully populate them,
+no placeholders:
+
+```bash
+git add <the actual files changed>          # or `git add -A` if that's genuinely intended
+git commit -m "<a real, descriptive message>"
+git push origin redesign/warm-local-ui       # the working branch
+```
+
+Use the real changed file paths and a real commit message — never `<files>`/`<message>`
+placeholders. If a commit was already made during the task, still show the equivalent
+commands and note what's already done vs. left (e.g. "already committed as `abc1234` — just
+run the push line").
+
 ## Two docs that will mislead you — read this first
 
 - **`SKILLS.md` is an aspirational blueprint, not the implementation.** It describes

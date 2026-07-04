@@ -140,18 +140,22 @@ export default function RouteCard({
         relative overflow-hidden
         bg-surface-container-low border rounded-2xl p-4 sm:p-5
         transition-all duration-300 ease-out select-none cursor-pointer
+        shadow-[var(--sw-shadow-card)]
         ${
           isSelected
-            ? "border-cebu-blue ring-2 ring-cebu-blue/20 bg-surface-container-lowest shadow-md"
-            : "border-outline-variant hover:border-outline hover:shadow-md hover:bg-surface-container-lowest"
+            ? "border-cebu-blue ring-2 ring-cebu-blue/25 bg-surface-container-lowest shadow-[var(--sw-shadow-card-hover)] -translate-y-0.5"
+            : "border-outline-variant hover:border-outline hover:shadow-[var(--sw-shadow-card-hover)] hover:bg-surface-container-lowest hover:-translate-y-0.5"
         }
         ${animatePress ? "route-card-press" : ""}
         ${className}
       `}
     >
-      {/* Vertical selection accent */}
+      {/* Vertical selection accent — the brand's sea gradient */}
       {isSelected && (
-        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-cebu-blue rounded-l-2xl" />
+        <div
+          className="absolute top-0 left-0 bottom-0 w-1.5 rounded-l-2xl"
+          style={{ background: "var(--sw-gradient-sea)" }}
+        />
       )}
 
       {/* Main Row Info: Stacked on mobile, side-by-side on sm+ */}
