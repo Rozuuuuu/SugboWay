@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import BrandMark from "@/components/BrandMark";
 
 /**
  * SplashScreen — branded loading overlay shown on first paint.
@@ -34,11 +35,7 @@ export default function SplashScreen() {
       }`}
     >
       <div className="flex flex-col items-center gap-3 animate-[fadeIn_0.5s_ease-out]">
-        <img
-          src="/Logo.png"
-          alt=""
-          className="w-20 h-20 object-contain rounded-2xl shadow-sm"
-        />
+        <BrandMark className="w-16 h-20" />
         <div className="text-center">
           <h1 className="text-xl font-bold text-on-surface tracking-tight">SugboWay</h1>
           <p className="text-xs text-on-surface-variant mt-0.5">Cebu transit, made simple</p>
