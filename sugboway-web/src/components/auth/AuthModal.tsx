@@ -84,10 +84,10 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
             >
               <span className="material-symbols-outlined text-[20px] block">close</span>
             </button>
-            <div className="w-14 h-14 mx-auto rounded-full bg-cebu-blue/10 flex items-center justify-center text-cebu-blue">
+            <div className="sw-brand-tile w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-white">
               <span className="material-symbols-outlined text-3xl">mark_email_unread</span>
             </div>
-            <h2 className="text-lg font-bold text-on-surface">Check your email</h2>
+            <h2 className="text-xl font-extrabold tracking-tight text-on-surface">Check your email</h2>
             <p className="text-sm text-on-surface-variant leading-relaxed">
               We sent a verification link to <span className="font-semibold">{email}</span>. Open it, then sign in.
             </p>
@@ -99,7 +99,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
             </button>
             <button
               onClick={() => setMode("login")}
-              className="block w-full mt-2 bg-cebu-blue hover:brightness-95 text-white font-semibold text-sm py-2.5 rounded-xl active:scale-95 transition-all"
+              className="sw-btn-primary block w-full mt-2 font-semibold text-sm py-2.5 rounded-xl"
             >
               Back to sign in
             </button>
@@ -109,9 +109,11 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
             {/* Branded header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <BrandMark className="w-9 h-10 shrink-0" />
+                <div className="sw-brand-tile w-11 h-11 rounded-2xl flex items-center justify-center shrink-0">
+                  <BrandMark className="w-6 h-7" mono />
+                </div>
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-on-surface leading-tight">
+                  <h2 className="text-lg font-extrabold tracking-tight text-on-surface leading-tight">
                     {mode === "login" ? "Welcome back" : "Create your account"}
                   </h2>
                   <p className="text-xs text-on-surface-variant mt-0.5">
@@ -175,7 +177,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
               <button
                 onClick={submit}
                 disabled={busy}
-                className="w-full bg-cebu-blue hover:brightness-95 text-white font-semibold text-sm py-2.5 rounded-xl active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
+                className="sw-btn-primary w-full font-semibold text-sm py-2.5 rounded-xl disabled:active:scale-100"
               >
                 {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
               </button>

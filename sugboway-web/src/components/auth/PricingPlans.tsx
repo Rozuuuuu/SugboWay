@@ -43,35 +43,45 @@ const PricingPlans = ({ onRequireAuth }: { onRequireAuth: () => void }) => {
       {PLANS.map((plan) => {
         const isCurrent = plan.id === currentTier;
         const accent = plan.id === "pro" || plan.id === "max";
+        const isFeatured = plan.id === "max";
         return (
           <div
             key={plan.id}
-            className={`rounded-2xl border p-4 flex flex-col gap-3 ${
-              isCurrent ? "border-cebu-blue bg-cebu-blue/5" : "border-outline-variant bg-surface-container-lowest"
+            className={`relative rounded-2xl p-4 flex flex-col gap-3 transition-all ${
+              isFeatured
+                ? "sw-card-featured"
+                : isCurrent
+                ? "border-2 border-cebu-blue bg-cebu-blue/5 shadow-[var(--sw-shadow-card)]"
+                : "border border-outline-variant bg-surface-container-lowest shadow-[var(--sw-shadow-card)]"
             }`}
           >
+            {isFeatured && (
+              <span className="sw-btn-clay absolute -top-2.5 right-4 text-[9px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full">
+                Best value
+              </span>
+            )}
             <div className="flex items-baseline justify-between">
-              <h4 className="text-base font-bold text-on-surface">{plan.name}</h4>
-              <span className={`text-sm font-bold ${accent ? "text-clay" : "text-on-surface-variant"}`}>{plan.price}</span>
+              <h4 className="text-base font-extrabold tracking-tight text-on-surface">{plan.name}</h4>
+              <span className={`text-sm font-extrabold ${accent ? "text-clay" : "text-on-surface-variant"}`}>{plan.price}</span>
             </div>
-            <p className="text-sm font-semibold text-on-surface">{plan.quota}</p>
-            <ul className="space-y-1 flex-1">
+            <p className="text-sm font-bold text-on-surface">{plan.quota}</p>
+            <ul className="space-y-1.5 flex-1">
               {plan.perks.map((perk) => (
                 <li key={perk} className="flex items-start gap-1.5 text-xs text-on-surface-variant">
-                  <span className="material-symbols-outlined text-safe-green text-sm leading-tight">check</span>
+                  <span className="material-symbols-outlined text-safe-green text-sm leading-tight">check_circle</span>
                   {perk}
                 </li>
               ))}
             </ul>
             {isCurrent ? (
-              <span className="text-center text-xs font-bold text-cebu-blue py-2 rounded-xl bg-cebu-blue/10">
+              <span className="text-center text-xs font-extrabold text-cebu-blue py-2 rounded-xl sw-nav-active">
                 Current plan
               </span>
             ) : plan.upgradeTo ? (
               <button
                 onClick={() => handleUpgrade(plan)}
                 disabled={busy === plan.id}
-                className="text-sm font-semibold py-2 rounded-xl bg-clay text-white active:scale-95 transition-transform disabled:opacity-60"
+                className="sw-btn-clay text-sm font-bold py-2.5 rounded-xl disabled:opacity-60"
               >
                 {busy === plan.id ? "Upgrading…" : isAuthed ? `Upgrade to ${plan.name}` : "Sign in to upgrade"}
               </button>

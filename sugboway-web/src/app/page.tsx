@@ -1201,10 +1201,12 @@ export default function DemoPage() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-outline-variant p-4 gap-6 theme-transition">
         <div className="flex items-center gap-3 px-1 py-2">
-          <BrandMark className="w-8 h-9" />
+          <div className="sw-brand-tile flex items-center justify-center w-11 h-11 rounded-2xl shrink-0">
+            <BrandMark className="w-6 h-7" mono />
+          </div>
           <div className="flex flex-col leading-tight">
-            <h1 className="text-base font-bold text-on-surface">SugboWay</h1>
-            <span className="text-xs text-on-surface-variant">Cebu transit</span>
+            <h1 className="text-lg font-extrabold tracking-tight sw-text-gradient">SugboWay</h1>
+            <span className="text-[11px] font-medium text-on-surface-variant tracking-wide uppercase">Cebu transit</span>
           </div>
         </div>
 
@@ -1222,15 +1224,18 @@ export default function DemoPage() {
                 key={item.id}
                 onClick={() => setCurrentTab(item.id as any)}
                 className={`
-                  w-full flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm font-semibold
+                  relative w-full flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm font-semibold
                   transition-all duration-150 select-none active:scale-[0.98]
                   ${
                     isActive
-                      ? "bg-cebu-blue/10 text-cebu-blue"
+                      ? "sw-nav-active"
                       : "text-on-surface-variant hover:bg-surface-container"
                   }
                 `}
               >
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full sw-brand-tile" />
+                )}
                 <span
                   className="material-symbols-outlined text-xl"
                   style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
@@ -1384,8 +1389,10 @@ export default function DemoPage() {
               <>
 
               {/* Navigation & Search Area */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 space-y-4">
-                <h2 className="text-base font-bold text-on-surface">
+              <section className="sw-card sw-card-lit sw-hero-bloom p-5 space-y-4">
+                <div className="relative z-10 space-y-4">
+                <h2 className="text-xl font-extrabold tracking-tight text-on-surface flex items-center gap-2.5">
+                  <span className="sw-title-accent" />
                   Where are you headed?
                 </h2>
 
@@ -1459,7 +1466,7 @@ export default function DemoPage() {
                   <button
                     onClick={fetchRoutes}
                     disabled={isRoutingLoading}
-                    className="w-full bg-cebu-blue hover:bg-primary disabled:bg-cebu-blue/50 text-white dark:text-on-primary-fixed font-bold min-h-[48px] py-3 px-6 rounded-2xl shadow-sm transition-all duration-200 active:scale-98 flex items-center justify-center gap-2 select-none text-sm"
+                    className="sw-btn-primary w-full font-bold min-h-[52px] py-3 px-6 rounded-2xl flex items-center justify-center gap-2 select-none text-sm"
                   >
                     {isRoutingLoading ? (
                       <>
@@ -1468,11 +1475,12 @@ export default function DemoPage() {
                       </>
                     ) : (
                       <>
-                        <span className="material-symbols-outlined text-sm">search</span>
+                        <span className="material-symbols-outlined text-base">search</span>
                         <span>Find routes</span>
                       </>
                     )}
                   </button>
+                </div>
                 </div>
               </section>
 
@@ -1492,10 +1500,11 @@ export default function DemoPage() {
               {/* Results: each card expands to reveal its own road-track map */}
               <section className="space-y-3">
                 <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="text-base font-bold text-on-surface">
+                  <h2 className="text-lg font-extrabold tracking-tight text-on-surface flex items-center gap-2.5">
+                    <span className="sw-title-accent" />
                     {routes.length} {routes.length === 1 ? "way" : "ways"} to get there
                   </h2>
-                  <span className="text-xs text-on-surface-variant capitalize">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-on-surface-variant capitalize px-2.5 py-1 rounded-full bg-surface-container">
                     {passengerType} fare
                   </span>
                 </div>
@@ -1549,8 +1558,8 @@ export default function DemoPage() {
 
           {/* TAB 2: RUSH HOUR TRAFFIC ANALYTICS */}
           <div className={currentTab === "rush" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
-              <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-6 flex flex-col items-center text-center">
-                <span className="text-sm font-semibold text-on-surface-variant mb-4">
+              <section className="sw-card sw-card-lit sw-hero-bloom p-6 flex flex-col items-center text-center">
+                <span className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-4">
                   Traffic right now
                 </span>
  
@@ -1584,9 +1593,10 @@ export default function DemoPage() {
               </section>
  
               {/* Peak hours chart */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4">
+              <section className="sw-card sw-card-lit p-6 space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-base font-bold text-on-surface">
+                  <h3 className="text-lg font-extrabold tracking-tight text-on-surface flex items-center gap-2.5">
+                    <span className="sw-title-accent" />
                     Busiest hours
                   </h3>
                   <div className="flex items-center gap-3 text-[11px] text-on-surface-variant">
@@ -1675,8 +1685,8 @@ export default function DemoPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Best Times Card */}
-                <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-5 space-y-3">
-                  <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
+                <section className="sw-card sw-card-lit p-5 space-y-3">
+                  <h3 className="text-base font-extrabold tracking-tight text-on-surface flex items-center gap-2">
                     <span className="material-symbols-outlined text-safe-green">schedule</span>
                     Best times to travel
                   </h3>
@@ -1747,7 +1757,7 @@ export default function DemoPage() {
               </div>
 
               {/* capitol site alert card */}
-              <section className="bg-surface-container-low border border-outline-variant rounded-2xl overflow-hidden">
+              <section className="sw-card sw-card-lit overflow-hidden">
                 <div className="p-4 bg-clay/10 border-b border-outline-variant/40 flex items-center gap-2">
                   <span className="material-symbols-outlined text-clay text-lg">construction</span>
                   <span className="text-sm font-bold text-on-surface">Roadwork at Capitol Site</span>
@@ -1761,18 +1771,18 @@ export default function DemoPage() {
           </div>
 
           {/* TAB 3: CONVERSATIONAL AI TRANSIT GUIDE */}
-          <div className={currentTab === "chat" ? "flex flex-col bg-surface-container-lowest border border-outline-variant rounded-2xl h-[560px] overflow-hidden animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
+          <div className={currentTab === "chat" ? "flex flex-col sw-card sw-card-lit h-[560px] overflow-hidden animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
 
               {/* Chat Thread Container */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
                 {/* Initial Welcome prompt */}
                 <div className="flex flex-col items-center text-center py-6 border-b border-outline-variant/30">
-                  <div className="w-12 h-12 bg-cebu-blue/10 rounded-full flex items-center justify-center mb-2">
-                    <span className="material-symbols-outlined text-cebu-blue text-2xl">forum</span>
+                  <div className="sw-brand-tile w-14 h-14 rounded-2xl flex items-center justify-center mb-3">
+                    <span className="material-symbols-outlined text-white text-2xl">forum</span>
                   </div>
-                  <h3 className="text-base font-bold text-on-surface">Ask SugboWay</h3>
-                  <p className="text-sm text-on-surface-variant mt-0.5">
+                  <h3 className="text-lg font-extrabold tracking-tight text-on-surface">Ask SugboWay</h3>
+                  <p className="text-sm text-on-surface-variant mt-1">
                     Fares, routes, and traffic — in English or Bisaya
                   </p>
                 </div>
@@ -1784,18 +1794,18 @@ export default function DemoPage() {
                   >
                     <div className="flex gap-2 max-w-[85%] items-start">
                       {msg.sender === "ai" && (
-                        <div className="w-7 h-7 bg-cebu-blue/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                          <span className="material-symbols-outlined text-cebu-blue text-sm">forum</span>
+                        <div className="sw-brand-tile w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="material-symbols-outlined text-white text-sm">forum</span>
                         </div>
                       )}
-                      
-                      <div 
+
+                      <div
                         className={`
-                          p-3.5 rounded-2xl text-sm leading-relaxed shadow-2xs border
+                          p-3.5 rounded-2xl text-sm leading-relaxed border
                           ${
-                            msg.sender === "user" 
-                              ? "bg-cebu-blue text-white border-cebu-blue/20 rounded-tr-none" 
-                              : "bg-surface-container-low text-on-surface border-outline-variant/40 rounded-tl-none"
+                            msg.sender === "user"
+                              ? "sw-fill-sea border-transparent rounded-tr-none shadow-[var(--sw-glow-blue)]"
+                              : "bg-surface-container-low text-on-surface border-outline-variant/40 rounded-tl-none shadow-2xs"
                           }
                         `}
                       >
@@ -1835,8 +1845,8 @@ export default function DemoPage() {
  
                 {isAiLoading && (
                   <div className="flex gap-2 max-w-[85%] items-start animate-[fadeIn_0.2s_ease-out]">
-                    <div className="w-7 h-7 bg-cebu-blue/10 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                      <span className="material-symbols-outlined text-cebu-blue text-sm">forum</span>
+                    <div className="sw-brand-tile w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="material-symbols-outlined text-white text-sm">forum</span>
                     </div>
                     <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-low text-on-surface border border-outline-variant/40 shadow-2xs">
                       <div className="flex space-x-1.5 items-center py-1">
@@ -1880,11 +1890,11 @@ export default function DemoPage() {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Ask anything about getting around…"
-                  className="flex-1 bg-surface-container-low rounded-full px-4 py-3 border border-outline-variant focus:outline-none focus:ring-1 focus:ring-cebu-blue text-sm text-on-surface"
+                  className="flex-1 bg-surface-container-low rounded-full px-4 py-3 border border-outline-variant focus:outline-none focus:ring-2 focus:ring-cebu-blue/50 focus:border-cebu-blue text-sm text-on-surface transition-all"
                 />
-                <button 
+                <button
                   type="submit"
-                  className="w-10 h-10 rounded-full bg-cebu-blue hover:bg-primary text-white flex items-center justify-center shrink-0 transition-transform active:scale-90 shadow-sm"
+                  className="sw-btn-primary w-11 h-11 rounded-full flex items-center justify-center shrink-0"
                 >
                   <span className="material-symbols-outlined text-lg">send</span>
                 </button>
@@ -1895,12 +1905,12 @@ export default function DemoPage() {
           <div className={currentTab === "profile" ? "space-y-6 animate-[fadeIn_0.3s_ease-out]" : "hidden"}>
               
               {/* Account */}
-              <section className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 space-y-4">
+              <section className="sw-card sw-card-lit sw-hero-bloom p-5 space-y-4">
                 {isAuthed ? (
                   <>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full bg-cebu-blue/10 flex items-center justify-center text-cebu-blue shrink-0">
-                        <span className="material-symbols-outlined text-3xl">account_circle</span>
+                    <div className="relative z-10 flex items-center gap-4">
+                      <div className="sw-brand-tile w-14 h-14 rounded-2xl flex items-center justify-center text-white shrink-0">
+                        <span className="material-symbols-outlined text-3xl">person</span>
                       </div>
                       <div className="min-w-0">
                         <h3 className="text-base font-bold text-on-surface truncate">{user?.name || user?.email}</h3>
@@ -1923,19 +1933,21 @@ export default function DemoPage() {
                     </button>
                   </>
                 ) : (
-                  <div className="text-center space-y-3 py-2">
-                    <span className="material-symbols-outlined text-cebu-blue text-4xl">account_circle</span>
+                  <div className="relative z-10 text-center space-y-3 py-2">
+                    <div className="sw-brand-tile w-16 h-16 rounded-2xl flex items-center justify-center mx-auto">
+                      <span className="material-symbols-outlined text-white text-3xl">person</span>
+                    </div>
                     <div>
-                      <h3 className="text-base font-bold text-on-surface">You&apos;re browsing as a guest</h3>
+                      <h3 className="text-lg font-extrabold tracking-tight text-on-surface">You&apos;re browsing as a guest</h3>
                       <p className="text-sm text-on-surface-variant mt-1">
                         Guests get 5 questions/hour. Create a free account for 10.
                       </p>
                     </div>
                     <div className="flex gap-2 justify-center">
-                      <button onClick={() => openAuth("register")} className="bg-cebu-blue text-white font-semibold text-sm px-4 py-2.5 rounded-xl active:scale-95 transition-transform">
+                      <button onClick={() => openAuth("register")} className="sw-btn-primary font-semibold text-sm px-5 py-2.5 rounded-xl">
                         Create account
                       </button>
-                      <button onClick={() => openAuth("login")} className="bg-surface-container border border-outline-variant text-on-surface font-semibold text-sm px-4 py-2.5 rounded-xl active:scale-95 transition-transform">
+                      <button onClick={() => openAuth("login")} className="bg-surface-container border border-outline-variant text-on-surface font-semibold text-sm px-4 py-2.5 rounded-xl active:scale-95 transition-transform hover:border-cebu-blue/50">
                         Sign in
                       </button>
                     </div>
@@ -1945,7 +1957,7 @@ export default function DemoPage() {
 
               {/* Plans */}
               <section className="space-y-3">
-                <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
+                <h3 className="text-lg font-extrabold tracking-tight text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-clay">workspace_premium</span>
                   Plans
                 </h3>
@@ -1953,8 +1965,8 @@ export default function DemoPage() {
               </section>
 
               {/* Emergency hotlines */}
-              <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-5 space-y-4">
-                <h3 className="text-base font-bold text-on-surface flex items-center gap-2">
+              <section className="sw-card sw-card-lit p-5 space-y-4">
+                <h3 className="text-base font-extrabold tracking-tight text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-error">emergency</span>
                   Emergency hotlines
                 </h3>
@@ -2010,11 +2022,11 @@ export default function DemoPage() {
               >
                 {/* Icon wrapper for the pill background */}
                 <div className="relative flex items-center justify-center px-5 py-1 rounded-full transition-all duration-300">
-                  <div 
+                  <div
                     className={`
-                      absolute inset-0 rounded-full -z-10 transition-all duration-300
-                      ${isActive ? "bg-primary/15 scale-100 opacity-100" : "bg-transparent scale-50 opacity-0"}
-                    `} 
+                      absolute inset-0 rounded-full -z-10 transition-all duration-300 sw-nav-active
+                      ${isActive ? "scale-100 opacity-100" : "opacity-0 scale-50"}
+                    `}
                   />
                   <span className="material-symbols-outlined text-xl transition-transform duration-300" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
                     {item.icon}
