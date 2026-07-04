@@ -250,7 +250,7 @@ export default function AllRoutesPanel({
   return (
     <div className="space-y-3">
       {/* Search */}
-      <div className="flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant focus-within:border-cebu-blue transition-colors">
+      <div className="flex items-center bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant focus-within:border-cebu-blue focus-within:ring-2 focus-within:ring-cebu-blue/20 transition-all">
         <span className="material-symbols-outlined text-outline shrink-0">search</span>
         <input
           type="text"
@@ -278,7 +278,7 @@ export default function AllRoutesPanel({
             onClick={() => setVehicle(c.key)}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all active:scale-95 ${
               vehicle === c.key
-                ? "bg-cebu-blue text-white border-cebu-blue"
+                ? "sw-fill-sea border-transparent shadow-[var(--sw-glow-blue)]"
                 : "bg-surface-container text-on-surface-variant border-outline-variant/50 hover:border-outline-variant"
             }`}
           >
@@ -331,7 +331,7 @@ export default function AllRoutesPanel({
 
       {/* List */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
+        <div className="flex flex-col items-center justify-center p-8 sw-card sw-card-lit space-y-3">
           <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-on-surface-variant font-medium">Loading all Cebu routes…</p>
         </div>
@@ -346,7 +346,7 @@ export default function AllRoutesPanel({
           </button>
         </div>
       ) : allRoutes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
+        <div className="flex flex-col items-center justify-center p-8 sw-card sw-card-lit text-center">
           <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-2">
             <span className="material-symbols-outlined text-2xl">cloud_off</span>
           </div>
@@ -357,7 +357,7 @@ export default function AllRoutesPanel({
           </p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
+        <div className="flex flex-col items-center justify-center p-8 sw-card sw-card-lit text-center">
           <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-2">
             <span className="material-symbols-outlined text-2xl">search_off</span>
           </div>
