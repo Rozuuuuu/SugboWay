@@ -50,9 +50,9 @@ export default function PeakWarning({
   };
 
   return (
-    <div className="bg-surface-container-high border border-clay/30 rounded-2xl p-5 flex flex-col gap-4 theme-transition animate-fade-in">
+    <div className="bg-surface-container-high border border-clay/30 rounded-2xl p-5 flex flex-col gap-4 theme-transition animate-fade-in shadow-[var(--sw-shadow-card)]">
       <div className="flex items-start gap-4">
-        <div className="w-11 h-11 rounded-full bg-clay/10 flex items-center justify-center shrink-0">
+        <div className="w-11 h-11 rounded-2xl bg-clay/15 flex items-center justify-center shrink-0">
           <span className="material-symbols-outlined text-clay text-2xl">warning</span>
         </div>
 
@@ -71,7 +71,7 @@ export default function PeakWarning({
             </button>
           </div>
 
-          <h3 className="text-base font-bold text-on-surface mt-0.5">
+          <h3 className="text-lg font-extrabold tracking-tight text-on-surface mt-0.5">
             Roads are busy right now
           </h3>
 
