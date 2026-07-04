@@ -119,9 +119,11 @@ export default function NavigationDrawer({
       >
         {/* Top Header */}
         <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-cebu-blue">navigation</span>
-            <h2 className="text-base font-bold text-on-surface">
+          <div className="flex items-center gap-2.5">
+            <span className="sw-brand-tile w-8 h-8 rounded-xl flex items-center justify-center">
+              <span className="material-symbols-outlined text-white text-lg">navigation</span>
+            </span>
+            <h2 className="text-lg font-extrabold tracking-tight text-on-surface">
               Step-by-step
             </h2>
           </div>
@@ -173,9 +175,9 @@ export default function NavigationDrawer({
             <span className="truncate text-right">{currentLeg.toStop.stopName}</span>
           </div>
           <div className="overflow-hidden h-1.5 text-xs flex rounded bg-outline-variant/30 relative">
-            <div 
-              style={{ width: `${((activeStepIndex + 1) / instructions.length) * 100}%` }}
-              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-cebu-blue transition-all duration-500"
+            <div
+              style={{ width: `${((activeStepIndex + 1) / instructions.length) * 100}%`, background: "var(--sw-gradient-sea)" }}
+              className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500"
             />
           </div>
         </div>
@@ -220,9 +222,9 @@ export default function NavigationDrawer({
             Back Step
           </button>
           
-          <button 
+          <button
             onClick={handleNextStep}
-            className="flex-1 bg-cebu-blue hover:bg-primary text-white font-bold py-3 rounded-xl transition-all active:scale-95 text-xs select-none shadow-sm flex items-center justify-center gap-1.5"
+            className="sw-btn-primary flex-1 font-bold py-3 rounded-xl text-xs select-none flex items-center justify-center gap-1.5"
           >
             <span>
               {activeLegIndex === legs.length - 1 && activeStepIndex === instructions.length - 1 

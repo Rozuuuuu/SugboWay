@@ -34,19 +34,21 @@ export default function SplashScreen() {
         fading ? "opacity-0" : "opacity-100"
       }`}
     >
-      <div className="flex flex-col items-center gap-3 animate-[fadeIn_0.5s_ease-out]">
-        <BrandMark className="w-16 h-20" />
+      <div className="flex flex-col items-center gap-4 animate-[fadeIn_0.5s_ease-out]">
+        <div className="sw-brand-tile w-20 h-20 rounded-3xl flex items-center justify-center">
+          <BrandMark className="w-11 h-14" mono />
+        </div>
         <div className="text-center">
-          <h1 className="text-xl font-bold text-on-surface tracking-tight">SugboWay</h1>
-          <p className="text-xs text-on-surface-variant mt-0.5">Cebu transit, made simple</p>
+          <h1 className="text-2xl font-extrabold tracking-tight sw-text-gradient">SugboWay</h1>
+          <p className="text-xs font-medium text-on-surface-variant mt-1 tracking-wide">Cebu transit, made simple</p>
         </div>
       </div>
 
       {/* Loading bar */}
       <div className="w-44 h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
         <div
-          className="h-full rounded-full bg-cebu-blue transition-[width] duration-[1600ms] ease-out"
-          style={{ width: `${progress}%` }}
+          className="h-full rounded-full transition-[width] duration-[1600ms] ease-out"
+          style={{ width: `${progress}%`, background: "var(--sw-gradient-sea)" }}
         />
       </div>
     </div>
