@@ -41,7 +41,7 @@ export default function PeakWarning({
       case "rain":
         return "text-amber-500 bg-amber-500/10 border-amber-500/30";
       case "cloudy":
-        return "text-blue-400 bg-blue-400/10 border-blue-400/30";
+        return "text-on-surface-variant bg-surface-container-high border-outline-variant/40";
       case "clear":
         return "text-yellow-500 bg-yellow-500/10 border-yellow-500/30";
       default:
@@ -50,9 +50,9 @@ export default function PeakWarning({
   };
 
   return (
-    <div className="bg-surface-container-high border border-clay/30 rounded-2xl p-5 flex flex-col gap-4 theme-transition animate-fade-in shadow-[var(--sw-shadow-card)]">
+    <div className="bg-surface-container-high border border-clay/30 rounded-lg p-5 flex flex-col gap-4 theme-transition animate-fade-in shadow-[var(--sw-shadow-card)]">
       <div className="flex items-start gap-4">
-        <div className="w-11 h-11 rounded-2xl bg-clay/15 flex items-center justify-center shrink-0">
+        <div className="w-11 h-11 rounded-lg bg-clay/15 flex items-center justify-center shrink-0">
           <span className="material-symbols-outlined text-clay text-2xl">warning</span>
         </div>
 

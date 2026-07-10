@@ -1305,30 +1305,30 @@ export default function DemoPage() {
           
           {/* Weather Alert/Notification Banner */}
           {isWeatherAlertOpen && weatherCondition !== "unknown" && (
-            <div 
+            <div
               className={`
-                relative overflow-hidden rounded-2xl border p-4 shadow-sm flex items-start justify-between gap-4 transition-all duration-300 animate-[fadeIn_0.3s_ease-out]
+                relative overflow-hidden rounded-lg border p-4 shadow-[var(--sw-shadow-card)] flex items-start justify-between gap-4 transition-all duration-300 animate-[fadeIn_0.3s_ease-out]
                 ${
                   weatherCondition === "rain" || weatherCondition === "heavy_rain"
-                    ? "bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/30 text-amber-900 dark:text-amber-200"
-                    : "bg-blue-500/10 dark:bg-blue-500/15 border-blue-500/30 text-blue-900 dark:text-blue-200"
+                    ? "bg-alert-amber/10 border-alert-amber/40 text-on-surface"
+                    : "bg-surface-container-lowest border-outline-variant text-on-surface"
                 }
               `}
             >
-              {/* Decorative side pulse */}
-              <div 
+              {/* Status rule down the left edge */}
+              <div
                 className={`
                   absolute top-0 left-0 bottom-0 w-1
                   ${
                     weatherCondition === "rain" || weatherCondition === "heavy_rain"
-                      ? "bg-amber-500"
-                      : "bg-blue-500"
+                      ? "bg-alert-amber"
+                      : "bg-outline"
                   }
-                `} 
+                `}
               />
-              
+
               <div className="flex gap-3 items-start flex-1 min-w-0">
-                <span className={`material-symbols-outlined text-2xl shrink-0 mt-0.5 ${weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "text-amber-600 dark:text-amber-400 animate-pulse" : "text-blue-600 dark:text-blue-400"}`}>
+                <span className={`material-symbols-outlined text-2xl shrink-0 mt-0.5 ${weatherCondition === "rain" || weatherCondition === "heavy_rain" ? "text-alert-amber" : "text-on-surface-variant"}`}>
                   {weatherCondition === "heavy_rain" ? "thunderstorm" : weatherCondition === "rain" ? "rainy" : weatherCondition === "cloudy" ? "cloud" : "wb_sunny"}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -1466,7 +1466,7 @@ export default function DemoPage() {
                   <button
                     onClick={fetchRoutes}
                     disabled={isRoutingLoading}
-                    className="sw-btn-primary w-full font-bold min-h-[52px] py-3 px-6 rounded-2xl flex items-center justify-center gap-2 select-none text-sm"
+                    className="sw-btn-primary w-full font-bold min-h-[52px] py-3 px-6 rounded-lg flex items-center justify-center gap-2 select-none text-sm"
                   >
                     {isRoutingLoading ? (
                       <>
@@ -1604,7 +1604,7 @@ export default function DemoPage() {
                       <span className="w-2 h-2 rounded-sm bg-alert-amber/80" />Rush
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-sm bg-cebu-blue/30" />Off-peak
+                      <span className="w-2 h-2 rounded-sm bg-on-surface-variant/40" />Off-peak
                     </span>
                   </div>
                 </div>
@@ -1635,10 +1635,10 @@ export default function DemoPage() {
                         </span>
                         {/* Bar segment */}
                         <div
-                          className={`w-full rounded-t-lg transition-all duration-300 ${
+                          className={`w-full rounded-t-sm transition-all duration-300 ${
                             bar.rush
                               ? "bg-alert-amber/80 group-hover:bg-alert-amber"
-                              : "bg-cebu-blue/30 group-hover:bg-cebu-blue/50"
+                              : "bg-on-surface-variant/30 group-hover:bg-on-surface-variant/45"
                           } ${isSelected ? "ring-2 ring-cebu-blue ring-offset-2 ring-offset-surface-container-lowest" : ""}`}
                           style={{ height: `${bar.volume}%` }}
                         />
@@ -1710,7 +1710,7 @@ export default function DemoPage() {
                 </section>
 
                 {/* Safety Mode Toggle Card */}
-                <section className="relative overflow-hidden bg-primary text-on-primary border border-outline-variant rounded-2xl p-6 flex flex-col justify-between">
+                <section className="relative overflow-hidden bg-primary text-on-primary border border-outline-variant rounded-lg p-6 flex flex-col justify-between">
                   <div className="z-10 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-2">
