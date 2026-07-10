@@ -516,7 +516,7 @@ function ensureRouteTrackLayers(map: Map) {
       type: "line",
       source: ROUTE_TRACK_SOURCE,
       layout: { "line-join": "round", "line-cap": "round" },
-      paint: { "line-color": "#0056B3", "line-width": 4, "line-opacity": 0.9 },
+      paint: { "line-color": "#D23A2B", "line-width": 4, "line-opacity": 0.95 },
     });
   }
   // Intermediate stop dots sit in their own source ABOVE the line.
@@ -530,8 +530,8 @@ function ensureRouteTrackLayers(map: Map) {
       source: ROUTE_STOPS_SOURCE,
       paint: {
         "circle-radius": 4,
-        "circle-color": "#0056B3",
-        "circle-opacity": 0.65,
+        "circle-color": "#191C1E",
+        "circle-opacity": 0.72,
         "circle-stroke-width": 1.5,
         "circle-stroke-color": "#ffffff",
       },
@@ -1201,12 +1201,12 @@ export default function DemoPage() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-surface border-r border-outline-variant p-4 gap-6 theme-transition">
         <div className="flex items-center gap-3 px-1 py-2">
-          <div className="sw-brand-tile flex items-center justify-center w-11 h-11 rounded-2xl shrink-0">
+          <div className="sw-brand-tile flex items-center justify-center w-11 h-11 rounded-lg shrink-0">
             <BrandMark className="w-6 h-7" mono />
           </div>
-          <div className="flex flex-col leading-tight">
-            <h1 className="text-lg font-extrabold tracking-tight sw-text-gradient">SugboWay</h1>
-            <span className="text-[11px] font-medium text-on-surface-variant tracking-wide uppercase">Cebu transit</span>
+          <div className="flex flex-col leading-none gap-1">
+            <h1 className="font-display text-xl font-extrabold uppercase tracking-[0.11em] text-on-surface">SugboWay</h1>
+            <span className="text-[10px] font-semibold text-on-surface-variant tracking-[0.2em] uppercase">Cebu transit</span>
           </div>
         </div>
 
@@ -1264,7 +1264,7 @@ export default function DemoPage() {
         <header className="sticky top-0 z-40 flex justify-between items-center px-4 h-16 safe-top bg-surface/90 backdrop-blur border-b border-outline-variant theme-transition">
           <div className="flex items-center gap-2.5">
             <BrandMark className="md:hidden w-7 h-8" />
-            <h1 className="text-lg font-bold text-on-surface md:text-base md:text-on-surface-variant md:font-semibold">
+            <h1 className="font-display text-xl font-extrabold uppercase tracking-[0.1em] text-on-surface md:text-base md:tracking-normal md:normal-case md:text-on-surface-variant md:font-semibold">
               <span className="md:hidden">SugboWay</span>
               <span className="hidden md:inline">
                 {currentTab === "map" && "Routes"}
@@ -1778,7 +1778,7 @@ export default function DemoPage() {
 
                 {/* Initial Welcome prompt */}
                 <div className="flex flex-col items-center text-center py-6 border-b border-outline-variant/30">
-                  <div className="sw-brand-tile w-14 h-14 rounded-2xl flex items-center justify-center mb-3">
+                  <div className="sw-brand-tile w-14 h-14 rounded-lg flex items-center justify-center mb-3">
                     <span className="material-symbols-outlined text-white text-2xl">forum</span>
                   </div>
                   <h3 className="text-lg font-extrabold tracking-tight text-on-surface">Ask SugboWay</h3>
@@ -1794,7 +1794,7 @@ export default function DemoPage() {
                   >
                     <div className="flex gap-2 max-w-[85%] items-start">
                       {msg.sender === "ai" && (
-                        <div className="sw-brand-tile w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                        <div className="sw-brand-tile w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5">
                           <span className="material-symbols-outlined text-white text-sm">forum</span>
                         </div>
                       )}
@@ -1845,7 +1845,7 @@ export default function DemoPage() {
  
                 {isAiLoading && (
                   <div className="flex gap-2 max-w-[85%] items-start animate-[fadeIn_0.2s_ease-out]">
-                    <div className="sw-brand-tile w-7 h-7 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="sw-brand-tile w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5">
                       <span className="material-symbols-outlined text-white text-sm">forum</span>
                     </div>
                     <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-low text-on-surface border border-outline-variant/40 shadow-2xs">
@@ -1909,7 +1909,7 @@ export default function DemoPage() {
                 {isAuthed ? (
                   <>
                     <div className="relative z-10 flex items-center gap-4">
-                      <div className="sw-brand-tile w-14 h-14 rounded-2xl flex items-center justify-center text-white shrink-0">
+                      <div className="sw-brand-tile w-14 h-14 rounded-lg flex items-center justify-center text-white shrink-0">
                         <span className="material-symbols-outlined text-3xl">person</span>
                       </div>
                       <div className="min-w-0">
@@ -1934,7 +1934,7 @@ export default function DemoPage() {
                   </>
                 ) : (
                   <div className="relative z-10 text-center space-y-3 py-2">
-                    <div className="sw-brand-tile w-16 h-16 rounded-2xl flex items-center justify-center mx-auto">
+                    <div className="sw-brand-tile w-16 h-16 rounded-lg flex items-center justify-center mx-auto">
                       <span className="material-symbols-outlined text-white text-3xl">person</span>
                     </div>
                     <div>

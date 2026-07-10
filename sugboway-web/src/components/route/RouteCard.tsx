@@ -138,23 +138,23 @@ export default function RouteCard({
       onClick={handleCardClick}
       className={`
         relative overflow-hidden
-        bg-surface-container-low border rounded-2xl p-4 sm:p-5
-        transition-all duration-300 ease-out select-none cursor-pointer
+        bg-surface-container-lowest border rounded-lg p-4 sm:p-5
+        transition-[box-shadow,border-color] duration-200 ease-out select-none cursor-pointer
         shadow-[var(--sw-shadow-card)]
         ${
           isSelected
-            ? "border-cebu-blue ring-2 ring-cebu-blue/25 bg-surface-container-lowest shadow-[var(--sw-shadow-card-hover)] -translate-y-0.5"
-            : "border-outline-variant hover:border-outline hover:shadow-[var(--sw-shadow-card-hover)] hover:bg-surface-container-lowest hover:-translate-y-0.5"
+            ? "border-cebu-blue ring-1 ring-cebu-blue/40 shadow-[var(--sw-shadow-card-hover)]"
+            : "border-outline-variant hover:border-outline hover:shadow-[var(--sw-shadow-card-hover)]"
         }
         ${animatePress ? "route-card-press" : ""}
         ${className}
       `}
     >
-      {/* Vertical selection accent — the brand's sea gradient */}
+      {/* Vertical selection accent — a flat enamel rule down the plate edge */}
       {isSelected && (
         <div
-          className="absolute top-0 left-0 bottom-0 w-1.5 rounded-l-2xl"
-          style={{ background: "var(--sw-gradient-sea)" }}
+          className="absolute top-0 left-0 bottom-0 w-1.5 rounded-l-lg"
+          style={{ background: "var(--sw-enamel)" }}
         />
       )}
 
@@ -356,7 +356,7 @@ export default function RouteCard({
                 className="relative h-52 sm:h-56 rounded-xl overflow-hidden border border-outline-variant bg-surface-container-highest"
               />
               <p className="text-xs text-on-surface-variant">
-                Blue line follows the actual streets this {transitLegs.length > 0 ? "jeepney/bus" : "walk"} takes.
+                The red line traces the actual streets this {transitLegs.length > 0 ? "jeepney/bus" : "walk"} takes.
               </p>
             </div>
           )}

@@ -4,88 +4,92 @@
 
 
 /* =========================================================================
-   SugboWay Design System
+   SugboWay Design System — "Signboard"
    =========================================================================
-   Warm sand-and-sea palette: cebu-blue as the single confident accent,
-   clay as the warm local support, neutrals tinted toward sand (light)
-   and warm charcoal (dark). Light/dark adaptive tokens.
-   Typography: Plus Jakarta Sans (headings) + Inter (body).
+   Grounded in the Cebu jeepney destination board: cool steel-tinted paper,
+   ink lettering, and ONE enamel-vermilion accent (kept under the historical
+   token name --color-cebu-blue for compatibility). No gradients, no glows —
+   flat printed plates and hairline rules. Color is structural: the enamel
+   marks the brand/route boards; green/amber/red stay reserved for crowding.
+   Typography: Saira Condensed (signboard display) + Hanken Grotesk (body).
    ========================================================================= */
 
 /* ---------------------------------------------------------------------------
    Tailwind v4 Theme: Design Tokens (Light — Default)
    --------------------------------------------------------------------------- */
 @theme {
-  /* --- Brand Colors --- */
-  --color-cebu-blue: #0056b3;
-  --color-safe-green: #2e7d32;
-  --color-alert-amber: #f59e0b;
-  --color-aircon-cyan: #00838f;
+  /* --- Brand: enamel vermilion (the jeepney signboard accent) ---
+     Kept under the historical name --color-cebu-blue so every existing
+     `text-cebu-blue` / `border-cebu-blue` becomes enamel in one move. */
+  --color-cebu-blue: #c0392b;
+  --color-safe-green: #1f7a43;
+  --color-alert-amber: #c9791a;
+  --color-aircon-cyan: #2b7180;
 
-  /* --- Clay: warm local support accent (replaces stray purple) --- */
+  /* --- Clay: warm local support accent --- */
   --color-clay: #b8501e;
   --color-clay-soft: #e7d3c4;
 
-  /* --- Primary System --- */
-  --color-primary: #003f87;
-  --color-primary-container: #0056b3;
-  --color-primary-fixed: #d7e2ff;
-  --color-primary-fixed-dim: #acc7ff;
+  /* --- Primary System (enamel) --- */
+  --color-primary: #b23021;
+  --color-primary-container: #c0392b;
+  --color-primary-fixed: #ffdcd4;
+  --color-primary-fixed-dim: #ffb4a6;
   --color-on-primary: #ffffff;
-  --color-on-primary-container: #bbd0ff;
-  --color-on-primary-fixed: #001a40;
-  --color-on-primary-fixed-variant: #004491;
-  --color-inverse-primary: #acc7ff;
+  --color-on-primary-container: #ffdcd4;
+  --color-on-primary-fixed: #3a0a03;
+  --color-on-primary-fixed-variant: #8f261a;
+  --color-inverse-primary: #ffb4a6;
 
-  /* --- Secondary System --- */
-  --color-secondary: #1b6d24;
-  --color-secondary-container: #a0f399;
-  --color-secondary-fixed: #a3f69c;
-  --color-secondary-fixed-dim: #88d982;
+  /* --- Secondary System (steel) --- */
+  --color-secondary: #46504f;
+  --color-secondary-container: #dbe1e0;
+  --color-secondary-fixed: #dbe1e0;
+  --color-secondary-fixed-dim: #bfc8c6;
   --color-on-secondary: #ffffff;
-  --color-on-secondary-container: #217128;
-  --color-on-secondary-fixed: #002204;
-  --color-on-secondary-fixed-variant: #005312;
+  --color-on-secondary-container: #333c3b;
+  --color-on-secondary-fixed: #0d1211;
+  --color-on-secondary-fixed-variant: #3a4342;
 
-  /* --- Tertiary System --- */
-  --color-tertiary: #722b00;
-  --color-tertiary-container: #983c00;
-  --color-tertiary-fixed: #ffdbcc;
-  --color-tertiary-fixed-dim: #ffb694;
+  /* --- Tertiary System (ink) --- */
+  --color-tertiary: #2a2d2e;
+  --color-tertiary-container: #3a3e40;
+  --color-tertiary-fixed: #d9dedf;
+  --color-tertiary-fixed-dim: #b7bfc0;
   --color-on-tertiary: #ffffff;
-  --color-on-tertiary-container: #ffc2a7;
-  --color-on-tertiary-fixed: #351000;
-  --color-on-tertiary-fixed-variant: #7b2f00;
+  --color-on-tertiary-container: #d9dedf;
+  --color-on-tertiary-fixed: #191c1e;
+  --color-on-tertiary-fixed-variant: #3a3e40;
 
   /* --- Error System --- */
-  --color-error: #ba1a1a;
+  --color-error: #b3261e;
   --color-error-container: #ffdad6;
   --color-on-error: #ffffff;
-  --color-on-error-container: #93000a;
+  --color-on-error-container: #7e0e0a;
 
-  /* --- Surface System (warm sand-tinted neutrals) --- */
-  --color-surface: #faf7f1;
-  --color-surface-dim: #e4ddd0;
-  --color-surface-bright: #fdfbf6;
-  --color-surface-variant: #e6ded0;
-  --color-surface-tint: #115cb9;
-  --color-surface-container: #f0e9dd;
-  --color-surface-container-low: #f5efe5;
-  --color-surface-container-high: #eae2d4;
-  --color-surface-container-highest: #e4dccc;
-  --color-surface-container-lowest: #fffdf8;
-  --color-on-surface: #1c1813;
-  --color-on-surface-variant: #4b4439;
-  --color-inverse-surface: #322e27;
-  --color-inverse-on-surface: #f6f0e6;
+  /* --- Surface System (cool steel-tinted paper) --- */
+  --color-surface: #eff0ed;
+  --color-surface-dim: #d8dbd6;
+  --color-surface-bright: #ffffff;
+  --color-surface-variant: #e2e5e0;
+  --color-surface-tint: #c0392b;
+  --color-surface-container: #eaece7;
+  --color-surface-container-low: #f4f5f2;
+  --color-surface-container-high: #e3e6e1;
+  --color-surface-container-highest: #dce0db;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #4c5453;
+  --color-inverse-surface: #2c2f31;
+  --color-inverse-on-surface: #f1f2ef;
 
-  /* --- Outline --- */
-  --color-outline: #7c7263;
-  --color-outline-variant: #d4cab9;
+  /* --- Outline (steel + hairline) --- */
+  --color-outline: #78807e;
+  --color-outline-variant: #c9cdc8;
 
   /* --- Background --- */
-  --color-background: #faf7f1;
-  --color-on-background: #1c1813;
+  --color-background: #eff0ed;
+  --color-on-background: #191c1e;
 
   /* --- Crowding Colors (semantic) --- */
   --color-crowding-low: #2e7d32;
@@ -99,9 +103,12 @@
   --spacing-container-margin: 16px;
   --spacing-gutter: 12px;
 
-  /* --- Font Families --- */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-plus-jakarta-sans), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* --- Font Families ---
+     Signboard = Saira Condensed (destination-board display + route codes),
+     body = Hanken Grotesk, data = JetBrains Mono (fares, times, coordinates). */
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-saira), var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-signboard: var(--font-saira), var(--font-hanken), ui-sans-serif, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* --- Font Sizes --- */
@@ -119,71 +126,71 @@
    --------------------------------------------------------------------------- */
 @layer theme {
   html.dark, .dark {
-    --color-cebu-blue: #6eaaff;
-    --color-safe-green: #7bc97f;
-    --color-alert-amber: #fbbf24;
-    --color-aircon-cyan: #4dd0e1;
+    --color-cebu-blue: #ff6a57;
+    --color-safe-green: #4fc27a;
+    --color-alert-amber: #e6b24a;
+    --color-aircon-cyan: #5cbcce;
 
     --color-clay: #f0935f;
     --color-clay-soft: #5c3522;
 
-    --color-primary: #acc7ff;
-    --color-primary-container: #1a4b8c;
-    --color-primary-fixed: #d7e2ff;
-    --color-primary-fixed-dim: #acc7ff;
-    --color-on-primary: #002f6b;
-    --color-on-primary-container: #d7e2ff;
-    --color-on-primary-fixed: #001a40;
-    --color-on-primary-fixed-variant: #004491;
-    --color-inverse-primary: #0056b3;
+    --color-primary: #ff6a57;
+    --color-primary-container: #8f261a;
+    --color-primary-fixed: #ffdcd4;
+    --color-primary-fixed-dim: #ffb4a6;
+    --color-on-primary: #4d0f07;
+    --color-on-primary-container: #ffdcd4;
+    --color-on-primary-fixed: #3a0a03;
+    --color-on-primary-fixed-variant: #8f261a;
+    --color-inverse-primary: #b23021;
 
-    --color-secondary: #88d982;
-    --color-secondary-container: #1a5c22;
-    --color-secondary-fixed: #a3f69c;
-    --color-secondary-fixed-dim: #88d982;
-    --color-on-secondary: #003910;
-    --color-on-secondary-container: #a0f399;
-    --color-on-secondary-fixed: #002204;
-    --color-on-secondary-fixed-variant: #005312;
+    --color-secondary: #bfc8c6;
+    --color-secondary-container: #3a4342;
+    --color-secondary-fixed: #dbe1e0;
+    --color-secondary-fixed-dim: #bfc8c6;
+    --color-on-secondary: #24302e;
+    --color-on-secondary-container: #dbe1e0;
+    --color-on-secondary-fixed: #0d1211;
+    --color-on-secondary-fixed-variant: #3a4342;
 
-    --color-tertiary: #ffb694;
-    --color-tertiary-container: #6e2900;
-    --color-tertiary-fixed: #ffdbcc;
-    --color-tertiary-fixed-dim: #ffb694;
-    --color-on-tertiary: #502000;
-    --color-on-tertiary-container: #ffdbcc;
-    --color-on-tertiary-fixed: #351000;
-    --color-on-tertiary-fixed-variant: #7b2f00;
+    --color-tertiary: #cfd4d5;
+    --color-tertiary-container: #33373a;
+    --color-tertiary-fixed: #d9dedf;
+    --color-tertiary-fixed-dim: #b7bfc0;
+    --color-on-tertiary: #262a2c;
+    --color-on-tertiary-container: #d9dedf;
+    --color-on-tertiary-fixed: #191c1e;
+    --color-on-tertiary-fixed-variant: #33373a;
 
     --color-error: #ffb4ab;
-    --color-error-container: #93000a;
-    --color-on-error: #690005;
+    --color-error-container: #7e0e0a;
+    --color-on-error: #4d0400;
     --color-on-error-container: #ffdad6;
 
-    --color-surface: #17150f;
-    --color-surface-dim: #17150f;
-    --color-surface-bright: #3d3930;
-    --color-surface-variant: #4a4439;
-    --color-surface-tint: #acc7ff;
-    --color-surface-container: #211e16;
-    --color-surface-container-low: #1c1a13;
-    --color-surface-container-high: #2c2820;
-    --color-surface-container-highest: #37322a;
-    --color-surface-container-lowest: #110f0a;
-    --color-on-surface: #f3efe6;
-    --color-on-surface-variant: #d8d1c2;
-    --color-inverse-surface: #e7e1d6;
-    --color-inverse-on-surface: #322e27;
+    --color-surface: #131618;
+    --color-surface-dim: #131618;
+    --color-surface-bright: #34383a;
+    --color-surface-variant: #3f4749;
+    --color-surface-tint: #ff6a57;
+    --color-surface-container: #1c1f21;
+    --color-surface-container-low: #17191b;
+    --color-surface-container-high: #262a2c;
+    --color-surface-container-highest: #313537;
+    --color-surface-container-lowest: #0d0f10;
+    --color-on-surface: #eaecea;
+    --color-on-surface-variant: #a4acae;
+    --color-inverse-surface: #eaecea;
+    --color-inverse-on-surface: #2c2f31;
 
-    --color-outline: #a59c8b;
-    --color-outline-variant: #4a4439;
+    --color-outline: #7d8589;
+    --color-outline-variant: #2c3134;
 
-    --color-background: #17150f;
-    --color-on-background: #f3efe6;
+    --color-background: #131618;
+    --color-on-background: #eaecea;
 
-    --color-crowding-low: #66bb6a;
-    --color-crowding-mid: #ffd54f;
-    --color-crowding-high: #fb923c;
+    --color-crowding-low: #4fc27a;
+    --color-crowding-mid: #e6c44a;
+    --color-crowding-high: #f0824a;
     --color-crowding-full: #ffb4ab;
   }
 }
@@ -375,160 +382,164 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ===========================================================================
-   Bold Design Language v2
+   Signboard Design Language
    ---------------------------------------------------------------------------
-   A confident visual signature: the "sea" gradient (Cebu-blue → aircon-cyan)
-   as the brand's hero sweep, layered card elevation, gradient wordmark, and a
-   colored glow on primary actions. Light + dark aware.
+   Flat enamel plates, steel, and ink — the jeepney destination board, not a
+   digital gradient. The historical --sw-gradient-* variable names are kept but
+   now resolve to a FLAT enamel fill, so every existing consumer updates at once.
+   A route board reads as a physical plate: a hard bottom edge (--sw-plate-edge)
+   gives it thickness; pressing a button sinks the plate rather than scaling it.
    =========================================================================== */
 :root {
-  --sw-gradient-sea: linear-gradient(135deg, #0a6cd4 0%, #0056b3 48%, #00838f 100%);
-  --sw-gradient-sea-soft: linear-gradient(135deg, rgba(0, 86, 179, 0.14), rgba(0, 131, 143, 0.12));
-  --sw-gradient-clay: linear-gradient(135deg, #d2691e 0%, #b8501e 100%);
-  --sw-glow-blue: 0 10px 26px -10px rgba(0, 86, 179, 0.5);
-  --sw-shadow-card: 0 1px 2px rgba(28, 24, 19, 0.05), 0 12px 30px -20px rgba(28, 24, 19, 0.3);
-  --sw-shadow-card-hover: 0 2px 6px rgba(28, 24, 19, 0.07), 0 20px 44px -22px rgba(28, 24, 19, 0.4);
+  --sw-enamel: #d23a2b;         /* the plate face */
+  --sw-enamel-deep: #9e2a1d;    /* the plate's shadowed edge */
+  --sw-ink: #1c1f21;            /* ink board (secondary actions) */
+  --sw-plate-edge: 0 1.5px 0 var(--sw-enamel-deep), 0 2px 5px -2px rgba(20, 22, 24, 0.35);
+  --sw-ink-edge: 0 1.5px 0 rgba(0, 0, 0, 0.55), 0 2px 5px -2px rgba(20, 22, 24, 0.35);
+
+  /* Compatibility aliases — old gradient names now resolve to flat enamel. */
+  --sw-gradient-sea: var(--sw-enamel);
+  --sw-gradient-sea-soft: color-mix(in srgb, var(--sw-enamel) 12%, transparent);
+  --sw-gradient-clay: var(--sw-ink);
+  --sw-glow-blue: var(--sw-plate-edge);
+
+  --sw-shadow-card: 0 1px 2px rgba(20, 22, 24, 0.05);
+  --sw-shadow-card-hover: 0 3px 8px -3px rgba(20, 22, 24, 0.16);
 }
 html.dark, .dark {
-  --sw-gradient-sea: linear-gradient(135deg, #2a86ec 0%, #0f63c4 50%, #0d8493 100%);
-  --sw-gradient-sea-soft: linear-gradient(135deg, rgba(60, 130, 220, 0.16), rgba(20, 150, 165, 0.14));
-  --sw-glow-blue: 0 10px 28px -10px rgba(60, 130, 220, 0.55);
-  --sw-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 14px 34px -22px rgba(0, 0, 0, 0.75);
-  --sw-shadow-card-hover: 0 2px 6px rgba(0, 0, 0, 0.55), 0 22px 46px -22px rgba(0, 0, 0, 0.85);
+  --sw-enamel: #da3e2e;
+  --sw-enamel-deep: #7e241a;
+  --sw-ink: #262a2c;
+  --sw-plate-edge: 0 1.5px 0 var(--sw-enamel-deep), 0 2px 6px -2px rgba(0, 0, 0, 0.6);
+  --sw-ink-edge: 0 1.5px 0 rgba(0, 0, 0, 0.7), 0 2px 6px -2px rgba(0, 0, 0, 0.6);
+  --sw-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sw-shadow-card-hover: 0 4px 10px -4px rgba(0, 0, 0, 0.6);
 }
 
-/* Layered, elevated card — replaces flat 1px-bordered surfaces */
+/* Card — a sheet of paper: hairline rule, tight radius, minimal shadow. No lift. */
 .sw-card {
   background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline-variant);
-  border-radius: 1.25rem;
+  border-radius: 0.625rem;
   box-shadow: var(--sw-shadow-card);
-  transition: box-shadow 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
-/* Hairline highlight along the top edge for a crisp lit look */
+/* The glossy top-edge highlight is a gradient tell — retire it. */
 .sw-card-lit {
   position: relative;
-}
-.sw-card-lit::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  border-radius: inherit;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  opacity: 0.6;
-  pointer-events: none;
-}
-.dark .sw-card-lit::before {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
 }
 .sw-card-interactive {
   cursor: pointer;
 }
 .sw-card-interactive:hover {
   box-shadow: var(--sw-shadow-card-hover);
-  border-color: color-mix(in srgb, var(--color-cebu-blue) 45%, var(--color-outline-variant));
-  transform: translateY(-1px);
+  border-color: var(--color-outline);
 }
 
-/* Brand tile: the gradient square that carries the BrandMark */
+/* Brand tile: a flat enamel plate carrying the BrandMark. */
 .sw-brand-tile {
-  background: var(--sw-gradient-sea);
-  box-shadow: var(--sw-glow-blue);
+  background: var(--sw-enamel);
+  box-shadow: var(--sw-plate-edge);
+  border-radius: 0.5rem;
 }
 
-/* Plain sea-gradient fill (chat bubbles, avatars, accents) — no glow */
+/* Flat enamel fill (chat bubbles, avatars, accents). */
 .sw-fill-sea {
-  background: var(--sw-gradient-sea);
+  background: var(--sw-enamel);
   color: #fff;
 }
 
-/* Gradient wordmark / accent text */
+/* Wordmark / accent text — solid ink, printed, no clip trick. */
 .sw-text-gradient {
-  background: var(--sw-gradient-sea);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--color-on-surface);
 }
 
-/* Primary action: gradient fill + colored glow */
+/* Primary action: a pressable enamel plate. */
 .sw-btn-primary {
-  background: var(--sw-gradient-sea);
+  background: var(--sw-enamel);
   color: #fff;
-  box-shadow: var(--sw-glow-blue);
-  transition: filter 0.2s ease, transform 0.12s ease, box-shadow 0.3s ease;
+  border-radius: 0.5rem;
+  box-shadow: var(--sw-plate-edge);
+  transition: filter 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
 }
 .sw-btn-primary:hover {
-  filter: brightness(1.07);
+  filter: brightness(1.05);
 }
 .sw-btn-primary:active {
-  transform: scale(0.98);
+  transform: translateY(1.5px);
+  box-shadow: 0 0 0 0 var(--sw-enamel-deep);
 }
 .sw-btn-primary:disabled {
-  filter: grayscale(0.3) brightness(0.9);
-  opacity: 0.6;
+  filter: grayscale(0.45);
+  opacity: 0.55;
   box-shadow: none;
 }
 
-/* Warm "clay" premium action — for upgrade CTAs */
+/* Secondary "upgrade" action — an ink board, so it reads apart from primary. */
 .sw-btn-clay {
-  background: var(--sw-gradient-clay);
+  background: var(--sw-ink);
   color: #fff;
-  box-shadow: 0 8px 22px -10px rgba(184, 80, 30, 0.55);
-  transition: filter 0.2s ease, transform 0.12s ease;
+  border-radius: 0.5rem;
+  box-shadow: var(--sw-ink-edge);
+  transition: filter 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
 }
 .sw-btn-clay:hover {
-  filter: brightness(1.06);
+  filter: brightness(1.15);
 }
 .sw-btn-clay:active {
-  transform: scale(0.97);
+  transform: translateY(1.5px);
+  box-shadow: none;
 }
 .sw-btn-clay:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
-/* Featured plan card — gradient border via padding-box/border-box trick */
+/* Featured plan card — a solid enamel edge, not a gradient border. */
 .sw-card-featured {
-  border: 1.5px solid transparent !important;
-  border-radius: 1rem;
-  background:
-    linear-gradient(var(--color-surface-container-lowest), var(--color-surface-container-lowest)) padding-box,
-    var(--sw-gradient-clay) border-box;
-  box-shadow: 0 12px 32px -18px rgba(184, 80, 30, 0.5);
+  border: 1.5px solid var(--sw-enamel) !important;
+  border-radius: 0.625rem;
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--sw-plate-edge);
 }
 
-/* Soft gradient wash for hero surfaces (contained, overflow-hidden parent) */
+/* Hero surfaces: no radial bloom (that wash is a gradient tell). */
 .sw-hero-bloom {
   position: relative;
   overflow: hidden;
 }
-.sw-hero-bloom::after {
-  content: "";
-  position: absolute;
-  top: -40%;
-  right: -20%;
-  width: 22rem;
-  height: 22rem;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(0, 131, 143, 0.16), transparent 62%);
-  pointer-events: none;
-  z-index: 0;
-}
 
-/* Gradient accent chip that precedes bold section titles */
+/* Solid enamel tick that precedes a section title. */
 .sw-title-accent {
   display: inline-block;
-  width: 0.28rem;
+  width: 0.25rem;
   height: 1.05em;
-  border-radius: 9999px;
-  background: var(--sw-gradient-sea);
+  border-radius: 1px;
+  background: var(--sw-enamel);
   vertical-align: -0.15em;
 }
 
-/* Active-tab pill using the sea gradient (nav) */
+/* Active nav item — enamel wash + enamel label. */
 .sw-nav-active {
-  background: var(--sw-gradient-sea-soft);
-  color: var(--color-cebu-blue);
+  background: color-mix(in srgb, var(--sw-enamel) 12%, transparent);
+  color: var(--color-primary);
+}
+
+/* Route-code destination board — the app's signature. A flat enamel plate
+   with condensed white lettering and a printed-plate bottom edge. */
+.sw-board {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sw-enamel);
+  color: #fff;
+  font-family: var(--font-signboard);
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  box-shadow: var(--sw-plate-edge);
 }
 
 /* ---------------------------------------------------------------------------
