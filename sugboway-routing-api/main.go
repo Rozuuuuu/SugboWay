@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -71,10 +72,21 @@ func main() {
 	routingHandler := api.NewRoutingHandler(repo, routingService)
 
 	// Auth: config from env (shared JWT secret with the AI service).
+	// Fail closed: a missing/weak secret is fatal unless APP_ENV=development.
+	// The dev default is a publicly-known string — booting with it in production
+	// would let anyone mint valid JWTs for any user/tier, so we refuse to start.
 	jwtSecret := os.Getenv("AUTH_JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "dev-insecure-secret-change-me"
-		log.Println("[SugboWay Routing API] WARNING: AUTH_JWT_SECRET not set — using an insecure dev default. Set it in production.")
+	devMode := isDevEnv()
+	switch {
+	case jwtSecret == "" && devMode:
+		jwtSecret = devJWTSecret
+		log.Println("[SugboWay Routing API] WARNING: AUTH_JWT_SECRET not set — using an insecure dev default (APP_ENV=development).")
+	case jwtSecret == "":
+		log.Fatal("Fatal: AUTH_JWT_SECRET is not set. Set a strong secret (>=32 chars), identical on the AI service. Use APP_ENV=development only for local runs.")
+	case jwtSecret == devJWTSecret && !devMode:
+		log.Fatal("Fatal: AUTH_JWT_SECRET is set to the insecure dev default. Set a unique, strong secret in production.")
+	case len(jwtSecret) < 32 && !devMode:
+		log.Fatal("Fatal: AUTH_JWT_SECRET is too short (need >=32 chars) for production. Generate one with `openssl rand -base64 48`.")
 	}
 	appBaseURL := envOr("APP_BASE_URL", "http://localhost:3000")
 	publicAPIURL := envOr("PUBLIC_API_URL", "http://localhost:8080")
@@ -139,8 +151,8 @@ func main() {
 	// leaving normal interactive use (map panning, route searches) unaffected.
 	// /health is exempt so uptime probes never trip it.
 	app.Use(limiter.New(limiter.Config{
-		Max:        300,
-		Expiration: 1 * time.Minute,
+		Max:          300,
+		Expiration:   1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string { return c.IP() },
 		Next: func(c *fiber.Ctx) bool {
 			return c.Path() == "/health"
@@ -211,4 +223,16 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// devJWTSecret is the insecure fallback signing key permitted only in local
+// development (APP_ENV=development). It must never be used in production.
+const devJWTSecret = "dev-insecure-secret-change-me"
+
+// isDevEnv reports whether the app is running in an explicit local-dev mode.
+// Production is the safe default: unless APP_ENV/ENV is "development"/"dev",
+// auth config is validated strictly (see main).
+func isDevEnv() bool {
+	env := strings.ToLower(strings.TrimSpace(envOr("APP_ENV", os.Getenv("ENV"))))
+	return env == "development" || env == "dev"
 }
