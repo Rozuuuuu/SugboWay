@@ -237,18 +237,18 @@ export default function RouteCard({
                   </span>
 
                   {primaryTransitLeg.route?.routeType === "mybus" ? (
-                    <span className="bg-blue-500/10 text-blue-500 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-blue-500/20 flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-blue-500" />
+                    <span className="bg-aircon-cyan/10 text-aircon-cyan text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-aircon-cyan/25 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-aircon-cyan" />
                       Beep card • Scheduled stops • AC
                     </span>
                   ) : primaryTransitLeg.route?.isModernized ? (
-                    <span className="bg-green-500/10 text-green-500 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-green-500/20 flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-green-500" />
+                    <span className="bg-safe-green/10 text-safe-green text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-safe-green/25 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-safe-green" />
                       Tap-to-pay • No conductor • AC
                     </span>
                   ) : (
-                    <span className="bg-amber-500/10 text-amber-500 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-amber-500/20 flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-amber-500" />
+                    <span className="bg-alert-amber/10 text-alert-amber text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-semibold border border-alert-amber/25 flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-alert-amber" />
                       Cash fare • Has conductor • No AC
                     </span>
                   )}
