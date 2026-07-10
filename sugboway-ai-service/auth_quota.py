@@ -27,12 +27,22 @@ def _secret() -> str:
     refuse to run rather than validate forgeable tokens.
     """
     secret = os.environ.get("AUTH_JWT_SECRET")
+    if secret is not None:
+        secret = secret.strip()  # tolerate a trailing newline/space from the dashboard
     if _is_dev_env():
         return secret or _DEV_JWT_SECRET
     if not secret:
+        # Names-only diagnostic (never values) so a Render free-tier deploy log
+        # reveals a typo'd key or an unlinked env group without shell access.
+        related = sorted(
+            k for k in os.environ
+            if any(t in k.upper() for t in ("AUTH", "JWT", "SECRET"))
+        )
         raise RuntimeError(
-            "AUTH_JWT_SECRET is not set. Set a strong secret (>=32 chars), "
-            "identical to the routing API. Use APP_ENV=development only locally."
+            "AUTH_JWT_SECRET is not set (empty or missing). Set a strong secret "
+            "(>=32 chars), identical to the routing API. Use APP_ENV=development "
+            f"only locally. Env keys visible to this process matching "
+            f"AUTH/JWT/SECRET: {related or 'none'}."
         )
     if secret == _DEV_JWT_SECRET:
         raise RuntimeError(
