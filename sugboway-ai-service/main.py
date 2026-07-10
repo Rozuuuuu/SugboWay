@@ -18,6 +18,11 @@ logger = logging.getLogger("sugboway-ai")
 if "GEMINI_API_KEY" in os.environ and "GOOGLE_API_KEY" not in os.environ:
     os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
 
+# Fail closed at boot: refuse to start in production without a strong, non-default
+# AUTH_JWT_SECRET. A publicly-known default would let anyone forge JWTs for any
+# user/tier. auth_quota._secret() raises unless APP_ENV=development.
+auth_quota._secret()
+
 app = FastAPI(
     title="SugboWay AI Service",
     description="Conversational layer and RAG pipeline for SugboWay.",

@@ -9,9 +9,37 @@ import jwt
 TIER_LIMITS = {"free": 10, "pro": 100, "max": None}
 GUEST_LIMIT = 5
 
+# Insecure fallback signing key permitted only in local development
+# (APP_ENV=development). Must match the Go side's devJWTSecret.
+_DEV_JWT_SECRET = "dev-insecure-secret-change-me"
+
+
+def _is_dev_env() -> bool:
+    env = (os.environ.get("APP_ENV") or os.environ.get("ENV") or "").strip().lower()
+    return env in ("development", "dev")
+
 
 def _secret() -> str:
-    return os.environ.get("AUTH_JWT_SECRET", "dev-insecure-secret-change-me")
+    """Return the shared JWT secret, failing closed in production.
+
+    A missing secret would otherwise fall back to a publicly-known default,
+    letting anyone forge tokens for any user/tier. Outside explicit local dev we
+    refuse to run rather than validate forgeable tokens.
+    """
+    secret = os.environ.get("AUTH_JWT_SECRET")
+    if _is_dev_env():
+        return secret or _DEV_JWT_SECRET
+    if not secret:
+        raise RuntimeError(
+            "AUTH_JWT_SECRET is not set. Set a strong secret (>=32 chars), "
+            "identical to the routing API. Use APP_ENV=development only locally."
+        )
+    if secret == _DEV_JWT_SECRET:
+        raise RuntimeError(
+            "AUTH_JWT_SECRET is set to the insecure dev default. "
+            "Set a unique, strong secret in production."
+        )
+    return secret
 
 
 def verify_token(token: str) -> dict:
