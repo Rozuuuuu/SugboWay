@@ -31,9 +31,9 @@ interface RouteCodeBadgeProps {
 // ---------------------------------------------------------------------------
 
 const SIZE_CLASSES = {
-  sm: "px-2 py-0.5 text-xs",
-  md: "px-3 py-1 text-sm",
-  lg: "px-4 py-1.5 text-base",
+  sm: "px-2 py-0.5 text-sm",
+  md: "px-2.5 py-0.5 text-base",
+  lg: "px-3.5 py-1 text-xl",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -41,9 +41,9 @@ const SIZE_CLASSES = {
 // ---------------------------------------------------------------------------
 
 const VARIANT_CLASSES = {
-  default: "sw-fill-sea shadow-[var(--sw-glow-blue)]",
-  inactive: "bg-transparent text-outline border border-outline",
-  alert: "bg-alert-amber text-on-tertiary-fixed",
+  default: "sw-board",
+  inactive: "border border-outline text-on-surface-variant font-signboard font-bold uppercase tracking-[0.045em] rounded",
+  alert: "bg-alert-amber text-white font-signboard font-bold uppercase tracking-[0.045em] rounded shadow-[var(--sw-plate-edge)]",
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -75,10 +75,9 @@ export default function RouteCodeBadge({
   return (
     <span
       className={`
-        inline-flex items-center justify-center
-        font-mono font-bold tracking-wider uppercase
-        rounded-lg whitespace-nowrap select-none
-        transition-all duration-150
+        inline-flex items-center justify-center leading-none
+        whitespace-nowrap select-none
+        transition-[filter] duration-150
         ${VARIANT_CLASSES[variant]}
         ${SIZE_CLASSES[size]}
       `}

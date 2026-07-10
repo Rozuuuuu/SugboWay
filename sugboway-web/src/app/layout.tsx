@@ -1,22 +1,26 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Hanken_Grotesk, Saira_Condensed, JetBrains_Mono } from "next/font/google";
 import ThemeProvider from "@/components/ThemeProvider";
 import AuthProvider from "@/components/AuthProvider";
 import SplashScreen from "@/components/SplashScreen";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Body / UI — a grotesque with more spine than Inter, still highly legible.
+const hankenGrotesk = Hanken_Grotesk({
+  variable: "--font-hanken",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-plus-jakarta-sans",
+// Signboard display + route codes — condensed, industrial, evokes the
+// stencilled destination boards on a jeepney windshield.
+const sairaCondensed = Saira_Condensed({
+  variable: "--font-saira",
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
 });
 
+// Data — fares, times, coordinates.
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
@@ -35,8 +39,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf7f1" },
-    { media: "(prefers-color-scheme: dark)", color: "#17150f" },
+    { media: "(prefers-color-scheme: light)", color: "#eff0ed" },
+    { media: "(prefers-color-scheme: dark)", color: "#131618" },
   ],
 };
 
@@ -48,7 +52,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${hankenGrotesk.variable} ${sairaCondensed.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

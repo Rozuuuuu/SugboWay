@@ -35,20 +35,24 @@ export default function SplashScreen() {
       }`}
     >
       <div className="flex flex-col items-center gap-4 animate-[fadeIn_0.5s_ease-out]">
-        <div className="sw-brand-tile w-20 h-20 rounded-3xl flex items-center justify-center">
+        <div className="sw-brand-tile w-20 h-20 flex items-center justify-center">
           <BrandMark className="w-11 h-14" mono />
         </div>
         <div className="text-center">
-          <h1 className="text-2xl font-extrabold tracking-tight sw-text-gradient">SugboWay</h1>
-          <p className="text-xs font-medium text-on-surface-variant mt-1 tracking-wide">Cebu transit, made simple</p>
+          <h1 className="font-display text-3xl font-extrabold uppercase tracking-[0.14em] text-on-surface">
+            SugboWay
+          </h1>
+          <p className="text-[11px] font-semibold text-on-surface-variant mt-1.5 uppercase tracking-[0.22em]">
+            Cebu transit
+          </p>
         </div>
       </div>
 
-      {/* Loading bar */}
-      <div className="w-44 h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+      {/* Loading rule — a flat enamel bar filling a steel track */}
+      <div className="w-44 h-1 bg-surface-container-highest overflow-hidden">
         <div
-          className="h-full rounded-full transition-[width] duration-[1600ms] ease-out"
-          style={{ width: `${progress}%`, background: "var(--sw-gradient-sea)" }}
+          className="h-full transition-[width] duration-[1600ms] ease-out"
+          style={{ width: `${progress}%`, background: "var(--sw-enamel)" }}
         />
       </div>
     </div>
