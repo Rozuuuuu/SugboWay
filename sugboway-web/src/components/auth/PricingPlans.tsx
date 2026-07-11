@@ -47,7 +47,7 @@ const PricingPlans = ({ onRequireAuth }: { onRequireAuth: () => void }) => {
         return (
           <div
             key={plan.id}
-            className={`relative rounded-2xl p-4 flex flex-col gap-3 transition-all ${
+            className={`relative rounded-lg p-4 flex flex-col gap-3 transition-all ${
               isFeatured
                 ? "sw-card-featured"
                 : isCurrent

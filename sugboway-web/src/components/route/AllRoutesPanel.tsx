@@ -336,7 +336,7 @@ export default function AllRoutesPanel({
           <p className="text-sm text-on-surface-variant font-medium">Loading all Cebu routes…</p>
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
+        <div className="flex flex-col items-center justify-center p-8 sw-card sw-card-lit space-y-2 text-center">
           <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error mb-1">
             <span className="material-symbols-outlined text-2xl">error</span>
           </div>

@@ -72,7 +72,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/40 animate-[fadeIn_0.15s_ease-out]" onClick={onClose}>
       <div
-        className="relative w-full max-w-sm bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 space-y-4 shadow-2xl animate-[scaleUp_0.25s_ease-out]"
+        className="relative w-full max-w-sm bg-surface-container-lowest border border-outline-variant rounded-lg p-6 space-y-4 shadow-2xl animate-[scaleUp_0.25s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
         {mode === "check-email" ? (
@@ -84,7 +84,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
             >
               <span className="material-symbols-outlined text-[20px] block">close</span>
             </button>
-            <div className="sw-brand-tile w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-white">
+            <div className="sw-brand-tile w-14 h-14 mx-auto rounded-lg flex items-center justify-center text-white">
               <span className="material-symbols-outlined text-3xl">mark_email_unread</span>
             </div>
             <h2 className="text-xl font-extrabold tracking-tight text-on-surface">Check your email</h2>
@@ -109,7 +109,7 @@ const AuthModal = ({ open, onClose, initialMode = "login" }: Props) => {
             {/* Branded header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="sw-brand-tile w-11 h-11 rounded-2xl flex items-center justify-center shrink-0">
+                <div className="sw-brand-tile w-11 h-11 rounded-lg flex items-center justify-center shrink-0">
                   <BrandMark className="w-6 h-7" mono />
                 </div>
                 <div className="min-w-0">

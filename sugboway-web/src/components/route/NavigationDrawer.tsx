@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import type { RouteResult, PassengerType, RouteLeg } from "@/domain";
 import { formatPHP, calculateFare } from "@/domain";
+import RouteCodeBadge from "./RouteCodeBadge";
 
 interface NavigationDrawerProps {
   route: RouteResult | null;
@@ -113,14 +114,14 @@ export default function NavigationDrawer({
     <div className="fixed inset-0 z-40 flex items-end justify-center md:items-center bg-black/65 backdrop-blur-xs select-none">
       <div
         className="
-          w-full max-w-lg bg-surface border border-outline-variant rounded-2xl p-6 mb-28 md:mb-6 mx-4 shadow-2xl
+          w-full max-w-lg bg-surface border border-outline-variant rounded-lg p-6 mb-28 md:mb-6 mx-4 shadow-2xl
           animate-[slideUp_0.3s_ease-out] space-y-6 max-h-[70vh] md:max-h-[85vh] overflow-y-auto theme-transition
         "
       >
         {/* Top Header */}
         <div className="flex justify-between items-center pb-3 border-b border-outline-variant/30">
           <div className="flex items-center gap-2.5">
-            <span className="sw-brand-tile w-8 h-8 rounded-xl flex items-center justify-center">
+            <span className="sw-brand-tile w-8 h-8 rounded-lg flex items-center justify-center">
               <span className="material-symbols-outlined text-white text-lg">navigation</span>
             </span>
             <h2 className="text-lg font-extrabold tracking-tight text-on-surface">
@@ -152,11 +153,9 @@ export default function NavigationDrawer({
         )}
 
         {/* Route Info */}
-        <div className="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/20 flex justify-between items-center">
+        <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/20 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="bg-cebu-blue text-white text-xs font-mono font-bold px-3 py-1.5 rounded-lg">
-              {currentLeg.routeShortName || "Transit"}
-            </div>
+            <RouteCodeBadge code={currentLeg.routeShortName || "Transit"} size="sm" />
             <div>
               <p className="text-xs font-bold text-on-surface">
                 {currentLeg.route?.routeLongName || "Transit Connection"}
