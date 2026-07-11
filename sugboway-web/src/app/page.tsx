@@ -1514,12 +1514,12 @@ export default function DemoPage() {
 
                 <div className="flex flex-col gap-4">
                   {isRoutingLoading ? (
-                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 space-y-3">
+                    <div className="flex flex-col items-center justify-center p-8 sw-card sw-card-lit space-y-3">
                       <div className="w-8 h-8 border-4 border-cebu-blue border-t-transparent rounded-full animate-spin" />
                       <p className="text-sm text-on-surface-variant font-medium">Finding the best ways across Cebu…</p>
                     </div>
                   ) : routingError ? (
-                    <div className="flex flex-col items-center justify-center p-8 bg-error-container/10 rounded-2xl border border-error/20 space-y-2 text-center">
+                    <div className="flex flex-col items-center justify-center p-8 sw-card sw-card-lit space-y-2 text-center">
                       <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error mb-1">
                         <span className="material-symbols-outlined text-2xl">error</span>
                       </div>
@@ -1528,7 +1528,7 @@ export default function DemoPage() {
                       <button onClick={fetchRoutes} className="mt-2 text-sm font-semibold text-cebu-blue hover:underline active:scale-95 transition-transform">Try again</button>
                     </div>
                   ) : routes.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-8 bg-surface-container-low rounded-2xl border border-outline-variant/30 text-center">
+                    <div className="flex flex-col items-center justify-center p-8 sw-card sw-card-lit text-center">
                       <div className="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant mb-2">
                         <span className="material-symbols-outlined text-2xl">wrong_location</span>
                       </div>
@@ -1801,7 +1801,7 @@ export default function DemoPage() {
 
                       <div
                         className={`
-                          p-3.5 rounded-2xl text-sm leading-relaxed border
+                          p-3.5 rounded-xl text-sm leading-relaxed border
                           ${
                             msg.sender === "user"
                               ? "sw-fill-sea border-transparent rounded-tr-none shadow-[var(--sw-glow-blue)]"
@@ -1848,7 +1848,7 @@ export default function DemoPage() {
                     <div className="sw-brand-tile w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5">
                       <span className="material-symbols-outlined text-white text-sm">forum</span>
                     </div>
-                    <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-low text-on-surface border border-outline-variant/40 shadow-2xs">
+                    <div className="p-3.5 rounded-xl rounded-tl-none bg-surface-container-low text-on-surface border border-outline-variant/40 shadow-2xs">
                       <div className="flex space-x-1.5 items-center py-1">
                         <div className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                         <div className="w-1.5 h-1.5 bg-on-surface-variant/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -2058,8 +2058,8 @@ export default function DemoPage() {
         {/* Premium Upgrade Modal when Rate Limited */}
         {isRateLimited && (
           <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-surface-container-high border border-outline-variant shadow-2xl rounded-2xl p-6 max-w-sm w-full space-y-4 animate-[scaleUp_0.3s_ease-out] text-center">
-              <div className="sw-btn-clay w-14 h-14 rounded-2xl flex items-center justify-center mx-auto text-white">
+            <div className="bg-surface-container-high border border-outline-variant shadow-2xl rounded-lg p-6 max-w-sm w-full space-y-4 animate-[scaleUp_0.3s_ease-out] text-center">
+              <div className="sw-btn-clay w-14 h-14 rounded-lg flex items-center justify-center mx-auto text-white">
                 <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
               </div>
 
