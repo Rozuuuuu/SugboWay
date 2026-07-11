@@ -29,13 +29,13 @@ export default function ProximityAlert({
     : 100;
 
   return (
-    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:w-96 z-40 animate-slide-up shadow-2xl">
-      <div className="bg-surface-container-high border border-safe-green/40 shadow-xl rounded-2xl p-5 flex flex-col gap-4 theme-transition">
+    <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:w-96 z-40 animate-slide-up">
+      <div className="bg-surface-container-high border border-safe-green/40 shadow-[var(--sw-shadow-card-hover)] rounded-lg p-5 flex flex-col gap-4 theme-transition">
         <div className="flex items-start gap-4">
           {/* Attention icon with a single wave cue */}
-          <div className="w-12 h-12 rounded-2xl bg-safe-green/15 flex items-center justify-center shrink-0 relative">
+          <div className="w-12 h-12 rounded-lg bg-safe-green/15 flex items-center justify-center shrink-0 relative">
             <span className="material-symbols-outlined text-safe-green text-2xl">campaign</span>
-            <span className="absolute inset-0 rounded-2xl border-2 border-safe-green/40 animate-ping opacity-75" />
+            <span className="absolute inset-0 rounded-lg border-2 border-safe-green/40 animate-ping opacity-75" />
           </div>
 
           <div className="flex-1 min-w-0">
