@@ -17,9 +17,9 @@
 - **Do not modify `sugboway-web/`.** Copy from it; never edit it.
 - **All work lives under `sugboway-mobile/`.**
 - **Expo Go is unusable** — background location, notifications, and MapLibre are native modules it does not bundle. A **development build** is required from Task 1 onward.
-- Accent color: `#c0392b` (light) / `#da3e2e` (dark), exposed under the historical token name `cebu-blue`.
+- Two accents, distinct roles: `cebu-blue` (text/stroke) `#c0392b` light / `#ff6a57` dark; `enamel` (plate fill behind white text) `#d23a2b` light / `#da3e2e` dark. Both keep the historical `cebu-blue` name from the web app.
 - Fonts: **Hanken Grotesk** (body), **Saira Condensed** (display/signboard), **JetBrains Mono** (route codes).
-- Reserved semantics: green `#1f7a43` / amber `#c9791a` / red are **crowding-only**. Never reuse them for generic UI state.
+- Reserved semantics: green / amber / clay / red are **crowding-only**. Never reuse them for generic UI state. Their hex values shift per theme (`#1f7a43` → `#4fc27a`, `#c9791a` → `#e6b24a`) — always read them from `TOKENS[resolved]`, never hardcode.
 - Metro Cebu bounds, used everywhere a bbox is needed: `[[123.82, 10.25], [123.96, 10.42]]`.
 - Map default camera: center `[123.89, 10.31]`, zoom `13`.
 - Basemap styles: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json` (light), `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json` (dark).
@@ -220,8 +220,8 @@ Create `sugboway-mobile/theme/tokens.ts`. Values copied from `globals.css`:
 export const TOKENS = {
   light: {
     cebuBlue: "#c0392b",
-    enamel: "#c0392b",
-    enamelDeep: "#8f261a",
+    enamel: "#d23a2b",
+    enamelDeep: "#9e2a1d",
     safeGreen: "#1f7a43",
     alertAmber: "#c9791a",
     airconCyan: "#2b7180",
@@ -237,25 +237,32 @@ export const TOKENS = {
     error: "#b3261e",
   },
   dark: {
-    cebuBlue: "#da3e2e",
+    cebuBlue: "#ff6a57",
     enamel: "#da3e2e",
     enamelDeep: "#7e241a",
-    safeGreen: "#1f7a43",
-    alertAmber: "#c9791a",
-    airconCyan: "#2b7180",
-    clay: "#b8501e",
-    surface: "#191c1e",
-    surfaceContainerLowest: "#0f1214",
-    surfaceContainer: "#1d2123",
-    surfaceVariant: "#262a2c",
-    onSurface: "#e2e5e0",
-    onSurfaceVariant: "#c9cdc8",
-    outline: "#8b9391",
-    outlineVariant: "#3a4342",
+    safeGreen: "#4fc27a",
+    alertAmber: "#e6b24a",
+    airconCyan: "#5cbcce",
+    clay: "#f0935f",
+    surface: "#131618",
+    surfaceContainerLowest: "#0d0f10",
+    surfaceContainer: "#1c1f21",
+    surfaceVariant: "#3f4749",
+    onSurface: "#eaecea",
+    onSurfaceVariant: "#a4acae",
+    outline: "#7d8589",
+    outlineVariant: "#2c3134",
     error: "#ffb4ab",
   },
 } as const;
 ```
+
+**Two distinct accents, do not conflate them** — the web app defines both, for different jobs:
+
+- `cebuBlue` (`--color-cebu-blue`): the **text/stroke** accent. `#c0392b` light, brightened to `#ff6a57` in dark for legibility against dark surfaces. Use it for accent text, borders, icons, and map strokes.
+- `enamel` (`--sw-enamel`): the **plate fill** sitting behind white text. `#d23a2b` light, `#da3e2e` dark. Use it for filled buttons, badges, and the brand tile.
+
+Every dark value above is read from the `@layer theme { html.dark, .dark { … } }` block in `sugboway-web/src/app/globals.css` (around line 128) — **not** the `.sw-*` block at line 409, which only redefines the enamel plate variables. When in doubt, read the file; do not infer a dark value by darkening a light one.
 
 - [ ] **Step 3: Write the Tailwind config**
 
@@ -334,8 +341,8 @@ module.exports = withNativeWind(getDefaultConfig(__dirname), { input: "./global.
 @layer base {
   :root {
     --cebu-blue: 192 57 43;
-    --enamel: 192 57 43;
-    --enamel-deep: 143 38 26;
+    --enamel: 210 58 43;
+    --enamel-deep: 158 42 29;
     --safe-green: 31 122 67;
     --alert-amber: 201 121 26;
     --aircon-cyan: 43 113 128;
@@ -352,27 +359,27 @@ module.exports = withNativeWind(getDefaultConfig(__dirname), { input: "./global.
   }
 
   .dark {
-    --cebu-blue: 218 62 46;
+    --cebu-blue: 255 106 87;
     --enamel: 218 62 46;
     --enamel-deep: 126 36 26;
-    --safe-green: 31 122 67;
-    --alert-amber: 201 121 26;
-    --aircon-cyan: 43 113 128;
-    --clay: 184 80 30;
-    --surface: 25 28 30;
-    --surface-container: 29 33 35;
-    --surface-container-lowest: 15 18 20;
-    --surface-variant: 38 42 44;
-    --on-surface: 226 229 224;
-    --on-surface-variant: 201 205 200;
-    --outline: 139 147 145;
-    --outline-variant: 58 67 66;
+    --safe-green: 79 194 122;
+    --alert-amber: 230 178 74;
+    --aircon-cyan: 92 188 206;
+    --clay: 240 147 95;
+    --surface: 19 22 24;
+    --surface-container: 28 31 33;
+    --surface-container-lowest: 13 15 16;
+    --surface-variant: 63 71 73;
+    --on-surface: 234 236 234;
+    --on-surface-variant: 164 172 174;
+    --outline: 125 133 137;
+    --outline-variant: 44 49 52;
     --error: 255 180 171;
   }
 }
 ```
 
-Crowding colors (`safe-green`, `alert-amber`) are deliberately **identical in both themes** — they carry reserved semantic meaning, and shifting them per theme would weaken the signal.
+Crowding colors (`safe-green`, `alert-amber`) keep their **reserved meaning** across themes but **not their hex values** — the web app brightens them for dark (`#1f7a43` → `#4fc27a`, `#c9791a` → `#e6b24a`) so they stay legible against dark surfaces. Preserve that shift; a green that reads clearly on steel paper is nearly invisible on `#131618`.
 
 `nativewind-env.d.ts`:
 
@@ -425,7 +432,7 @@ Temporarily set the Routes screen body to:
 
 Rebuild the dev client (`eas build --profile development --platform android`) — NativeWind changes Babel config, so a JS reload is not enough. Expected: vermilion condensed "SugboWay" on steel-paper background, monospace "13C".
 
-Then prove the dark variables resolve, before Task 6 builds a toggle on top of them: temporarily wrap that block in `<View className="dark flex-1">`. Expected: the background flips to near-black `#191c1e` and the text to `#e2e5e0`. If nothing changes, the CSS variables are not wired — fix that here rather than discovering it in Task 6.
+Then prove the dark variables resolve, before Task 6 builds a toggle on top of them: temporarily wrap that block in `<View className="dark flex-1">`. Expected: the background flips to near-black `#131618`, the accent text to `#ff6a57`, and body text to `#eaecea`. If nothing changes, the CSS variables are not wired — fix that here rather than discovering it in Task 6.
 
 **If NativeWind fights the Tailwind version here, stop and fall back to `StyleSheet` + `theme/tokens.ts`** (spec §16). The token values are identical either way; only the styling syntax changes.
 
@@ -1258,21 +1265,30 @@ Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement CrowdingIndicator**
 
-Colors come from `classifyCrowding` semantics and are **reserved for crowding only**:
+Colors come from `classifyCrowding` semantics and are **reserved for crowding only**. The dot is a `backgroundColor` style prop, not a Tailwind class, so it must read the theme-resolved token — the crowding palette shifts between light and dark (`#1f7a43` → `#4fc27a`), and a hardcoded light green is nearly invisible on a `#131618` surface:
 
 ```tsx
 import { Text, View } from "react-native";
 import { classifyCrowding } from "../../domain/crowding";
-
-const COLOR: Record<string, string> = {
-  comfortable: "#1f7a43", moderate: "#c9791a", crowded: "#b8501e", packed: "#b3261e",
-};
+import { useTheme } from "../ThemeProvider";
+import { TOKENS } from "../../theme/tokens";
+import type { CrowdingLevel } from "../../domain";
 
 export default function CrowdingIndicator({ score }: { score: number }) {
   const { level } = classifyCrowding(score);
+  const { resolved } = useTheme();
+  const t = TOKENS[resolved];
+
+  const color: Record<CrowdingLevel, string> = {
+    comfortable: t.safeGreen,
+    moderate: t.alertAmber,
+    crowded: t.clay,
+    packed: t.error,
+  };
+
   return (
     <View className="flex-row items-center gap-1.5">
-      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: COLOR[level] }} />
+      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color[level] }} />
       <Text className="text-xs font-sans capitalize text-on-surface-variant">{level}</Text>
     </View>
   );
@@ -1340,7 +1356,7 @@ git commit -m "feat(mobile): route result cards with fare and crowding"
 - Consumes: `RouteResult`, `RouteLeg`, `GeoJSONFeatureCollection` (Task 4); `fetchRouteShape`, `fetchRouteStops` (Task 5); `useTheme` (Task 6); `TOKENS` (Task 2)
 - Produces: `<RouteMap route: RouteResult | null; styleUrl: string />`
 
-**Theme note:** MapLibre layer styles are native props, not Tailwind classes, so they cannot pick up the CSS variables from Task 2. Read the accent from `TOKENS[resolved].enamel` (`#c0392b` light, `#da3e2e` dark) rather than hardcoding — otherwise the route line stays light-vermilion on a dark basemap.
+**Theme note:** MapLibre layer styles are native props, not Tailwind classes, so they cannot pick up the CSS variables from Task 2. Read the accent from `TOKENS[resolved].cebuBlue` (`#c0392b` light, `#ff6a57` dark) rather than hardcoding — otherwise the route line stays dark-vermilion against a dark basemap and nearly disappears. Use `cebuBlue`, not `enamel`: this is a stroke on a map, and `cebuBlue` is the accent the web app brightens for dark legibility.
 
 This replaces MapLibre GL JS. The web app's "park one map element and move it between cards" trick and its `style.load` layer-restoration handler both **disappear** — RN re-renders sources declaratively.
 
@@ -1382,7 +1398,7 @@ const EMPTY: GeoJSONFeatureCollection = { type: "FeatureCollection", features: [
 export default function RouteMap({ route, styleUrl }: { route: RouteResult | null; styleUrl: string }) {
   const [track, setTrack] = useState<GeoJSONFeatureCollection>(EMPTY);
   const { resolved } = useTheme();
-  const accent = TOKENS[resolved].enamel;
+  const accent = TOKENS[resolved].cebuBlue;
 
   useEffect(() => {
     if (!route) { setTrack(EMPTY); return; }

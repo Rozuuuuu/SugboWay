@@ -290,11 +290,18 @@ real tokens are:
 
 | Token | Light | Dark |
 |---|---|---|
-| Accent (`--color-cebu-blue`, historical name retained) | `#c0392b` enamel vermilion | — |
-| `--sw-enamel` | `#c0392b` | `#da3e2e` |
-| `--color-surface` | `#eff0ed` cool steel paper | (see `.dark` block) |
-| `--color-on-surface` | `#191c1e` ink | — |
-| Crowding-reserved | `--color-safe-green` `#1f7a43`, `--color-alert-amber` `#c9791a` | — |
+| `--color-cebu-blue` (text/stroke accent, historical name retained) | `#c0392b` enamel vermilion | `#ff6a57` |
+| `--sw-enamel` (plate fill behind white text) | `#d23a2b` | `#da3e2e` |
+| `--color-surface` | `#eff0ed` cool steel paper | `#131618` |
+| `--color-on-surface` | `#191c1e` ink | `#eaecea` |
+| `--color-outline-variant` (hairline rules) | `#c9cdc8` | `#2c3134` |
+| Crowding-reserved: `--color-safe-green` | `#1f7a43` | `#4fc27a` |
+| Crowding-reserved: `--color-alert-amber` | `#c9791a` | `#e6b24a` |
+
+Two points that are easy to get wrong, and were gotten wrong once already while drafting this spec:
+
+1. **`--color-cebu-blue` and `--sw-enamel` are different accents with different jobs**, not aliases. The first is text/stroke and is *brightened* for dark; the second is a fill sitting behind white text.
+2. **The crowding palette is not theme-invariant.** Its *meaning* is reserved, but its hex values shift for dark-surface legibility. The dark values live in the `@layer theme { html.dark, .dark { … } }` block near the top of `globals.css` — **not** the `.sw-*` block further down, which only redefines the enamel plate variables. Read them; do not infer a dark value by darkening a light one.
 
 Fonts are **Hanken Grotesk** (`--font-sans`, body), **Saira Condensed**
 (`--font-display` / `--font-signboard`), and **JetBrains Mono** (`--font-mono`, route-code
