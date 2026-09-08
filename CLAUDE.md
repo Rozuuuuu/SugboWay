@@ -237,8 +237,15 @@ loaded, the frontend falls back to a straight line between stops rather than fak
   (never CommonJS `require`); `camelCase` for files/variables, `PascalCase` for
   components. **State is plain local React state + custom hooks — there is no Zustand or
   other global store**, despite what `SKILLS.md` claims.
-- **Design tokens** live in `sugboway-web/src/app/globals.css` (Tailwind v4): sand/sea
-  palette, Cebu Blue `#0056B3` as the single accent, Plus Jakarta Sans (UI), JetBrains
-  Mono (route-code badges). Full light/dark theming.
+- **Design tokens** live in `sugboway-web/src/app/globals.css` (Tailwind v4). The system is
+  **"Signboard"**, grounded in the Cebu jeepney destination board: cool steel-tinted paper
+  surfaces, ink lettering, and one enamel-vermilion accent `#c0392b` (`#da3e2e` in dark) —
+  kept under the *historical* token name `--color-cebu-blue` for compatibility, so
+  `text-cebu-blue` renders vermilion, not blue. Fonts are Hanken Grotesk (body,
+  `--font-sans`), Saira Condensed (display/signboard), JetBrains Mono (route-code badges).
+  Green `#1f7a43` / amber `#c9791a` / red are **reserved for crowding** — don't reuse them
+  for generic UI state. `.sw-*` classes (`sw-card`, `sw-btn-primary`, `sw-brand-tile`) are
+  hand-written CSS, not Tailwind utilities. Icons come from the **Material Symbols Outlined**
+  web font via `className="material-symbols-outlined"`. Full light/dark theming.
 - **Go:** keep `domain/` free of HTTP/DB types; new spatial or fare behavior belongs in
   `domain/` with a test alongside it, surfaced through a handler in `adapter/api/`.

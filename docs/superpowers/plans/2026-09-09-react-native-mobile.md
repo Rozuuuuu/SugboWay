@@ -259,11 +259,11 @@ export const TOKENS = {
 
 - [ ] **Step 3: Write the Tailwind config**
 
-Create `sugboway-mobile/tailwind.config.js`. Dark mode uses the **class** strategy to match the web app's `@custom-variant dark`:
+Create `sugboway-mobile/tailwind.config.js`. Dark mode uses the **class** strategy to match the web app's `@custom-variant dark`.
+
+**Colors resolve through CSS variables, never hardcoded hex.** A config that maps `surface` directly to the light hex would make dark mode inert: the `dark` class Task 6 toggles would have nothing to resolve to, and every component uses bare `bg-surface` rather than `dark:` prefixes. The variables are defined per-theme in `global.css` (Step 4).
 
 ```js
-const { TOKENS } = require("./theme/tokens");
-
 module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
@@ -271,23 +271,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        "cebu-blue": TOKENS.light.cebuBlue,
-        enamel: TOKENS.light.enamel,
-        "safe-green": TOKENS.light.safeGreen,
-        "alert-amber": TOKENS.light.alertAmber,
-        "aircon-cyan": TOKENS.light.airconCyan,
-        clay: TOKENS.light.clay,
-        surface: TOKENS.light.surface,
-        "surface-container": TOKENS.light.surfaceContainer,
-        "surface-container-lowest": TOKENS.light.surfaceContainerLowest,
-        "surface-variant": TOKENS.light.surfaceVariant,
-        "on-surface": TOKENS.light.onSurface,
-        "on-surface-variant": TOKENS.light.onSurfaceVariant,
-        outline: TOKENS.light.outline,
-        "outline-variant": TOKENS.light.outlineVariant,
+        "cebu-blue": "rgb(var(--cebu-blue) / <alpha-value>)",
+        enamel: "rgb(var(--enamel) / <alpha-value>)",
+        "enamel-deep": "rgb(var(--enamel-deep) / <alpha-value>)",
+        "safe-green": "rgb(var(--safe-green) / <alpha-value>)",
+        "alert-amber": "rgb(var(--alert-amber) / <alpha-value>)",
+        "aircon-cyan": "rgb(var(--aircon-cyan) / <alpha-value>)",
+        clay: "rgb(var(--clay) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        "surface-container": "rgb(var(--surface-container) / <alpha-value>)",
+        "surface-container-lowest": "rgb(var(--surface-container-lowest) / <alpha-value>)",
+        "surface-variant": "rgb(var(--surface-variant) / <alpha-value>)",
+        "on-surface": "rgb(var(--on-surface) / <alpha-value>)",
+        "on-surface-variant": "rgb(var(--on-surface-variant) / <alpha-value>)",
+        outline: "rgb(var(--outline) / <alpha-value>)",
+        "outline-variant": "rgb(var(--outline-variant) / <alpha-value>)",
+        error: "rgb(var(--error) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["HankenGrotesk_400Regular"],
+        "sans-semibold": ["HankenGrotesk_600SemiBold"],
         display: ["SairaCondensed_600SemiBold"],
         mono: ["JetBrainsMono_500Medium"],
       },
@@ -296,6 +299,8 @@ module.exports = {
   plugins: [],
 };
 ```
+
+`theme/tokens.ts` stays the single source of the hex values — it is what Step 4's variable blocks are transcribed from, and what `RouteMap` reads in Task 10 for the map line color, where a Tailwind class cannot reach.
 
 - [ ] **Step 4: Wire Babel, Metro, and the CSS entry**
 
@@ -319,13 +324,55 @@ const { withNativeWind } = require("nativewind/metro");
 module.exports = withNativeWind(getDefaultConfig(__dirname), { input: "./global.css" });
 ```
 
-`global.css`:
+`global.css` — the light values live on `:root`, the dark overrides on `.dark`, as space-separated RGB channels so Tailwind's `<alpha-value>` works. Transcribed from `theme/tokens.ts`; the two must stay in agreement:
 
 ```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --cebu-blue: 192 57 43;
+    --enamel: 192 57 43;
+    --enamel-deep: 143 38 26;
+    --safe-green: 31 122 67;
+    --alert-amber: 201 121 26;
+    --aircon-cyan: 43 113 128;
+    --clay: 184 80 30;
+    --surface: 239 240 237;
+    --surface-container: 234 236 231;
+    --surface-container-lowest: 255 255 255;
+    --surface-variant: 226 229 224;
+    --on-surface: 25 28 30;
+    --on-surface-variant: 76 84 83;
+    --outline: 120 128 126;
+    --outline-variant: 201 205 200;
+    --error: 179 38 30;
+  }
+
+  .dark {
+    --cebu-blue: 218 62 46;
+    --enamel: 218 62 46;
+    --enamel-deep: 126 36 26;
+    --safe-green: 31 122 67;
+    --alert-amber: 201 121 26;
+    --aircon-cyan: 43 113 128;
+    --clay: 184 80 30;
+    --surface: 25 28 30;
+    --surface-container: 29 33 35;
+    --surface-container-lowest: 15 18 20;
+    --surface-variant: 38 42 44;
+    --on-surface: 226 229 224;
+    --on-surface-variant: 201 205 200;
+    --outline: 139 147 145;
+    --outline-variant: 58 67 66;
+    --error: 255 180 171;
+  }
+}
 ```
+
+Crowding colors (`safe-green`, `alert-amber`) are deliberately **identical in both themes** — they carry reserved semantic meaning, and shifting them per theme would weaken the signal.
 
 `nativewind-env.d.ts`:
 
@@ -377,6 +424,8 @@ Temporarily set the Routes screen body to:
 ```
 
 Rebuild the dev client (`eas build --profile development --platform android`) — NativeWind changes Babel config, so a JS reload is not enough. Expected: vermilion condensed "SugboWay" on steel-paper background, monospace "13C".
+
+Then prove the dark variables resolve, before Task 6 builds a toggle on top of them: temporarily wrap that block in `<View className="dark flex-1">`. Expected: the background flips to near-black `#191c1e` and the text to `#e2e5e0`. If nothing changes, the CSS variables are not wired — fix that here rather than discovering it in Task 6.
 
 **If NativeWind fights the Tailwind version here, stop and fall back to `StyleSheet` + `theme/tokens.ts`** (spec §16). The token values are identical either way; only the styling syntax changes.
 
@@ -684,6 +733,7 @@ git commit -m "feat(mobile): copy pure domain layer with unit tests"
   - `fetchNearbyStops(lat, lon, radius) → Promise<GTFSStop[]>`
   - `fetchAllRoutes() → Promise<GTFSRoute[]>`
   - `fetchWeather() → Promise<unknown>`
+  - `askAi(message: string, token: string | null) → Promise<{ ok: boolean; status: number; body: unknown }>` (consumed by Task 17)
 
 - [ ] **Step 1: Add `extra` to the Expo config**
 
@@ -1082,7 +1132,7 @@ git commit -m "feat(mobile): auth provider backed by expo-secure-store"
 - Test: `sugboway-mobile/__tests__/route/PlaceDropdown.test.tsx`
 
 **Interfaces:**
-- Consumes: `searchPlaces`, `CEBU_PLACES`, `Place` (Task 4); `fetchNearbyStops` (Task 5); `Card`, `Icon` (Task 3)
+- Consumes: `searchPlaces`, `CEBU_PLACES`, `Place` (Task 4); `searchRoutes` (Task 5); `PrimaryButton` (Task 3)
 - Produces: `<PlaceDropdown label: string; value: Place | null; onSelect: (p: Place) => void />`; the Routes screen holds `origin`/`destination` state
 
 - [ ] **Step 1: Write the failing test**
@@ -1287,8 +1337,10 @@ git commit -m "feat(mobile): route result cards with fare and crowding"
 - Modify: `sugboway-mobile/app.config.ts`, `app/(tabs)/index.tsx`
 
 **Interfaces:**
-- Consumes: `RouteResult`, `RouteLeg`, `GeoJSONFeatureCollection` (Task 4); `fetchRouteShape`, `fetchRouteStops` (Task 5); `useTheme` (Task 6)
+- Consumes: `RouteResult`, `RouteLeg`, `GeoJSONFeatureCollection` (Task 4); `fetchRouteShape`, `fetchRouteStops` (Task 5); `useTheme` (Task 6); `TOKENS` (Task 2)
 - Produces: `<RouteMap route: RouteResult | null; styleUrl: string />`
+
+**Theme note:** MapLibre layer styles are native props, not Tailwind classes, so they cannot pick up the CSS variables from Task 2. Read the accent from `TOKENS[resolved].enamel` (`#c0392b` light, `#da3e2e` dark) rather than hardcoding — otherwise the route line stays light-vermilion on a dark basemap.
 
 This replaces MapLibre GL JS. The web app's "park one map element and move it between cards" trick and its `style.load` layer-restoration handler both **disappear** — RN re-renders sources declaratively.
 
@@ -1321,12 +1373,16 @@ import { MapView, Camera, ShapeSource, LineLayer, CircleLayer, MarkerView } from
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { fetchRouteShape } from "../../lib/api";
+import { useTheme } from "../ThemeProvider";
+import { TOKENS } from "../../theme/tokens";
 import type { GeoJSONFeatureCollection, RouteResult } from "../../domain";
 
 const EMPTY: GeoJSONFeatureCollection = { type: "FeatureCollection", features: [] };
 
 export default function RouteMap({ route, styleUrl }: { route: RouteResult | null; styleUrl: string }) {
   const [track, setTrack] = useState<GeoJSONFeatureCollection>(EMPTY);
+  const { resolved } = useTheme();
+  const accent = TOKENS[resolved].enamel;
 
   useEffect(() => {
     if (!route) { setTrack(EMPTY); return; }
@@ -1374,13 +1430,13 @@ export default function RouteMap({ route, styleUrl }: { route: RouteResult | nul
       <ShapeSource id="route-track" shape={track}>
         <LineLayer
           id="route-track-line"
-          style={{ lineColor: "#c0392b", lineWidth: 4, lineCap: "round", lineJoin: "round" }}
+          style={{ lineColor: accent, lineWidth: 4, lineCap: "round", lineJoin: "round" }}
         />
       </ShapeSource>
       <ShapeSource id="route-stops" shape={stops}>
         <CircleLayer
           id="route-stops-dots"
-          style={{ circleRadius: 5, circleColor: "#ffffff", circleStrokeWidth: 2, circleStrokeColor: "#c0392b" }}
+          style={{ circleRadius: 5, circleColor: "#ffffff", circleStrokeWidth: 2, circleStrokeColor: accent }}
         />
       </ShapeSource>
       {route?.legs[0] && (
@@ -1956,7 +2012,7 @@ The Python service enforces the quota from the `Authorization: Bearer` header �
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { parseRateLimit } from "../../app/(tabs)/chat";
+import { parseRateLimit } from "../../lib/rateLimit";
 
 it("detects a 429 and reads reset_seconds", () => {
   expect(parseRateLimit(429, { reset_seconds: 120 })).toEqual({ limited: true, resetSeconds: 120 });
@@ -1971,7 +2027,7 @@ it("reports not limited on 200", () => {
 });
 ```
 
-Export `parseRateLimit` from a small `lib/rateLimit.ts` rather than the screen file if importing a route module in Jest proves awkward; update the import accordingly.
+`parseRateLimit` lives in `lib/rateLimit.ts`, not in the screen file — route modules under `app/` are awkward to import in Jest.
 
 - [ ] **Step 2: Run it to verify it fails**
 
