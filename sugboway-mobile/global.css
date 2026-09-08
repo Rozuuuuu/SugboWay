@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --cebu-blue: 192 57 43;
+    --enamel: 192 57 43;
+    --enamel-deep: 143 38 26;
+    --safe-green: 31 122 67;
+    --alert-amber: 201 121 26;
+    --aircon-cyan: 43 113 128;
+    --clay: 184 80 30;
+    --surface: 239 240 237;
+    --surface-container: 234 236 231;
+    --surface-container-lowest: 255 255 255;
+    --surface-variant: 226 229 224;
+    --on-surface: 25 28 30;
+    --on-surface-variant: 76 84 83;
+    --outline: 120 128 126;
+    --outline-variant: 201 205 200;
+    --error: 179 38 30;
+  }
+
+  .dark {
+    --cebu-blue: 218 62 46;
+    --enamel: 218 62 46;
+    --enamel-deep: 126 36 26;
+    --safe-green: 31 122 67;
+    --alert-amber: 201 121 26;
+    --aircon-cyan: 43 113 128;
+    --clay: 184 80 30;
+    --surface: 25 28 30;
+    --surface-container: 29 33 35;
+    --surface-container-lowest: 15 18 20;
+    --surface-variant: 38 42 44;
+    --on-surface: 226 229 224;
+    --on-surface-variant: 201 205 200;
+    --outline: 139 147 145;
+    --outline-variant: 58 67 66;
+    --error: 255 180 171;
+  }
+}
