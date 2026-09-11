@@ -19,7 +19,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<{ ok: boolean; needsVerification?: boolean; error?: string }>;
   googleLogin: (credential: string) => Promise<{ ok: boolean; error?: string }>;
   resend: (email: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   upgrade: (plan: "pro" | "max") => Promise<{ ok: boolean; error?: string }>;
 }
 
@@ -32,7 +32,7 @@ const AuthContext = createContext<AuthContextValue>({
   login: async () => ({ ok: false }),
   googleLogin: async () => ({ ok: false }),
   resend: async () => {},
-  logout: () => {},
+  logout: async () => {},
   upgrade: async () => ({ ok: false }),
 });
 
@@ -93,15 +93,30 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     await authApi.resend(email);
   }, []);
 
-  // Kept synchronous to match the public interface (logout: () => void); the
-  // SecureStore deletes run in the background rather than being awaited here.
-  const logout = useCallback(() => {
+  // Unlike the web version's synchronous logout (localStorage.removeItem is
+  // sync), this returns a Promise because SecureStore is async. In-memory
+  // state is cleared FIRST and unconditionally, so the UI is correct even if
+  // the deletes below fail or the process dies before they land — but a
+  // process death between clearing memory and the deletes landing leaves the
+  // token on disk, and the next launch's restore would sign the user back in.
+  // Callers (e.g. a Profile screen) should `await logout()` before navigating
+  // away, to close that window as tightly as possible.
+  const logout = useCallback(async () => {
     setToken(null);
     setUser(null);
-    void (async () => {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
-      await SecureStore.deleteItemAsync(USER_KEY);
-    })();
+    try {
+      await Promise.all([
+        SecureStore.deleteItemAsync(TOKEN_KEY),
+        SecureStore.deleteItemAsync(USER_KEY),
+      ]);
+    } catch {
+      // Storage delete failed; in-memory state is already cleared so the UI
+      // is correct for this session. The residual risk: a stale token left on
+      // disk (delete failure, or the process dying before the deletes land)
+      // will be picked back up by the next launch's restore, silently
+      // re-authenticating the user. Swallowing here (rather than rejecting)
+      // keeps logout() resolving so callers can still navigate away.
+    }
   }, []);
 
   const upgrade = useCallback(async (plan: "pro" | "max") => {

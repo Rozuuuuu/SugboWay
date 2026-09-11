@@ -103,3 +103,8 @@ See the "Copied code" section in `README.md` for the drift-warning this rule bac
   enamel-on-enamel and nearly disappears.
 - `app/_layout.tsx` gates rendering on `useFonts` and ignores the hook's error value, so a font
   load failure would render nothing, forever, with no console signal.
+- `AuthProvider`'s `logout()` returns a `Promise<void>` (unlike web's synchronous version,
+  because `SecureStore` is async) — **always `await logout()`** before navigating away from a
+  screen that calls it. Firing it and navigating immediately reopens the window where a
+  process death before the SecureStore deletes land leaves the token on disk, and the next
+  launch's restore silently signs the user back in.

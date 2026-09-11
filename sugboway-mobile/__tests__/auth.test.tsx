@@ -15,15 +15,21 @@ const USER_KEY = "sugboway-auth-user";
 const okJson = (body: unknown) =>
   Promise.resolve({ status: 200, json: () => Promise.resolve(body) } as Response);
 
+// Captures the live auth object on every render so tests can call and await
+// `logout()` directly (its actual returned Promise), rather than firing a
+// press event and hoping `act` flushes the right microtasks.
+let latestAuth: ReturnType<typeof useAuth> | null = null;
+
 function Probe() {
-  const { isAuthed, isRestoring, user, login, logout } = useAuth();
+  const auth = useAuth();
+  latestAuth = auth;
+  const { isAuthed, isRestoring, user, login } = auth;
   return (
     <>
       <Text>{isRestoring ? "restoring" : "settled"}</Text>
       <Text>{isAuthed ? "in" : "out"}</Text>
       <Text>{user?.name ?? "no-user"}</Text>
       <Text onPress={() => login("ana@example.com", "hunter2")}>do-login</Text>
-      <Text onPress={() => logout()}>do-logout</Text>
     </>
   );
 }
@@ -129,7 +135,7 @@ it("does not persist anything when login reports an unverified email", async () 
   expect(SecureStore.setItemAsync).not.toHaveBeenCalled();
 });
 
-it("clears SecureStore on logout", async () => {
+it("clears SecureStore on logout and resolves the returned promise", async () => {
   (SecureStore.getItemAsync as jest.Mock).mockImplementation((key: string) => {
     if (key === TOKEN_KEY) return Promise.resolve("stored-token");
     if (key === USER_KEY) {
@@ -146,10 +152,48 @@ it("clears SecureStore on logout", async () => {
   await waitFor(() => expect(getByText("in")).toBeTruthy());
 
   await act(async () => {
-    fireEvent.press(getByText("do-logout"));
+    await latestAuth!.logout();
   });
 
-  await waitFor(() => expect(getByText("out")).toBeTruthy());
+  expect(getByText("out")).toBeTruthy();
   expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(TOKEN_KEY);
   expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(USER_KEY);
+});
+
+// Guards the OOM-kill / force-stop / crash window from fix round 1: if the
+// SecureStore deletes reject (Keystore unavailable, etc.), logout() must
+// still resolve — not throw — and the user must still read as signed out.
+// Checked: removing the try/catch around the Promise.all in AuthProvider's
+// logout makes this test fail (the rejection propagates out of
+// `latestAuth!.logout()`, so `await act(...)` throws and the test errors out
+// instead of passing), so this is not a test that would pass against a
+// broken implementation.
+it("resolves (does not throw) and leaves the user signed out even when the SecureStore deletes reject", async () => {
+  (SecureStore.getItemAsync as jest.Mock).mockImplementation((key: string) => {
+    if (key === TOKEN_KEY) return Promise.resolve("stored-token");
+    if (key === USER_KEY) {
+      return Promise.resolve(JSON.stringify({ name: "Ana Cruz", email: "ana@example.com", tier: "free" }));
+    }
+    return Promise.resolve(null);
+  });
+  (SecureStore.deleteItemAsync as jest.Mock).mockRejectedValue(new Error("keystore unavailable"));
+
+  const { getByText } = render(
+    <AuthProvider>
+      <Probe />
+    </AuthProvider>
+  );
+  await waitFor(() => expect(getByText("in")).toBeTruthy());
+
+  let threw = false;
+  try {
+    await act(async () => {
+      await latestAuth!.logout();
+    });
+  } catch {
+    threw = true;
+  }
+
+  expect(threw).toBe(false);
+  expect(getByText("out")).toBeTruthy();
 });
