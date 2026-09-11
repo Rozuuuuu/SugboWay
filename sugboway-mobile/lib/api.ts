@@ -2,9 +2,13 @@ import { ROUTING_API_URL, AI_API_URL } from "./config";
 import type {
   Coordinate, GTFSRoute, GTFSStop, PassengerType, RouteResult,
 } from "../domain";
-// GeoJSONFeatureCollection isn't re-exported by the domain barrel (domain/index.ts is a
-// byte-identical copy of the web app's and must not be edited) — import it directly.
-import type { GeoJSONFeatureCollection } from "../domain/types";
+
+/** Minimal GeoJSON geometry shape — enough to describe what /route/shape hands back
+ *  after its `geojson` string field is parsed. Not a full geometry library on purpose. */
+export interface RouteGeometry {
+  type: string;
+  coordinates: unknown;
+}
 
 async function getJson<T>(url: string, emptyOn404: T | undefined = undefined): Promise<T> {
   const res = await fetch(url);
@@ -32,13 +36,20 @@ export function fetchServingRoutes(origin: Coordinate, dest: Coordinate, radius 
   );
 }
 
-export async function fetchRouteShape(routeId: string): Promise<GeoJSONFeatureCollection | null> {
+/**
+ * GET /route/shape returns { route_id, geojson } where `geojson` is a JSON-ENCODED
+ * STRING holding a PostGIS geometry — not an object, and not a FeatureCollection.
+ * Parse it and hand back the bare geometry; the caller wraps it in a Feature.
+ */
+export async function fetchRouteShape(routeId: string): Promise<RouteGeometry | null> {
   try {
-    return await getJson<GeoJSONFeatureCollection>(
+    const data = await getJson<{ geojson?: string }>(
       `${ROUTING_API_URL}/api/v1/route/shape?route_id=${routeId}`,
     );
+    if (!data.geojson) return null;
+    return JSON.parse(data.geojson) as RouteGeometry;
   } catch {
-    return null; // no road geometry -> caller falls back to a straight line
+    return null; // missing shape (handler 404s) or malformed JSON -> straight-line fallback
   }
 }
 
@@ -78,8 +89,13 @@ export interface CebuWeather {
   text: string;
 }
 
-export const fetchWeather = () =>
-  getJson<CebuWeather | null>(`${ROUTING_API_URL}/api/v1/weather`, null);
+export async function fetchWeather(): Promise<CebuWeather | null> {
+  try {
+    return await getJson<CebuWeather>(`${ROUTING_API_URL}/api/v1/weather`);
+  } catch {
+    return null; // weather is a nicety, never a blocker
+  }
+}
 
 export async function askAi(message: string, token: string | null) {
   const res = await fetch(`${AI_API_URL}/api/v1/chat`, {
