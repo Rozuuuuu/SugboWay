@@ -40,3 +40,15 @@ it("setTheme('dark') updates resolved and persists the choice under the sugboway
   await waitFor(() => expect(getByText("dark")).toBeTruthy());
   await waitFor(() => expect(AsyncStorage.setItem).toHaveBeenCalledWith("sugboway-theme", "dark"));
 });
+
+it("restores a persisted theme choice from storage on mount", async () => {
+  await AsyncStorage.setItem("sugboway-theme", "dark");
+
+  const { getByText } = render(
+    <ThemeProvider>
+      <Probe />
+    </ThemeProvider>
+  );
+
+  await waitFor(() => expect(getByText("dark")).toBeTruthy());
+});

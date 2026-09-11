@@ -22,6 +22,7 @@
     --error: 179 38 30;
   }
 
+  /* Drives ThemeProvider's root "dark" class via a real CSS-variable context — see the comment at the top of components/ThemeProvider.tsx before reaching for a dark-variant class instead. */
   .dark {
     --cebu-blue: 255 106 87;
     --enamel: 218 62 46;
