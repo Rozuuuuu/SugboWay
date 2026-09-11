@@ -12,6 +12,11 @@ const config: ExpoConfig = {
     adaptiveIcon: { backgroundColor: "#c0392b" },
   },
   plugins: ["expo-router"],
+  extra: {
+    routingApiUrl: process.env.ROUTING_API_URL ?? "http://localhost:8080",
+    aiApiUrl: process.env.AI_API_URL ?? "http://localhost:8000",
+    googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID,
+  },
 };
 
 export default config;
