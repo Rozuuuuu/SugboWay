@@ -20,6 +20,8 @@
 - Two accents, distinct roles: `cebu-blue` (text/stroke) `#c0392b` light / `#ff6a57` dark; `enamel` (plate fill behind white text) `#d23a2b` light / `#da3e2e` dark. Both keep the historical `cebu-blue` name from the web app.
 - Fonts: **Hanken Grotesk** (body), **Saira Condensed** (display/signboard), **JetBrains Mono** (route codes).
 - Reserved semantics: green / amber / clay / red are **crowding-only**. Never reuse them for generic UI state. Their hex values shift per theme (`#1f7a43` → `#4fc27a`, `#c9791a` → `#e6b24a`) — always read them from `TOKENS[resolved]`, never hardcode.
+- **Icon names do not copy over from the web app.** The web uses Material Symbols Outlined (underscore names, `wb_sunny`); this app uses `@expo/vector-icons/MaterialIcons`, the classic set (hyphen names, `wb-sunny`). Some Symbols names have no classic equivalent at all — `rainy`, used in the weather chip, is one. Translate each name and verify it exists in `MaterialIcons.glyphMap`; an unknown name renders as blank space, not an error.
+- Tests use `@testing-library/react-native` **v13's synchronous `render()`**. The dependency is pinned at `^13.3.3`; never bump it to v14 or write `await render(...)`.
 - Metro Cebu bounds, used everywhere a bbox is needed: `[[123.82, 10.25], [123.96, 10.42]]`.
 - Map default camera: center `[123.89, 10.31]`, zoom `13`.
 - Basemap styles: `https://basemaps.cartocdn.com/gl/positron-gl-style/style.json` (light), `https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json` (dark).
