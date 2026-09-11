@@ -85,6 +85,15 @@ renders as blank space, not an error.
   `.sw-*` block further down, which only redefines the enamel plate variables. Read the file;
   do not infer a dark value by darkening a light one.
 
+## Copied domain code
+
+`domain/` and `data/places.ts` are byte-for-byte copies of `sugboway-web/src/{domain,data}`,
+not shared via an npm workspace (Metro resolves symlinked workspaces badly). Do not edit
+these copied files to "fix" a test or add a feature — they are the shipping, production
+LTFRB fare table and BPR crowding model. If the fare/crowding logic genuinely needs to
+change, edit `sugboway-web/src/domain/` first and re-copy both files in the same commit.
+See the "Copied code" section in `README.md` for the drift-warning this rule backs.
+
 ## Known sharp edges
 
 - `<Card>` sets its own `className` and `style` *after* spreading `...rest`, so a `style` prop

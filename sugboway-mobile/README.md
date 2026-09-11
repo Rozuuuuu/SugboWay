@@ -37,3 +37,10 @@ fully support once later tasks add MapLibre/location/notifications.
 
 - `npm run android` — start Metro for Android
 - `npm run web` — start Metro for web (debugging only; this app targets Android)
+
+## Copied code
+
+`domain/` and `data/places.ts` are **copies** of `sugboway-web/src/{domain,data}`.
+They are intentionally duplicated rather than shared through an npm workspace
+(Metro resolves symlinked workspaces badly). If fare or crowding logic changes,
+update **both** copies in the same commit.
