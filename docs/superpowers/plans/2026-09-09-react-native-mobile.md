@@ -880,13 +880,22 @@ export function fetchServingRoutes(origin: Coordinate, dest: Coordinate, radius 
   );
 }
 
-export async function fetchRouteShape(routeId: string): Promise<GeoJSONFeatureCollection | null> {
+/**
+ * GET /route/shape returns { route_id, geojson } where `geojson` is a JSON-ENCODED
+ * STRING holding a PostGIS geometry — not an object, and not a FeatureCollection.
+ * Parse it and hand back the bare geometry; the caller wraps it in a Feature.
+ * Getting this wrong is silent: the map still renders, but every route degrades
+ * to a straight line and no road geometry is ever drawn.
+ */
+export async function fetchRouteShape(routeId: string): Promise<RouteGeometry | null> {
   try {
-    return await getJson<GeoJSONFeatureCollection>(
+    const data = await getJson<{ geojson?: string }>(
       `${ROUTING_API_URL}/api/v1/route/shape?route_id=${routeId}`,
     );
+    if (!data.geojson) return null;
+    return JSON.parse(data.geojson) as RouteGeometry;
   } catch {
-    return null; // no road geometry -> caller falls back to a straight line
+    return null; // missing shape (handler 404s) or malformed JSON -> straight-line fallback
   }
 }
 
@@ -922,8 +931,19 @@ export async function fetchAllRoutes(): Promise<GTFSRoute[]> {
 
 export interface CebuWeather { temp_c: number; humidity: number; text: string }
 
-export const fetchWeather = () =>
-  getJson<CebuWeather | null>(`${ROUTING_API_URL}/api/v1/weather`, null);
+/**
+ * The weather proxy never returns 404 — every failure path (missing key, upstream
+ * error, decode failure) is a 502 or 503. So `emptyOn404` cannot give us the null
+ * this signature promises; it needs a real try/catch or callers hit an unhandled
+ * rejection on any weather outage.
+ */
+export async function fetchWeather(): Promise<CebuWeather | null> {
+  try {
+    return await getJson<CebuWeather>(`${ROUTING_API_URL}/api/v1/weather`);
+  } catch {
+    return null; // weather is a nicety, never a blocker
+  }
+}
 
 export async function askAi(message: string, token: string | null) {
   const res = await fetch(`${AI_API_URL}/api/v1/chat`, {
@@ -1437,9 +1457,11 @@ export default function RouteMap({ route, styleUrl }: { route: RouteResult | nul
     (async () => {
       const features: GeoJSONFeatureCollection["features"] = [];
       for (const leg of route.legs) {
-        const shape = leg.routeId ? await fetchRouteShape(leg.routeId) : null;
-        if (shape?.features?.length) {
-          features.push(...shape.features);
+        // fetchRouteShape returns a bare geometry (already JSON.parsed), not a
+        // FeatureCollection — see Task 5. Wrap it, exactly as the web app does.
+        const geometry = leg.routeId ? await fetchRouteShape(leg.routeId) : null;
+        if (geometry) {
+          features.push({ type: "Feature", geometry, properties: { legType: leg.type } });
         } else {
           // No road geometry: draw a straight line rather than faking a path.
           features.push({
