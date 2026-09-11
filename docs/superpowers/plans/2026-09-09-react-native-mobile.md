@@ -2175,7 +2175,8 @@ Handle the three real outcomes the Go API returns:
 
 `app/(tabs)/profile.tsx` renders:
 - Signed out: a "Sign in" `PrimaryButton` → `router.push("/auth")`.
-- Signed in: name, email, tier badge, and a "Sign out" action.
+- Signed in: name, email, tier badge, and a "Sign out" action. **`logout()` returns a promise — await it before navigating away.** It clears in-memory state synchronously but the SecureStore deletes are async; navigating early can let a process kill leave the token on disk, and the next launch would silently sign the user back in. This diverges deliberately from the web version, whose `logout` is synchronous because `localStorage` is.
+- Gate all signed-in/signed-out UI on `isRestoring` before trusting `isAuthed`. `SecureStore.getItemAsync` is async, so an already-authenticated user would otherwise see "Sign in" flash on every cold start.
 - `<OfflineMapCard />` from Task 13.
 - `<ThemeToggle />` cycling light → dark → system via `useTheme().setTheme`.
 - The emergency hotline list from the web Profile tab.
