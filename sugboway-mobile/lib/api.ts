@@ -66,8 +66,20 @@ export async function fetchNearbyStops(lat: number, lon: number, radius = 500): 
   return data.nearbyStops ?? [];
 }
 
-export const fetchAllRoutes = () => getJson<GTFSRoute[]>(`${ROUTING_API_URL}/api/v1/routes`, []);
-export const fetchWeather = () => getJson<unknown>(`${ROUTING_API_URL}/api/v1/weather`, null);
+export async function fetchAllRoutes(): Promise<GTFSRoute[]> {
+  // GET /routes returns { count, routes: [...] } — not a bare array.
+  const data = await getJson<{ routes?: GTFSRoute[] }>(`${ROUTING_API_URL}/api/v1/routes`, {});
+  return data.routes ?? [];
+}
+
+export interface CebuWeather {
+  temp_c: number;
+  humidity: number;
+  text: string;
+}
+
+export const fetchWeather = () =>
+  getJson<CebuWeather | null>(`${ROUTING_API_URL}/api/v1/weather`, null);
 
 export async function askAi(message: string, token: string | null) {
   const res = await fetch(`${AI_API_URL}/api/v1/chat`, {
