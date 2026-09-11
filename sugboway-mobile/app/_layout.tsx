@@ -6,6 +6,7 @@ import { useFonts, HankenGrotesk_400Regular, HankenGrotesk_600SemiBold } from "@
 import { SairaCondensed_600SemiBold } from "@expo-google-fonts/saira-condensed";
 import { JetBrainsMono_500Medium } from "@expo-google-fonts/jetbrains-mono";
 import ThemeProvider, { useTheme } from "../components/ThemeProvider";
+import AuthProvider from "../components/AuthProvider";
 
 function ThemedRoot() {
   const { resolved } = useTheme();
@@ -37,7 +38,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <ThemedRoot />
+      <AuthProvider>
+        <ThemedRoot />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

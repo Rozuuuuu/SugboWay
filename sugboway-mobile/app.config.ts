@@ -11,7 +11,7 @@ const config: ExpoConfig = {
     package: "ph.sugboway.app",
     adaptiveIcon: { backgroundColor: "#c0392b" },
   },
-  plugins: ["expo-router"],
+  plugins: ["expo-router", "expo-secure-store"],
   extra: {
     routingApiUrl: process.env.ROUTING_API_URL ?? "http://localhost:8080",
     aiApiUrl: process.env.AI_API_URL ?? "http://localhost:8000",
