@@ -249,6 +249,19 @@ requires a new APK, not just a restart. Values are non-secret (public URLs and a
 OAuth *client* ID); no API keys ship in the bundle. The weather key stays server-side behind
 `GET /api/v1/weather`.
 
+**Verified live response shapes** (probed against the deployed API, not assumed — some are wrapped where a bare array might be expected):
+
+| Endpoint | Returns |
+|---|---|
+| `/api/v1/routes` | `{ count, routes: [...] }` — **wrapped**; 54 routes live |
+| `/api/v1/routes/serving` | `{ searchRadiusMeters, serving: [...] }` |
+| `/api/v1/stops/nearby` | `{ nearbyStops, searchRadiusMeters, timestamp, userLocation }` |
+| `/api/v1/weather` | `{ temp_c, humidity, text }` |
+
+Route objects carry `routeId`, `routeShortName`, `routeLongName`, `isModernized`, `hasAircon`, `hasConductor`, `distanceMeters`, `startLat`, `startLon`. They do **not** include `routeType` or `agencyId`, which the `GTFSRoute` type declares — treat those as optional at runtime.
+
+Neon's autosuspend is real and larger than the README implies: a cold first request measured **~32 seconds**, settling to ~0.6s once warm. Loading states must tolerate that, and no client timeout should be set below it.
+
 **Endpoints consumed** (all existing, none new):
 
 | Service | Endpoint |

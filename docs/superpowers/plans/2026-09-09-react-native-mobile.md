@@ -621,7 +621,15 @@ git commit -m "feat(mobile): UI primitives replacing .sw-* CSS classes"
 
 **Interfaces:**
 - Consumes: nothing
-- Produces: `calculateFare(distanceKm, passengerType, routeType) → FareBreakdown`; `formatPHP(amount) → string`; `bprTravelTime`, `volumeToScore(volume, capacity) → number`, `classifyCrowding(score) → CrowdingData`; types `RouteResult`, `RouteLeg`, `GTFSStop`, `GTFSRoute`, `Coordinate`, `PassengerType`, `CrowdingLevel`; `CEBU_PLACES: Place[]`, `searchPlaces(query, limit?) → Place[]`
+- Produces: `calculateFare(distanceKm: number, passengerType: PassengerType, transfers: number) → FareBreakdown`; `formatPHP(amount) → string`; `bprTravelTime`, `volumeToScore(volume, capacity) → number`, `classifyCrowding(score) → CrowdingData`; types `RouteResult`, `RouteLeg`, `GTFSStop`, `GTFSRoute`, `Coordinate`, `PassengerType`, `CrowdingLevel`; `CEBU_PLACES: Place[]`, `searchPlaces(query, limit?) → Place[]`
+
+**The real fare API — verified against the shipping `fare.ts`, not assumed.** The third argument is `transfers`, a number, **not** a route type. `FareBreakdown` has **no** `totalPHP` or `discountPHP` field; its fields are:
+
+```ts
+{ baseFare, distanceSurcharge, discountRate, discountedLegFare, totalFare, perLeg, passengerType }
+```
+
+The total to display is `totalFare`. Constants: `BASE_FARE_PHP: 13.0`, `SURCHARGE_PER_KM: 1.8`, `FREE_DISTANCE_KM: 4.0`, `DISCOUNT_RATE: 0.2` — so a 4 km regular trip is exactly `₱13.00`, and distance is only charged beyond the first 4 km.
 
 These files are pure TypeScript with zero DOM references — they copy without edits.
 
@@ -651,32 +659,45 @@ update **both** copies in the same commit.
 Create `sugboway-mobile/__tests__/domain/fare.test.ts`. Read the real constants in `domain/fare.ts` first and assert against them — do not invent numbers:
 
 ```ts
-import { calculateFare, formatPHP } from "../../domain/fare";
+import { calculateFare, formatPHP, FARE_CONSTANTS } from "../../domain/fare";
 
 describe("calculateFare", () => {
-  it("charges the minimum fare for a short regular trip", () => {
-    const fare = calculateFare(2, "regular", "jeepney");
-    expect(fare.totalPHP).toBeGreaterThan(0);
-    expect(fare.discountPHP).toBe(0);
+  it("charges exactly the base fare for a short regular trip within the free distance", () => {
+    const fare = calculateFare(2, "regular", 0);
+    expect(fare.totalFare).toBe(FARE_CONSTANTS.BASE_FARE_PHP); // 13.00
+    expect(fare.distanceSurcharge).toBe(0);
+    expect(fare.discountRate).toBe(0);
   });
 
   it("applies the statutory 20% discount for students, seniors, and PWDs", () => {
-    const regular = calculateFare(10, "regular", "jeepney");
+    const regular = calculateFare(10, "regular", 0);
+    expect(regular.totalFare).toBe(23.8); // 13 + (10-4)*1.8
+
     for (const type of ["student", "senior", "pwd"] as const) {
-      const discounted = calculateFare(10, type, "jeepney");
-      expect(discounted.totalPHP).toBeLessThan(regular.totalPHP);
+      const discounted = calculateFare(10, type, 0);
+      expect(discounted.discountRate).toBe(0.2);
+      expect(discounted.totalFare).toBe(19.04); // round(23.80 * 0.80)
     }
   });
 
-  it("increases fare with distance", () => {
-    expect(calculateFare(20, "regular", "jeepney").totalPHP)
-      .toBeGreaterThan(calculateFare(5, "regular", "jeepney").totalPHP);
+  it("increases fare with distance beyond the free 4km band", () => {
+    expect(calculateFare(20, "regular", 0).totalFare).toBe(41.8); // 13 + 16*1.8
+    expect(calculateFare(5, "regular", 0).totalFare).toBe(14.8);  // 13 + 1*1.8
+  });
+
+  it("multiplies the per-leg fare by the number of vehicles boarded (transfers + 1)", () => {
+    const direct = calculateFare(2, "regular", 0);
+    const oneTransfer = calculateFare(2, "regular", 1);
+    expect(direct.perLeg).toEqual([13]);
+    expect(oneTransfer.perLeg).toEqual([13, 13]);
+    expect(oneTransfer.totalFare).toBe(direct.totalFare * 2);
   });
 });
 
 describe("formatPHP", () => {
-  it("renders a peso-prefixed amount", () => {
-    expect(formatPHP(13)).toMatch(/13/);
+  it("renders a peso-prefixed amount with 2 decimal places", () => {
+    expect(formatPHP(13)).toBe("₱13.00");
+    expect(formatPHP(19.04)).toBe("₱19.04");
   });
 });
 ```
@@ -893,8 +914,16 @@ export async function fetchNearbyStops(lat: number, lon: number, radius = 500): 
   return data.nearbyStops ?? [];
 }
 
-export const fetchAllRoutes = () => getJson<GTFSRoute[]>(`${ROUTING_API_URL}/api/v1/routes`, []);
-export const fetchWeather = () => getJson<unknown>(`${ROUTING_API_URL}/api/v1/weather`, null);
+export async function fetchAllRoutes(): Promise<GTFSRoute[]> {
+  // GET /routes returns { count, routes: [...] } — not a bare array.
+  const data = await getJson<{ routes?: GTFSRoute[] }>(`${ROUTING_API_URL}/api/v1/routes`, {});
+  return data.routes ?? [];
+}
+
+export interface CebuWeather { temp_c: number; humidity: number; text: string }
+
+export const fetchWeather = () =>
+  getJson<CebuWeather | null>(`${ROUTING_API_URL}/api/v1/weather`, null);
 
 export async function askAi(message: string, token: string | null) {
   const res = await fetch(`${AI_API_URL}/api/v1/chat`, {
