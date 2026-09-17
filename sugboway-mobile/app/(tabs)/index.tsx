@@ -1,12 +1,19 @@
 import { useState } from "react";
 import { ActivityIndicator, FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import RouteMap from "../../components/map/RouteMap";
 import PlaceDropdown from "../../components/route/PlaceDropdown";
 import RouteCard from "../../components/route/RouteCard";
 import PrimaryButton from "../../components/ui/PrimaryButton";
+import { useTheme } from "../../components/ThemeProvider";
 import type { Place } from "../../data/places";
 import type { PassengerType, RouteResult } from "../../domain";
 import { searchRoutes } from "../../lib/api";
+
+const CARTO_STYLE_URL = {
+  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+} as const;
 
 export default function RoutesScreen() {
   const [origin, setOrigin] = useState<Place | null>(null);
@@ -19,6 +26,7 @@ export default function RoutesScreen() {
   const [selectedRoute, setSelectedRoute] = useState<RouteResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { resolved } = useTheme();
 
   const canSearch = origin !== null && destination !== null && !loading;
 
@@ -86,6 +94,12 @@ export default function RoutesScreen() {
               <Text className="text-on-surface-variant font-sans" testID="route-empty">
                 No routes found for that trip.
               </Text>
+            )}
+
+            {results !== null && results.length > 0 && (
+              <View className="h-64 rounded-lg overflow-hidden border border-outline-variant">
+                <RouteMap route={selectedRoute} styleUrl={CARTO_STYLE_URL[resolved]} />
+              </View>
             )}
           </View>
         }

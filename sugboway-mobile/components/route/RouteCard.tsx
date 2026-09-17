@@ -61,7 +61,12 @@ export default function RouteCard({
   const label = vehicleLabel(primaryTransitLeg?.route?.routeType, primaryTransitLeg?.route?.isModernized);
 
   return (
-    <Pressable onPress={onPress} testID="route-card" accessibilityRole="button">
+    <Pressable
+      onPress={onPress}
+      testID="route-card"
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+    >
       <Card className={selected ? "border-2 border-cebu-blue" : ""}>
         <View className="p-4 gap-3">
           {/* Route codes + fare */}

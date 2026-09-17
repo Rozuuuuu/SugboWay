@@ -17,6 +17,13 @@ jest.mock("../../lib/api", () => ({
   searchRoutes: jest.fn(),
 }));
 
+// RouteMap pulls in @maplibre/maplibre-react-native, a native module shipped
+// as ESM that Jest cannot require() — and even if it could, the map can't be
+// meaningfully exercised outside a device (see components/map/RouteMap.tsx).
+// This screen's tests are about search/selection wiring, not the map itself,
+// so stub the component the same way Icon is stubbed below.
+jest.mock("../../components/map/RouteMap", () => "RouteMap");
+
 // @expo/vector-icons's componentDidMount calls expo-font's loadAsync, which
 // resolves the icon font file through expo-asset's module registry. Under
 // Jest, jest-expo's asset transform stubs every asset file to the bare
@@ -172,12 +179,20 @@ describe("RoutesScreen", () => {
     fireEvent.press(getAllByTestId("place-option")[0]);
     fireEvent.press(getByText("Find routes"));
 
-    const cards = await findAllByTestId("route-card");
-    // Selecting a card must not throw and must be reflected via re-render;
-    // the strongest cheap signal available without a selected-state prop
-    // dump is that pressing it doesn't crash and the card tree stays intact.
+    let cards = await findAllByTestId("route-card");
+    // Neither card is selected before anything is tapped.
+    expect(cards[0].props.accessibilityState?.selected).toBeFalsy();
+    expect(cards[1].props.accessibilityState?.selected).toBeFalsy();
+
     fireEvent.press(cards[1]);
-    expect((await findAllByTestId("route-card")).length).toBe(2);
+
+    // RouteCard's Pressable sets accessibilityState={{ selected }}, so this
+    // asserts the tap actually flowed through to `selectedRoute` state
+    // (not just that pressing doesn't crash) — a screen reader needs this
+    // to announce which route is selected, too.
+    cards = await findAllByTestId("route-card");
+    expect(cards[0].props.accessibilityState?.selected).toBeFalsy();
+    expect(cards[1].props.accessibilityState?.selected).toBe(true);
   });
 
   it("shows an error instead of crashing when the routing service rejects", async () => {
