@@ -7,9 +7,11 @@
 // style-spec kebab-case; line-cap/line-join are layout, not paint. Do not
 // "fix" any of this toward v10 names seen in older tutorials.
 import { Map, Camera, GeoJSONSource, Layer, ViewAnnotation } from "@maplibre/maplibre-react-native";
-import { useEffect, useState } from "react";
+import type { CameraRef } from "@maplibre/maplibre-react-native";
+import { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import { fetchRouteShape } from "../../lib/api";
+import { boundsOf } from "../../lib/geo";
 import { useTheme } from "../ThemeProvider";
 import { TOKENS } from "../../theme/tokens";
 import type { RouteResult } from "../../domain";
@@ -27,6 +29,7 @@ function toGeoJSON(fc: GeoJSONFeatureCollection): import("geojson").FeatureColle
 
 export default function RouteMap({ route, styleUrl }: { route: RouteResult | null; styleUrl: string }) {
   const [track, setTrack] = useState<GeoJSONFeatureCollection>(EMPTY_FEATURE_COLLECTION);
+  const cameraRef = useRef<CameraRef>(null);
   const { resolved } = useTheme();
   // MapLibre layer styles are native props, not Tailwind classes — read the
   // accent straight from tokens. cebuBlue (not enamel): this is a map
@@ -50,9 +53,24 @@ export default function RouteMap({ route, styleUrl }: { route: RouteResult | nul
 
   const stops = buildStopsFeatureCollection(route);
 
+  // initialViewState is, as the name says, *initial* — it does not
+  // re-apply on later renders, so reframing to the selected route's track
+  // has to be imperative via the CameraRef rather than a declarative prop.
+  // No `bounds` prop exists on <Camera> in this library version (v11); that
+  // is a v10 API and does not apply here.
+  useEffect(() => {
+    const bounds = boundsOf(track);
+    if (bounds) {
+      cameraRef.current?.fitBounds(
+        bounds,
+        { padding: { top: 40, right: 40, bottom: 40, left: 40 }, duration: 600 }
+      );
+    }
+  }, [track]);
+
   return (
     <Map style={{ flex: 1 }} mapStyle={styleUrl}>
-      <Camera initialViewState={{ center: [123.89, 10.31], zoom: 13 }} />
+      <Camera ref={cameraRef} initialViewState={{ center: [123.89, 10.31], zoom: 13 }} />
       <GeoJSONSource id="route-track" data={toGeoJSON(track)}>
         <Layer
           id="route-track-line"
