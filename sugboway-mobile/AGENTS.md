@@ -18,10 +18,14 @@ Design and plan documents:
 `expo-router`'s web-only optional dependencies (`@expo/dom-webview` / `@radix-ui` / `vaul`
 pull `react-dom@19.2.8` against a pinned `react@19.2.3`).
 
-**That flag disables automatic peer installation, and it has silently dropped five required
+**That flag disables automatic peer installation, and it has silently dropped six required
 packages so far** — `react-native-worklets`, `babel-preset-expo`, `@react-native/jest-preset`,
-`test-renderer`, and one inert case. Two of them would have broken the build with errors that
-point nowhere near the real cause.
+`test-renderer`, `expo-asset`, and one inert case. Three of them would have broken the build
+or the app with errors that point nowhere near the real cause. `expo-asset` in particular was
+missing until Task 8, and without it **any component that mounts an `Icon` fails** — which is
+most screens.
+
+This keeps happening. Assume the next install drops something too.
 
 So, every time you install:
 
@@ -46,6 +50,22 @@ deliberate change that bumps the dependency and rewrites all tests in one pass �
 something to do in passing while implementing a feature.
 
 Run tests with `npm test` from this directory.
+
+### Testing a screen that renders an `Icon`
+
+`jest-expo` stubs font assets to the number `1`, so the icon font never really loads and
+`@expo/vector-icons` rejects. In a synchronous test this is invisible, but any test that
+awaits (a screen test with async state, for instance) will surface it as an unhandled
+rejection or a failure that looks unrelated to what you are testing.
+
+Mock the wrapper locally in those test files:
+
+```tsx
+jest.mock("../../components/ui/Icon", () => "Icon");
+```
+
+Mock `components/ui/Icon`, not `@expo/vector-icons` — the wrapper is ours and the seam is
+cleaner.
 
 ## Icons: web icon names do NOT copy over
 
