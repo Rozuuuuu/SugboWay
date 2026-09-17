@@ -1414,7 +1414,7 @@ This replaces MapLibre GL JS. The web app's "park one map element and move it be
 - [ ] **Step 1: Install and register the config plugin**
 
 ```bash
-npx expo install @maplibre/maplibre-react-native
+npx expo install @maplibre/maplibre-react-native@^11.3.10
 ```
 
 Add to `app.config.ts` `plugins`:
@@ -1436,7 +1436,7 @@ Install the new APK before continuing.
 - [ ] **Step 3: Implement the map**
 
 ```tsx
-import { MapView, Camera, ShapeSource, LineLayer, CircleLayer, MarkerView } from "@maplibre/maplibre-react-native";
+import { Map, Camera, GeoJSONSource, Layer, ViewAnnotation } from "@maplibre/maplibre-react-native";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { fetchRouteShape } from "../../lib/api";
@@ -1494,31 +1494,52 @@ export default function RouteMap({ route, styleUrl }: { route: RouteResult | nul
   };
 
   return (
-    <MapView style={{ flex: 1 }} mapStyle={styleUrl}>
-      <Camera defaultSettings={{ centerCoordinate: [123.89, 10.31], zoomLevel: 13 }} />
-      <ShapeSource id="route-track" shape={track}>
-        <LineLayer
+    <Map style={{ flex: 1 }} mapStyle={styleUrl}>
+      <Camera initialViewState={{ center: [123.89, 10.31], zoom: 13 }} />
+      <GeoJSONSource id="route-track" data={track}>
+        <Layer
           id="route-track-line"
-          style={{ lineColor: accent, lineWidth: 4, lineCap: "round", lineJoin: "round" }}
+          type="line"
+          paint={{ "line-color": accent, "line-width": 4 }}
+          layout={{ "line-cap": "round", "line-join": "round" }}
         />
-      </ShapeSource>
-      <ShapeSource id="route-stops" shape={stops}>
-        <CircleLayer
+      </GeoJSONSource>
+      <GeoJSONSource id="route-stops" data={stops}>
+        <Layer
           id="route-stops-dots"
-          style={{ circleRadius: 5, circleColor: "#ffffff", circleStrokeWidth: 2, circleStrokeColor: accent }}
+          type="circle"
+          paint={{
+            "circle-radius": 5,
+            "circle-color": "#ffffff",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": accent,
+          }}
         />
-      </ShapeSource>
+      </GeoJSONSource>
       {route?.legs[0] && (
-        <MarkerView coordinate={[route.legs[0].fromStop.location.lon, route.legs[0].fromStop.location.lat]}>
+        <ViewAnnotation lngLat={[route.legs[0].fromStop.location.lon, route.legs[0].fromStop.location.lat]}>
           <View className="bg-surface-container-lowest border border-outline-variant rounded px-2 py-1">
             <Text className="text-on-surface text-xs font-sans">{route.legs[0].fromStop.stopName}</Text>
           </View>
-        </MarkerView>
+        </ViewAnnotation>
       )}
-    </MapView>
+    </Map>
   );
 }
 ```
+
+**This code targets `@maplibre/maplibre-react-native` v11 (current: 11.3.10). Pin `^11.3.10`.** v11 was a breaking release that renamed almost everything, aligning the library with MapLibre GL JS. Anything you find in an older tutorial or answer will not compile:
+
+| v10 (obsolete) | v11 (use this) |
+|---|---|
+| `<MapView>` | `<Map>` |
+| `<ShapeSource shape={…}>` | `<GeoJSONSource data={…}>` |
+| `<LineLayer style={{lineColor}}>` | `<Layer type="line" paint={{"line-color"}}>` |
+| `<CircleLayer style={{circleRadius}}>` | `<Layer type="circle" paint={{"circle-radius"}}>` |
+| `<PointAnnotation coordinate={…}>` | `<ViewAnnotation lngLat={…}>` |
+| `<Camera defaultSettings={{centerCoordinate, zoomLevel}}>` | `<Camera initialViewState={{center, zoom}}>` |
+
+Layer styling is now **style-spec compliant kebab-case** split across `paint` and `layout` — `line-cap` and `line-join` are layout properties, not paint. The upside is that these values now copy directly to and from the web app's MapLibre GL JS style definitions.
 
 - [ ] **Step 4: Mount it and pass the themed style**
 
@@ -1546,7 +1567,9 @@ git commit -m "feat(mobile): MapLibre route map with track and stop layers"
 
 **Interfaces:**
 - Consumes: `GeoJSONFeatureCollection` (Task 4)
-- Produces: `boundsOf(fc: GeoJSONFeatureCollection) → { ne: [number, number]; sw: [number, number] } | null`
+- Produces: `boundsOf(fc: GeoJSONFeatureCollection) → [west: number, south: number, east: number, north: number] | null`
+
+**Return a flat `[w, s, e, n]` tuple, not `{ne, sw}`.** That is exactly what v11's `Camera.fitBounds()` and `initialViewState.bounds` take, so it feeds straight in with no adapter.
 
 Replaces `map.fitBounds(new maplibregl.LngLatBounds(...))` from `page.tsx:1027`.
 
@@ -1563,8 +1586,8 @@ const fc = {
   }],
 };
 
-it("computes ne/sw corners from a LineString", () => {
-  expect(boundsOf(fc)).toEqual({ ne: [123.92, 10.35], sw: [123.85, 10.28] });
+it("computes a [west, south, east, north] tuple from a LineString", () => {
+  expect(boundsOf(fc)).toEqual([123.85, 10.28, 123.92, 10.35]);
 });
 
 it("returns null for an empty collection", () => {
@@ -1593,10 +1616,15 @@ export function boundsOf(fc: GeoJSONFeatureCollection) {
 
   const lons = coords.map((c) => c[0]);
   const lats = coords.map((c) => c[1]);
-  return {
-    ne: [Math.max(...lons), Math.max(...lats)] as [number, number],
-    sw: [Math.min(...lons), Math.min(...lats)] as [number, number],
-  };
+
+  // [west, south, east, north] — the shape Camera.fitBounds() and
+  // initialViewState.bounds both take in maplibre-react-native v11.
+  return [
+    Math.min(...lons),
+    Math.min(...lats),
+    Math.max(...lons),
+    Math.max(...lats),
+  ] as [number, number, number, number];
 }
 ```
 
@@ -1607,7 +1635,13 @@ Expected: PASS, 2 tests.
 
 - [ ] **Step 5: Drive the camera**
 
-In `RouteMap`, compute `boundsOf(track)` and pass it to `<Camera bounds={{ ne, sw }} padding={{ paddingTop: 40, paddingBottom: 40, paddingLeft: 40, paddingRight: 40 }} animationDuration={600} />` when non-null, falling back to the default Metro Cebu camera otherwise.
+In `RouteMap`, hold a `useRef<CameraRef>` on the `<Camera>`. When `boundsOf(track)` is non-null, call it imperatively in an effect:
+
+```ts
+cameraRef.current?.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 }, 600);
+```
+
+Keep `initialViewState={{ center: [123.89, 10.31], zoom: 13 }}` as the fallback for when no route is selected. `initialViewState` is, as the name says, *initial* — it does not re-apply on later renders, which is why reframing is imperative rather than declarative here.
 
 - [ ] **Step 6: Verify on device**
 
