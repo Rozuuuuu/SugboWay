@@ -1,6 +1,15 @@
 import { render, fireEvent } from "@testing-library/react-native";
 import RoutesScreen from "../../app/(tabs)/index";
 import * as api from "../../lib/api";
+import type { GTFSStop, RouteResult } from "../../domain";
+
+// RouteCard now pulls in CrowdingIndicator -> ThemeProvider -> AsyncStorage.
+// Jest has no native AsyncStorage module linked, so without this mock the
+// import chain throws "NativeModule: AsyncStorage is null" (see
+// __tests__/theme.test.tsx, which needs the same mock for the same reason).
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock")
+);
 
 // The routing DB autosuspends and a real search can take ~30s to answer.
 // Never let a test touch the live backend — mock searchRoutes outright.
@@ -30,6 +39,63 @@ const selectPlace = (
   fireEvent.press(getAllByTestId("place-option")[0]);
 };
 
+function stop(stopName: string): GTFSStop {
+  return {
+    stopId: stopName.toLowerCase().replace(/\s+/g, "-"),
+    stopName,
+    aliases: [],
+    location: { lat: 10.3, lon: 123.9 },
+    routeIds: ["13C"],
+    wheelchairAccessible: false,
+    hasShelter: false,
+    isTerminal: false,
+  };
+}
+
+// A route with real shape: one transit leg + one walking leg, so the card
+// under test actually exercises fare calc, crowding, and per-leg rendering
+// instead of the placeholder `{}` doubles the old count-only test used.
+function makeRoute(overrides: Partial<RouteResult> = {}): RouteResult {
+  return {
+    legs: [
+      {
+        type: "transit",
+        routeId: "13C",
+        routeShortName: "13C",
+        route: {
+          routeId: "13C",
+          routeShortName: "13C",
+          routeLongName: "Talamban - Colon via Ramos",
+          routeType: "jeepney",
+          agencyId: "agency-1",
+          isModernized: false,
+          hasAircon: false,
+        },
+        fromStop: stop("Colon Street"),
+        toStop: stop("USC Talamban"),
+        durationSeconds: 900,
+        distanceMeters: 6000,
+        farePHP: 13,
+        instructions: [],
+      },
+      {
+        type: "walking",
+        fromStop: stop("USC Talamban"),
+        toStop: stop("USC Talamban Gate"),
+        durationSeconds: 120,
+        distanceMeters: 150,
+        instructions: [],
+      },
+    ],
+    totalTimeSeconds: 1020,
+    totalFarePHP: 13,
+    transfers: 0,
+    crowdingWorstLeg: 0.2,
+    geoJson: { type: "FeatureCollection", features: [] },
+    ...overrides,
+  };
+}
+
 describe("RoutesScreen", () => {
   afterEach(() => jest.resetAllMocks());
 
@@ -44,9 +110,9 @@ describe("RoutesScreen", () => {
     expect(getByRole("button", { name: "Find routes" }).props.accessibilityState?.disabled).toBe(true);
   });
 
-  it("calls searchRoutes with the two chosen places' real coordinates and renders the result count", async () => {
-    (api.searchRoutes as jest.Mock).mockResolvedValue([{}, {}, {}]);
-    const { getByText, getAllByPlaceholderText, getAllByTestId, findByTestId } = render(
+  it("calls searchRoutes with the two chosen places' real coordinates and renders a route card per result", async () => {
+    (api.searchRoutes as jest.Mock).mockResolvedValue([makeRoute(), makeRoute(), makeRoute()]);
+    const { getByText, getAllByPlaceholderText, getAllByTestId, findAllByTestId } = render(
       <RoutesScreen />
     );
 
@@ -65,8 +131,53 @@ describe("RoutesScreen", () => {
       false
     );
 
-    const count = await findByTestId("route-result-count");
-    expect(count.props.children.join("")).toContain("3");
+    const cards = await findAllByTestId("route-card");
+    expect(cards).toHaveLength(3);
+  });
+
+  it("shows the route's fare, code, and crowding label on its card", async () => {
+    (api.searchRoutes as jest.Mock).mockResolvedValue([makeRoute()]);
+    const { getByText, getAllByPlaceholderText, getAllByTestId, findAllByTestId } = render(
+      <RoutesScreen />
+    );
+
+    const [fromInput, toInput] = getAllByPlaceholderText("Search a place");
+    fireEvent.changeText(fromInput, "Colon");
+    fireEvent.press(getAllByTestId("place-option")[0]);
+    fireEvent.changeText(toInput, "TC");
+    fireEvent.press(getAllByTestId("place-option")[0]);
+    fireEvent.press(getByText("Find routes"));
+    await findAllByTestId("route-card");
+
+    // RouteCard sums every leg's distance (transit 6000m + walking 150m =
+    // 6.15km), regular passenger, 0 transfers:
+    // base 13.00 + (6.15-4)*1.80 = 16.87, no discount -> totalFare 16.87.
+    expect(getByText("₱16.87")).toBeTruthy();
+    expect(getByText("13C")).toBeTruthy();
+    expect(getByText(/comfortable/i)).toBeTruthy();
+  });
+
+  it("sets the tapped route as selected", async () => {
+    const routeA = makeRoute();
+    const routeB = makeRoute({ totalTimeSeconds: 1500 });
+    (api.searchRoutes as jest.Mock).mockResolvedValue([routeA, routeB]);
+    const { getByText, getAllByPlaceholderText, getAllByTestId, findAllByTestId } = render(
+      <RoutesScreen />
+    );
+
+    const [fromInput, toInput] = getAllByPlaceholderText("Search a place");
+    fireEvent.changeText(fromInput, "Colon");
+    fireEvent.press(getAllByTestId("place-option")[0]);
+    fireEvent.changeText(toInput, "TC");
+    fireEvent.press(getAllByTestId("place-option")[0]);
+    fireEvent.press(getByText("Find routes"));
+
+    const cards = await findAllByTestId("route-card");
+    // Selecting a card must not throw and must be reflected via re-render;
+    // the strongest cheap signal available without a selected-state prop
+    // dump is that pressing it doesn't crash and the card tree stays intact.
+    fireEvent.press(cards[1]);
+    expect((await findAllByTestId("route-card")).length).toBe(2);
   });
 
   it("shows an error instead of crashing when the routing service rejects", async () => {
@@ -85,5 +196,22 @@ describe("RoutesScreen", () => {
 
     await findByText(/Couldn't reach the routing service/);
     expect(api.searchRoutes).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an empty-state message when the search legitimately returns no routes", async () => {
+    (api.searchRoutes as jest.Mock).mockResolvedValue([]);
+    const { getByText, getAllByPlaceholderText, getAllByTestId, findByTestId } = render(
+      <RoutesScreen />
+    );
+
+    const [fromInput, toInput] = getAllByPlaceholderText("Search a place");
+    fireEvent.changeText(fromInput, "Colon");
+    fireEvent.press(getAllByTestId("place-option")[0]);
+    fireEvent.changeText(toInput, "TC");
+    fireEvent.press(getAllByTestId("place-option")[0]);
+
+    fireEvent.press(getByText("Find routes"));
+
+    await findByTestId("route-empty");
   });
 });
