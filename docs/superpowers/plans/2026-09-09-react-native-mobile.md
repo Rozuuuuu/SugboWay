@@ -1638,10 +1638,15 @@ Expected: PASS, 2 tests.
 In `RouteMap`, hold a `useRef<CameraRef>` on the `<Camera>`. When `boundsOf(track)` is non-null, call it imperatively in an effect:
 
 ```ts
-cameraRef.current?.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 }, 600);
+cameraRef.current?.fitBounds(bounds, {
+  padding: { top: 40, right: 40, bottom: 40, left: 40 },
+  duration: 600,
+});
 ```
 
 Keep `initialViewState={{ center: [123.89, 10.31], zoom: 13 }}` as the fallback for when no route is selected. `initialViewState` is, as the name says, *initial* — it does not re-apply on later renders, which is why reframing is imperative rather than declarative here.
+
+**Note the two-argument form.** The library's own JSDoc example shows `fitBounds(bounds, padding, duration)` as three arguments, but its actual type declaration is `fitBounds(bounds: LngLatBounds, options?: CameraOptions & CameraAnimationOptions)` — padding and duration go inside a single options object. The docstring contradicts the signature directly above it. **Trust the declaration, not the example**, and verify against `node_modules/@maplibre/maplibre-react-native/lib/typescript/*/components/camera/Camera.d.ts` rather than any published doc.
 
 - [ ] **Step 6: Verify on device**
 
